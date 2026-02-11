@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { fetchAssetRequests } from '../redux/slices/assetRequestSlice';
 import KPICards from '../components/KPICards';
 import WaterfallStages from '../components/WaterfallStages';
-import { TrendingUp, Activity, Clock, BarChart3, PieChart, Users, FileText, Calendar, Filter, RefreshCw } from 'lucide-react';
+import { TrendingUp, Activity, Clock, BarChart3, PieChart, Users, FileText, Calendar, Filter, RefreshCw, Download } from 'lucide-react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn } from '../config/agGridConfig';
+import pptGenerator from '../utils/pptGenerator';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -38,6 +39,9 @@ const Dashboard = () => {
     const [trends, setTrends] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // PPT Generation State
+    const [generatingPPT, setGeneratingPPT] = useState(false);
 
     // KPI Modal State
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
@@ -153,6 +157,33 @@ const Dashboard = () => {
         }
     };
 
+    // PPT Generation Handler
+    const handleGeneratePPT = async () => {
+        try {
+            setGeneratingPPT(true);
+            
+            // Prepare dashboard data for PPT generation
+            const dashboardData = {
+                stats: stats,
+                recentActivity: recentActivity,
+                trends: trends
+            };
+            
+            // Generate PPT
+            const result = await pptGenerator.generateDashboardPPT(dashboardData);
+            
+            if (result.success) {
+                console.log('PPT generated successfully:', result.fileName);
+            } else {
+                console.error('Failed to generate PPT:', result.error);
+            }
+        } catch (error) {
+            console.error('Error generating PPT:', error);
+        } finally {
+            setGeneratingPPT(false);
+        }
+    };
+
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString('en-US', {
             month: 'short',
@@ -233,6 +264,14 @@ const Dashboard = () => {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button 
+                        onClick={handleGeneratePPT}
+                        disabled={generatingPPT || loading}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-tvs-blue text-white rounded-xl font-semibold hover:bg-tvs-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Download size={18} className={generatingPPT ? 'animate-pulse' : ''} />
+                        {generatingPPT ? 'Generating...' : 'Generate PPT'}
+                    </button>
                     <button onClick={fetchDashboardData} className="p-2.5 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-all text-gray-600">
                         <RefreshCw size={20} className={loadingRequests ? 'animate-spin' : ''} />
                     </button>
