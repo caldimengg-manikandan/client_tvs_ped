@@ -14,7 +14,7 @@ import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialN
 const { confirm } = Modal;
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
 const DEPT_API = API_BASE_URL + '/departments';
 
 const EmployeeMaster = () => {
@@ -192,7 +192,7 @@ const EmployeeMaster = () => {
 
     const handleConfirmImport = async () => {
         try {
-            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
             const token = localStorage.getItem('token');
 
             let successCount = 0;

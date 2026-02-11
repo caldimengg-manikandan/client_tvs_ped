@@ -34,6 +34,11 @@ app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Error Middleware
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+app.use(notFound);
+app.use(errorHandler);
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
