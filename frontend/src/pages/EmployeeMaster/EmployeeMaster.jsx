@@ -469,6 +469,7 @@ const EmployeeMaster = () => {
                 <div className="ag-theme-alpine w-full h-[620px]">
                     <AgGridReact
                         ref={gridRef}
+                        theme="legacy"
                         rowData={filteredEmployees}
                         columnDefs={columnDefs}
                         defaultColDef={globalDefaultColDef}

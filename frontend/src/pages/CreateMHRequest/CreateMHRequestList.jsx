@@ -218,6 +218,7 @@ const CreateMHRequestList = () => {
                     <div className="ag-theme-alpine w-full h-[600px]">
                         <AgGridReact
                             ref={gridRef}
+                            theme="legacy"
                             rowData={requests}
                             columnDefs={columnDefs}
                             defaultColDef={globalDefaultColDef}

@@ -21,6 +21,14 @@
   --font-outfit: "Outfit", sans-serif;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 @layer base {
   body {
     @apply bg-tvs-light text-tvs-dark-gray font-inter antialiased;
@@ -52,13 +60,13 @@
 }
 
 .fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
 
   to {
@@ -90,6 +98,39 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+
+  /* Layout Utilities */
+  .w-sidebar {
+    width: 280px;
+  }
+
+  .h-header {
+    height: 72px;
+  }
+
+  .pl-sidebar {
+    padding-left: 280px;
+  }
+
+  .ml-sidebar {
+    margin-left: 280px;
+  }
+
+  .left-sidebar {
+    left: 280px;
+  }
+
+  .z-sidebar {
+    z-index: 1000;
+  }
+
+  .z-header {
+    z-index: 900;
+  }
+
+  .z-modal {
+    z-index: 2000;
+  }
 }
 
 @keyframes float {
@@ -111,27 +152,27 @@
    ============================================================================ */
 
 .ag-theme-alpine {
-  --ag-header-background-color: #fafbfc !important;
-  --ag-header-foreground-color: #475569 !important;
-  --ag-header-cell-font-weight: 700 !important;
-  --ag-header-cell-font-size: 11px !important;
-  --ag-font-family: 'Inter', sans-serif !important;
-  --ag-border-color: #e2e8f0 !important;
-  --ag-row-border-color: #f1f5f9 !important;
-  --ag-row-hover-color: #f8fafc !important;
-  --ag-selected-row-background-color: #eff6ff !important;
-  --ag-font-size: 13.5px !important;
-  --ag-grid-size: 8px !important;
-  --ag-list-item-height: 40px !important;
-  --ag-control-panel-background-color: #ffffff !important;
+  --ag-header-background-color: #fafbfc;
+  --ag-header-foreground-color: #475569;
+  --ag-header-cell-font-weight: 700;
+  --ag-header-cell-font-size: 11px;
+  --ag-font-family: 'Inter', sans-serif;
+  --ag-border-color: #e2e8f0;
+  --ag-row-border-color: #f1f5f9;
+  --ag-row-hover-color: #f8fafc;
+  --ag-selected-row-background-color: #eff6ff;
+  --ag-font-size: 13.5px;
+  --ag-grid-size: 8px;
+  --ag-list-item-height: 40px;
+  --ag-control-panel-background-color: #ffffff;
 }
 
 .ag-theme-alpine .ag-root-wrapper {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
-  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  background-color: #ffffff;
 }
 
 .ag-theme-alpine .ag-header {
@@ -177,9 +218,6 @@
   padding-right: 16px !important;
   border: none !important;
   color: #334155 !important;
-  display: flex !important;
-  align-items: center !important;
-  line-height: 1.5 !important;
 }
 
 .ag-theme-alpine .ag-paging-panel {

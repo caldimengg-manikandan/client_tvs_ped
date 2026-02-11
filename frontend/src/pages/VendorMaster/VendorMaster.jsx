@@ -219,6 +219,7 @@ const VendorMaster = () => {
             <div className="ag-theme-alpine w-full h-[600px]">
                 <AgGridReact
                     ref={gridRef}
+                    theme="legacy"
                     rowData={filteredVendors}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}

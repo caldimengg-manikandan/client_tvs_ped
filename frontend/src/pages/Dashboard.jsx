@@ -535,6 +535,7 @@ const Dashboard = () => {
             >
                 <div className="ag-theme-alpine w-full h-[500px] mt-4 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
                     <AgGridReact
+                        theme="legacy"
                         rowData={getFilteredRequests()}
                         columnDefs={columnDefs}
                         defaultColDef={defaultColDef}

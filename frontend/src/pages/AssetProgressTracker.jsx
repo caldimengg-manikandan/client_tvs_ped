@@ -395,6 +395,7 @@ const AssetProgressTracker = () => {
 
             <div className="ag-theme-alpine w-full h-[600px]">
                 <AgGridReact
+                    theme="legacy"
                     rowData={filteredRequests}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}

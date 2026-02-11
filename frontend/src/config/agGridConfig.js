@@ -15,13 +15,10 @@ export const defaultColDef = {
     filter: true,                // ✅ MANDATORY: All columns filterable
     resizable: true,             // ✅ MANDATORY: All columns resizable
     floatingFilter: false,       // Hide floating filters for cleaner UI
-    suppressHeaderMenu: true,    // Modern property for header menu
+    suppressHeaderMenuButton: true, // Updated for v31+ compatibility
     minWidth: 80,                // Efficient minimum column width
     flex: 0,                     // Auto-sizing disabled by default
     cellStyle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
         paddingLeft: '16px',
         paddingRight: '16px',
         lineHeight: '1.5'
@@ -38,8 +35,11 @@ export const defaultGridOptions = {
     paginationPageSize: 20,      // Default page size
     paginationPageSizeSelector: [10, 20, 50, 100], // Page size options
 
-    // Selection - DISABLED for cleaner UI
-    rowSelection: null,          // ✅ REMOVED: No row selection checkboxes
+    // Selection - Configuration
+    rowSelection: 'multiple',
+
+    // Theme - Use legacy to support existing CSS file themes
+    theme: 'legacy',
 
     // Appearance
     rowHeight: 56,               // ✅ PREMIUM: More spacious row height for better readability
@@ -121,9 +121,7 @@ export const createSerialNumberColumn = () => {
         pinned: 'left',
         cellClass: 'ag-cell-bold',
         cellStyle: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            textAlign: 'center'
         },
         headerClass: 'tvs-ag-header-center'
     };
