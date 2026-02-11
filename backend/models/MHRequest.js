@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-const assetRequestSchema = new mongoose.Schema({
-    assetRequestId: {
+const mhRequestSchema = new mongoose.Schema({
+    mhRequestId: {
         type: String,
         required: true,
         unique: true
@@ -21,12 +21,11 @@ const assetRequestSchema = new mongoose.Schema({
     requestType: {
         type: String,
         required: true,
-        enum: ['New', 'Modify']
+        enum: ['New Project', 'Upgrade', 'Refresh', 'Capacity', 'Special Improvements']
     },
-    category: {
+    productModel: {
         type: String,
-        required: true,
-        enum: ['New Project', 'Current Product Support']
+        required: true
     },
     problemStatement: {
         type: String,
@@ -36,24 +35,32 @@ const assetRequestSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    assetNeededLocation: {
+    materialHandlingLocation: {
         type: String,
         required: true
     },
-    assetName: {
+    plantLocation: {
         type: String,
-        required: false
+        required: true,
+        enum: [
+            'Hosur Plant 1 (TN)',
+            'Hosur Plant 2 (TN)',
+            'Hosur Plant 3 (TN)',
+            'Mysore (KA)',
+            'Nalagarh (HP)'
+        ]
     },
-    poPrice: {
+    from: {
+        type: String,
+        required: true
+    },
+    to: {
+        type: String,
+        required: true
+    },
+    volumePerDay: {
         type: Number,
-        required: false
-    },
-    assetLocation: {
-        type: String, // Actual location after procurement/deployment
-        required: false
-    },
-    drawingFile: {
-        type: String // We store the path to the uploaded file
+        required: true
     },
     status: {
         type: String,
@@ -115,6 +122,8 @@ const assetRequestSchema = new mongoose.Schema({
         },
         details: String
     }]
+}, {
+    timestamps: true
 });
 
-module.exports = mongoose.model('AssetRequest', assetRequestSchema);
+module.exports = mongoose.model('MHRequest', mhRequestSchema);

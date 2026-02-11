@@ -5,7 +5,7 @@ import { message } from 'antd';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const Settings = () => {
     const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const Settings = () => {
 
     // Settings State
     const [frequency, setFrequency] = useState('Weekly');
-    const [reportType, setReportType] = useState('Progress Report of Asset Requests');
+    const [reportType, setReportType] = useState('Progress Report of MH Requests');
     const [selectedEmployees, setSelectedEmployees] = useState([]);
 
     useEffect(() => {
@@ -77,13 +77,13 @@ const Settings = () => {
             doc.text(`Total Requests: ${summary?.totalRequests || 0}`, 14, 46);
 
             // Detailed Table
-            const tableColumn = ["Request ID", "User", "Department", "Status", "Progress", "Date"];
+            const tableColumn = ["MH ID", "User", "Dept", "Status", "Progress", "Date"];
             const tableRows = [];
 
             if (data && Array.isArray(data)) {
                 data.forEach(req => {
                     const requestData = [
-                        req.assetRequestId || 'N/A',
+                        req.mhRequestId || 'N/A',
                         req.userName || 'N/A',
                         req.departmentName || 'N/A',
                         req.status || 'N/A',
@@ -207,7 +207,7 @@ const Settings = () => {
     const frequencies = ['Daily', 'Weekly', 'Fortnightly', 'Monthly'];
 
     const reportTypes = [
-        'Progress Report of Asset Requests',
+        'Progress Report of MH Requests',
         'Progress Report of Approved Requests',
         'Progress Report of Implemented',
         'Progress Report of Rejected'

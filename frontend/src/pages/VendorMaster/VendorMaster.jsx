@@ -5,6 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendors, deleteVendor } from '../../redux/slices/vendorSlice';
 import { Modal } from 'antd';
+import { AgGridReact } from 'ag-grid-react';
+import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createBoldColumn } from '../../config/agGridConfig';
+
+// AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
 const { confirm } = Modal;
 
@@ -12,6 +16,7 @@ const { confirm } = Modal;
 const VendorMaster = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const gridRef = React.useRef();
 
     // Redux State
     const { items: vendors, loading, error } = useSelector((state) => state.vendors);
@@ -102,24 +107,69 @@ const VendorMaster = () => {
         toast.success('Export feature coming soon...');
     };
 
-    // Filter vendors
-    const filteredVendors = vendors.filter(vendor => {
+    // Filter vendors with safety check
+    const filteredVendors = (vendors || []).filter(vendor => {
         const matchesSearch =
-            vendor.vendorCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.GSTIN?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.vendorLocation?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.vendorMailId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendor.remarks?.toLowerCase().includes(searchTerm.toLowerCase());
+            String(vendor.vendorCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(vendor.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(vendor.GSTIN || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(vendor.vendorLocation || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(vendor.vendorMailId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(vendor.remarks || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         return matchesSearch;
     });
 
-    const formatGSTIN = (gstin) => {
-        if (!gstin) return '';
-        // Format: 22AAAAA0000A1Z5
-        return gstin.toUpperCase();
-    };
+    const columnDefs = React.useMemo(() => [
+        createSerialNumberColumn(),
+        createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
+        createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
+        { 
+            headerName: 'GSTIN', 
+            field: 'GSTIN', 
+            width: 160,
+            valueFormatter: (params) => params.value ? params.value.toUpperCase() : '',
+            cellStyle: { fontFamily: 'monospace' }
+        },
+        { headerName: 'LOCATION', field: 'vendorLocation', width: 160 },
+        { 
+            headerName: 'EMAIL', 
+            field: 'vendorMailId', 
+            width: 220,
+            cellRenderer: (params) => (
+                <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline">
+                    {params.value}
+                </a>
+            )
+        },
+        { 
+            headerName: 'REMARKS', 
+            field: 'remarks', 
+            width: 200,
+            valueGetter: (params) => params.value || 'No remarks',
+            cellStyle: { color: '#6b7280', fontStyle: 'italic' }
+        },
+        createActionColumn([
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
+                title: 'View Details',
+                className: 'p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all',
+                onClick: (data) => handleView(data)
+            },
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+                title: 'Edit Vendor',
+                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
+                onClick: (data) => handleEdit(data)
+            },
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
+                title: 'Delete Vendor',
+                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
+                onClick: (data) => handleDelete(data._id)
+            }
+        ])
+    ], []);
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
@@ -166,172 +216,28 @@ const VendorMaster = () => {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="w-full overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th className="w-12 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                <input
-                                    type="checkbox"
-                                    checked={filteredVendors.length > 0 && selectedRows.length === filteredVendors.length}
-                                    onChange={handleSelectAll}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                            </th>
-                            <th className="w-16 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                S.No
-                            </th>
-                            <th className="w-32 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Vendor Code
-                            </th>
-                            <th className="w-48 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Vendor Name
-                            </th>
-                            <th className="w-40 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                GSTIN
-                            </th>
-                            <th className="w-40 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Location
-                            </th>
-                            <th className="w-48 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Email
-                            </th>
-                            <th className="w-48 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Remarks
-                            </th>
-                            <th className="w-40 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr>
-                                <td colSpan="9" className="p-8">
-                                    <div className="text-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tvs-blue mx-auto"></div>
-                                        <p className="mt-2 text-gray-600">Loading vendors...</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : filteredVendors.length > 0 ? (
-                            filteredVendors.map((vendor) => (
-                                <tr
-                                    key={vendor._id}
-                                    className={`hover:bg-blue-50/50 transition-colors ${selectedRows.includes(vendor._id) ? 'bg-blue-50' : ''}`}
-                                >
-                                    <td className="px-4 py-4 border-b border-gray-100">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedRows.includes(vendor._id)}
-                                            onChange={() => handleSelectRow(vendor._id)}
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <strong>{vendor.sNo}</strong>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <div className="flex items-center gap-2">
-                                            <Hash size={14} className="text-gray-400" />
-                                            <strong className="font-mono">{vendor.vendorCode}</strong>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <div className="flex items-center gap-2">
-                                            <Building size={14} className="text-gray-400" />
-                                            {vendor.vendorName}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate font-mono">
-                                        {formatGSTIN(vendor.GSTIN)}
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin size={14} className="text-gray-400" />
-                                            {vendor.vendorLocation}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <a
-                                            href={`mailto:${vendor.vendorMailId}`}
-                                            className="text-tvs-blue hover:underline flex items-center gap-1"
-                                        >
-                                            <Mail size={14} /> {vendor.vendorMailId}
-                                        </a>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <span className="text-gray-600 italic">
-                                            {vendor.remarks || 'No remarks'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleView(vendor)}
-                                                className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-                                                title="View Details"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleEdit(vendor)}
-                                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all cursor-pointer"
-                                                title="Edit Vendor"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(vendor._id)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
-                                                title="Delete Vendor"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="9" className="p-8">
-                                    <div className="text-center text-gray-500 font-medium bg-gray-50 rounded-lg py-8">
-                                        {searchTerm ? (
-                                            <div>
-                                                <p>No vendors found matching your search.</p>
-                                                <button
-                                                    onClick={() => setSearchTerm('')}
-                                                    className="mt-2 text-tvs-blue hover:underline"
-                                                >
-                                                    Clear search
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <p>No vendors found.</p>
-                                                <button
-                                                    onClick={handleAddVendor}
-                                                    className="mt-2 text-tvs-blue hover:underline"
-                                                >
-                                                    Add your first vendor
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            <div className="ag-theme-alpine w-full h-[600px]">
+                <AgGridReact
+                    ref={gridRef}
+                    rowData={filteredVendors}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    {...defaultGridOptions}
+                    loading={loading}
+                    onSelectionChanged={(event) => {
+                        const selectedNodes = event.api.getSelectedNodes();
+                        const selectedIds = selectedNodes.map(node => node.data._id);
+                        setSelectedRows(selectedIds);
+                    }}
+                />
             </div>
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="text-sm text-gray-600">
-                        Showing <span className="font-semibold">{filteredVendors.length}</span> of{' '}
-                        <span className="font-semibold">{vendors.length}</span> vendors
+                        Showing <span className="font-semibold">{filteredVendors?.length || 0}</span> of{' '}
+                        <span className="font-semibold">{vendors?.length || 0}</span> vendors
                     </div>
 
                     <div className="text-sm text-gray-600">

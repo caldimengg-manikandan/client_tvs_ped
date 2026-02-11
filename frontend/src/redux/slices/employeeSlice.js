@@ -5,7 +5,7 @@ export const checkIdAvailability = createAsyncThunk(
     'employees/checkId',
     async (employeeId, { rejectWithValue }) => {
         try {
-            const response = await api.post('/api/employees/check-id', { employeeId });
+            const response = await api.post('/employees/check-id', { employeeId });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to check ID');
@@ -20,7 +20,7 @@ export const fetchEmployees = createAsyncThunk(
     'employees/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/api/employees');
+            const response = await api.get('/employees');
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch employees');
@@ -32,7 +32,7 @@ export const fetchEmployeeById = createAsyncThunk(
     'employees/fetchById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/api/employees/${id}`);
+            const response = await api.get(`/employees/${id}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch employee');
@@ -44,7 +44,7 @@ export const fetchNextEmployeeId = createAsyncThunk(
     'employees/fetchNextId',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/api/employees/next-id');
+            const response = await api.get('/employees/next-id');
             return response.data.nextEmployeeId;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch next employee ID');
@@ -56,7 +56,7 @@ export const createEmployee = createAsyncThunk(
     'employees/create',
     async (employeeData, { rejectWithValue }) => {
         try {
-            const response = await api.post('/api/employees', employeeData);
+            const response = await api.post('/employees', employeeData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to create employee');
@@ -68,7 +68,7 @@ export const updateEmployee = createAsyncThunk(
     'employees/update',
     async ({ id, employeeData }, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/api/employees/${id}`, employeeData);
+            const response = await api.put(`/employees/${id}`, employeeData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update employee');
@@ -80,7 +80,7 @@ export const deleteEmployee = createAsyncThunk(
     'employees/delete',
     async (id, { rejectWithValue }) => {
         try {
-            await api.delete(`/api/employees/${id}`);
+            await api.delete(`/employees/${id}`);
             return id;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to delete employee');
@@ -92,7 +92,7 @@ export const fetchUserByEmployeeId = createAsyncThunk(
     'employees/fetchUserByEmployeeId',
     async (employeeId, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/api/users/employee/${employeeId}`);
+            const response = await api.get(`/users/employee/${employeeId}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch user');

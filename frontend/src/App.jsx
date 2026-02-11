@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import CreateAssetRequestList from './pages/CreateAssetRequest/CreateAssetRequestList';
-import CreateAssetRequestForm from './components/Forms/CreateAssetRequestForm';
+import CreateMHRequestList from './pages/CreateMHRequest/CreateMHRequestList';
+import MHRequestForm from './components/Forms/MHRequestForm';
 import RequestTracker from './pages/RequestTracker';
 import AssetProgressTracker from './pages/AssetProgressTracker';
 import EmployeeMaster from './pages/EmployeeMaster/EmployeeMaster';
@@ -32,21 +32,21 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Create Asset Request Module */}
-            <Route path="CreateAssetRequest">
+            {/* MH Request Module */}
+            <Route path="mh-requests">
               <Route index element={
                 <ProtectedRoute permission="assetRequest">
-                  <CreateAssetRequestList />
+                  <CreateMHRequestList />
                 </ProtectedRoute>
               } />
               <Route path="add" element={
                 <ProtectedRoute permission="assetRequest">
-                  <CreateAssetRequestForm />
+                  <MHRequestForm />
                 </ProtectedRoute>
               } />
               <Route path="edit/:id" element={
                 <ProtectedRoute permission="assetRequest">
-                  <CreateAssetRequestForm />
+                  <MHRequestForm />
                 </ProtectedRoute>
               } />
             </Route>

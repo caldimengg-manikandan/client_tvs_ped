@@ -89,36 +89,42 @@ const CreateAssetRequestForm = () => {
             });
         }
     }, [currentItem, isEditMode, id]);
+
     // Handle Success Redirect
     useEffect(() => {
         if (success) {
+            message.success(isEditMode ? 'Request updated successfully!' : 'Request created successfully!');
             dispatch(resetStatus());
             navigate('/CreateAssetRequest');
         }
-    }, [success, dispatch, navigate]);
+    }, [success, dispatch, navigate, isEditMode]);
+
+    // Handle Error Display
+    useEffect(() => {
+        if (error) {
+            message.error(error);
+            dispatch(resetStatus());
+        }
+    }, [error, dispatch]);
 
     // Validation State
     const [errors, setErrors] = useState({});
 
     const sanitizeInput = (value) => {
         if (typeof value !== 'string') return value;
-        // Basic sanitization to prevent HTML/Script injection
-        return value.replace(/<[^>]*>?/gm, "")
-            .replace(/['";]/g, ""); // Basic SQL/Cmd protection chars (though backend parameterization is main defense)
+        return value.replace(/<[^>]*>?/gm, "").replace(/['";]/g, "");
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         const sanitizedValue = sanitizeInput(value);
 
-        // Character Limit for Problem Statement
         if (name === 'problemStatement' && sanitizedValue.length > 500) {
             return;
         }
 
         setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
 
-        // Clear error when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
@@ -126,10 +132,11 @@ const CreateAssetRequestForm = () => {
 
     const validateForm = () => {
         const newErrors = {};
+        // Relaxing requirements for assetName, poPrice, and assetLocation as they might not be known at creation
         const requiredFields = [
             'departmentName', 'location', 'userName', 'requestType',
             'category', 'problemStatement', 'handlingPartName',
-            'assetNeededLocation', 'assetName', 'poPrice', 'assetLocation'
+            'assetNeededLocation'
         ];
 
         requiredFields.forEach(field => {
@@ -146,22 +153,28 @@ const CreateAssetRequestForm = () => {
         setFormData(prev => ({ ...prev, file: e.target.files[0] }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (loading) return;
+
         if (!validateForm()) {
-            message.error('Please fill in all required fields correctly.');
+            message.error('Please fill in all required fields.');
             return;
         }
 
         const formPayload = new FormData();
         Object.keys(formData).forEach(key => {
-            // If we are uploading a new file, don't send the old drawingFile path
-            // to avoid redundant fields in FormData
             if (key === 'drawingFile' && formData.file) return;
 
             if (key !== 'file') {
-                formPayload.append(key, formData[key] === null ? 'null' : formData[key]);
+                // Only send non-empty values or keep null as null
+                const value = formData[key];
+                if (value === '' || value === null) {
+                    formPayload.append(key, 'null');
+                } else {
+                    formPayload.append(key, value);
+                }
             }
         });
 
@@ -292,42 +305,39 @@ const CreateAssetRequestForm = () => {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold text-gray-600">Asset Name <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-semibold text-gray-600">Asset Name</label>
                         <input
                             type="text"
                             name="assetName"
                             value={formData.assetName}
                             onChange={handleChange}
                             placeholder="e.g. Laser Cutter 3000"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.assetName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
                         />
-                        {errors.assetName && <span className="text-xs text-red-500">{errors.assetName}</span>}
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold text-gray-600">PO Price <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-semibold text-gray-600">PO Price</label>
                         <input
                             type="number"
                             name="poPrice"
                             value={formData.poPrice}
                             onChange={handleChange}
                             placeholder="e.g. 50000"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.poPrice ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
                         />
-                        {errors.poPrice && <span className="text-xs text-red-500">{errors.poPrice}</span>}
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold text-gray-600">Asset Location (Final) <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-semibold text-gray-600">Asset Location (Final)</label>
                         <input
                             type="text"
                             name="assetLocation"
                             value={formData.assetLocation}
                             onChange={handleChange}
                             placeholder="e.g. Shop Floor Zone A"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.assetLocation ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
                         />
-                        {errors.assetLocation && <span className="text-xs text-red-500">{errors.assetLocation}</span>}
                     </div>
 
                     <div className="flex flex-col gap-2 md:col-span-4">

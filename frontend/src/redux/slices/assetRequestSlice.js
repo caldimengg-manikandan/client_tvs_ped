@@ -6,7 +6,7 @@ export const fetchAssetRequests = createAsyncThunk(
     'assetRequests/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/api/asset-request');
+            const response = await api.get('/asset-request');
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch requests');
@@ -18,7 +18,7 @@ export const fetchAssetRequestById = createAsyncThunk(
     'assetRequests/fetchById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/api/asset-request/${id}`);
+            const response = await api.get(`/asset-request/${id}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch request');
@@ -31,7 +31,7 @@ export const createAssetRequest = createAsyncThunk(
     async (formData, { rejectWithValue }) => {
         try {
             // Use uploadApi for FormData
-            const response = await uploadApi.post('/api/asset-request', formData);
+            const response = await uploadApi.post('/asset-request', formData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to create request');
@@ -44,7 +44,7 @@ export const updateAssetRequest = createAsyncThunk(
     async ({ id, formData }, { rejectWithValue }) => {
         try {
             // Use uploadApi for FormData
-            const response = await uploadApi.put(`/api/asset-request/${id}`, formData);
+            const response = await uploadApi.put(`/asset-request/${id}`, formData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update request');
@@ -68,7 +68,7 @@ export const sendEmailNotification = createAsyncThunk(
     'assetRequests/sendEmail',
     async ({ requestId, recipients }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/api/email/send', { requestId, recipients });
+            const response = await api.post('/email/send', { requestId, recipients });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to send email');

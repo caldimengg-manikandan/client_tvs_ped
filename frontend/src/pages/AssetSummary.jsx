@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Download, FileText, Filter } from 'lucide-react';
+import { AgGridReact } from 'ag-grid-react';
+import { defaultColDef, defaultGridOptions, createSerialNumberColumn } from '../config/agGridConfig';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// AG Grid Modules are registered GLOBALLY in agGridConfig.js
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const AssetSummary = () => {
     const [assets, setAssets] = useState([]);
@@ -32,13 +36,14 @@ const AssetSummary = () => {
         }
     };
 
-    const filteredAssets = assets.filter(asset => {
-        const term = searchTerm.toLowerCase();
+    // Filter assets with safety check
+    const filteredAssets = (assets || []).filter(asset => {
+        const term = (searchTerm || '').toLowerCase();
         const matchesSearch = (
-            (asset.assetRequestId?.toLowerCase() || '').includes(term) ||
-            (asset.assetName?.toLowerCase() || '').includes(term) ||
-            (asset.departmentName?.toLowerCase() || '').includes(term) ||
-            (asset.location?.toLowerCase() || '').includes(term)
+            String(asset.mhRequestId || '').toLowerCase().includes(term) ||
+            String(asset.assetName || '').toLowerCase().includes(term) ||
+            String(asset.departmentName || '').toLowerCase().includes(term) ||
+            String(asset.location || '').toLowerCase().includes(term)
         );
 
         const matchesDepartment = departmentFilter === 'all' || asset.departmentName === departmentFilter;
@@ -47,6 +52,38 @@ const AssetSummary = () => {
         return matchesSearch && matchesDepartment && matchesLocation;
     });
 
+    const columnDefs = React.useMemo(() => [
+        createSerialNumberColumn(),
+        { 
+            headerName: 'MH ID', 
+            valueGetter: (params) => params.data.allocationAssetId || params.data.mhRequestId,
+            width: 150,
+            cellClass: 'ag-cell-bold'
+        },
+        { headerName: 'PART NAME', field: 'handlingPartName', width: 200, valueFormatter: (params) => params.value || '-' },
+        { 
+            headerName: 'VENDOR NAME', 
+            width: 200,
+            valueGetter: (params) => {
+                const vendor = params.data.assignedVendor;
+                return (typeof vendor === 'object' && vendor !== null) ? vendor.vendorName : (vendor || '-');
+            }
+        },
+        { 
+            headerName: 'PO PRICE', 
+            field: 'poPrice', 
+            width: 150,
+            valueFormatter: (params) => params.value ? `₹ ${params.value.toLocaleString()}` : '-'
+        },
+        { headerName: 'DEPARTMENT', field: 'departmentName', width: 180 },
+        { headerName: 'PLANT LOCATION', field: 'location', width: 160 },
+        { 
+            headerName: 'HANDLING LOCATION', 
+            width: 200,
+            valueGetter: (params) => params.data.assetLocation || params.data.materialHandlingLocation || '-'
+        }
+    ], []);
+
     // Get unique departments and locations for filters
     const departments = [...new Set(assets.map(a => a.departmentName).filter(Boolean))];
     const locations = [...new Set(assets.map(a => a.location).filter(Boolean))];
@@ -54,7 +91,7 @@ const AssetSummary = () => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
             <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <h1 className="text-xl font-bold text-tvs-dark-gray m-0">Asset's Summary</h1>
+                <h1 className="text-xl font-bold text-tvs-dark-gray m-0">MH Summary</h1>
                 <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
                     Total Assets: {filteredAssets.length}
                 </div>
@@ -112,51 +149,14 @@ const AssetSummary = () => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">S.No</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Asset ID</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Asset Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Vendor Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">PO Price of the Asset</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Department Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Plant Location</th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Asset Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr>
-                                <td colSpan="8" className="p-8 text-center text-gray-500 font-medium bg-gray-50">Loading assets...</td>
-                            </tr>
-                        ) : filteredAssets.length === 0 ? (
-                            <tr>
-                                <td colSpan="8" className="p-8 text-center text-gray-500 font-medium bg-gray-50">No assets found</td>
-                            </tr>
-                        ) : (
-                            filteredAssets.map((asset, index) => (
-                                <tr key={asset._id} className="hover:bg-blue-50/50 transition-colors">
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">{index + 1}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap"><strong>{asset.allocationAssetId || asset.assetRequestId}</strong></td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap font-medium">{asset.assetName || '-'}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        {typeof asset.assignedVendor === 'object' && asset.assignedVendor !== null
-                                            ? asset.assignedVendor.vendorName
-                                            : (asset.assignedVendor || '-')}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        {asset.poPrice ? `₹ ${asset.poPrice.toLocaleString()}` : '-'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">{asset.departmentName}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">{asset.location}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">{asset.assetLocation || asset.assetNeededLocation}</td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div className="ag-theme-alpine w-full h-[600px]">
+                <AgGridReact
+                    rowData={filteredAssets}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    {...defaultGridOptions}
+                    loading={loading}
+                />
             </div>
         </div>
     );

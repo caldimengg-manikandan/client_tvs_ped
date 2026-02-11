@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, LogOut, ChevronDown, Clock, Activity } from 'lucide-react';
+import { ChevronRight, LogOut, ChevronDown, Clock, Activity, Search, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Modal } from 'antd';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const Header = () => {
     const location = useLocation();
@@ -42,7 +43,6 @@ const Header = () => {
         });
     };
 
-    // Fallback if user is not fully loaded yet
     const displayName = user?.name || "User";
     const displayEmail = user?.email || "";
     const displayInitials = user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "U";
@@ -53,7 +53,6 @@ const Header = () => {
         navigate('/login', { replace: true });
     };
 
-    // Close on click outside and Escape key
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (popoverRef.current && !popoverRef.current.contains(event.target)) {
@@ -78,12 +77,10 @@ const Header = () => {
         };
     }, [isPopoverOpen]);
 
-    // Breadcrumb Logic
     const generateBreadcrumbs = () => {
         const pathnames = location.pathname.split('/').filter(x => x);
         const breadcrumbs = [];
 
-        // Always start with Dashboard/Home if we are not on dashboard
         if (location.pathname !== '/') {
             breadcrumbs.push({ name: 'Dashboard', path: '/' });
         }
@@ -93,25 +90,20 @@ const Header = () => {
         pathnames.forEach((value, index) => {
             currentPath += `/${value}`;
 
-            // Map specific paths to readable names
             let name = '';
 
-            // Dynamic ID handling (skip IDs in breadcrumb name usually, or show as 'Details')
             if (value.match(/^[0-9a-fA-F]{24}$/) || value === 'edit' || value === 'view' || value === 'add') {
-                // Determine context from previous segment
                 const prevSegment = pathnames[index - 1];
-
                 if (value === 'add') name = 'Create New';
                 else if (value === 'edit') name = 'Edit';
                 else if (value === 'view') name = 'View Details';
-                else return; // Skip showing ID directly in breadcrumb text
+                else return;
             } else {
                 switch (value) {
-                    case 'CreateAssetRequest': name = 'Asset Requests'; break;
+                    case 'mh-requests': name = 'MH Requests'; break;
                     case 'request-tracker': name = 'Request Tracker'; break;
                     case 'asset-progress': name = 'Asset Progress'; break;
                     case 'asset-summary': name = 'Asset Summary'; break;
-
                     case 'employee-master': name = 'Employee Master'; break;
                     case 'vendor-master': name = 'Vendor Master'; break;
                     case 'settings': name = 'Settings'; break;
@@ -128,11 +120,10 @@ const Header = () => {
     };
 
     const breadcrumbs = generateBreadcrumbs();
-    const currentPageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : 'Dashboard';
+    const currentPageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : 'Dashboard Overview';
 
     const formatDurationTime = (seconds) => {
         if (!seconds) return '0s';
-
         const days = Math.floor(seconds / (3600 * 24));
         const hours = Math.floor((seconds % (3600 * 24)) / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -144,142 +135,182 @@ const Header = () => {
     };
 
     return (
-        <header className="h-header fixed top-0 right-0 left-sidebar bg-white border-b border-tvs-border z-header px-8 flex items-center justify-between shadow-sm transition-all duration-300">
+        <header className="h-header fixed top-0 right-0 left-sidebar bg-white/70 backdrop-blur-xl border-b border-gray-100/50 z-header px-8 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all duration-300">
             {/* Left side - Breadcrumbs & Title */}
             <div className="flex flex-col justify-center">
-                {/* Main Title */}
-                <h2 className="text-xl font-bold text-tvs-dark-gray m-0 leading-tight">
-                    {currentPageTitle}
-                </h2>
-                {/* Breadcrumbs */}
-                {location.pathname !== '/' && (
-                    <nav className="flex items-center text-xs text-gray-500 mb-1">
-                        {breadcrumbs.map((crumb, index) => (
+                <nav className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                    {location.pathname === '/' ? (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md">
+                            <Activity size={10} className="text-tvs-blue" />
+                            Live Metrics
+                        </span>
+                    ) : (
+                        breadcrumbs.map((crumb, index) => (
                             <React.Fragment key={crumb.path}>
-                                {index > 0 && <ChevronRight size={12} className="mx-1 text-gray-400" />}
+                                {index > 0 && <ChevronRight size={10} className="mx-1 text-gray-300" />}
                                 <Link
                                     to={crumb.path}
-                                    className={`hover:text-tvs-blue transition-colors ${index === breadcrumbs.length - 1 ? 'font-medium text-gray-700 pointer-events-none' : ''}`}
+                                    className={`hover:text-tvs-blue transition-colors ${index === breadcrumbs.length - 1 ? 'text-gray-600 pointer-events-none' : ''}`}
                                 >
                                     {crumb.name}
                                 </Link>
                             </React.Fragment>
-                        ))}
-                    </nav>
-                )}
+                        ))
+                    )}
+                </nav>
+                <h2 className="text-xl font-black text-gray-900 font-outfit m-0 leading-none">
+                    {currentPageTitle}
+                </h2>
             </div>
 
             {/* Right side - Actions & Profile */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+                {/* Search Bar */}
+                <div className="hidden lg:flex items-center gap-2 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-2 w-64 group focus-within:w-80 focus-within:bg-white focus-within:border-tvs-blue/30 focus-within:shadow-xl focus-within:shadow-tvs-blue/5 transition-all duration-500">
+                    <Search size={16} className="text-gray-400 group-focus-within:text-tvs-blue transition-colors" />
+                    <input 
+                        type="text" 
+                        placeholder="Search assets, requests..." 
+                        className="bg-transparent border-none focus:ring-0 text-xs font-semibold text-gray-600 w-full"
+                    />
+                </div>
+
+                <div className="h-8 w-[1px] bg-gray-100 mx-2 hidden md:block"></div>
+
+                {/* Notifications */}
+                <button className="relative p-2.5 rounded-xl hover:bg-gray-50 text-gray-500 transition-colors">
+                    <Bell size={20} />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-tvs-red border-2 border-white rounded-full"></span>
+                </button>
 
                 {/* Last Login Button */}
                 {userActivity && (
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setIsActivityModalOpen(true)}
-                        className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                        className="hidden xl:flex items-center gap-2 px-4 py-2.5 bg-tvs-blue/5 text-tvs-blue rounded-xl text-xs font-bold border border-tvs-blue/10 hover:bg-tvs-blue/10 transition-colors"
                     >
                         <Clock size={14} />
                         <span>
-                            Last Login: {userActivity.previousLoginAt ? formatDate(userActivity.previousLoginAt) : 'First Login'}
+                            Last: {userActivity.previousLoginAt ? formatDate(userActivity.previousLoginAt) : 'Fresh'}
                         </span>
-                    </button>
+                    </motion.button>
                 )}
 
                 {/* User Profile */}
-                <div className="flex items-center">
-                    <div className="relative" ref={popoverRef}>
-                        <div
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                            onClick={() => setIsPopoverOpen(!isPopoverOpen)}
-                        >
-                            <div className="w-9 h-9 bg-tvs-blue text-white rounded-full flex items-center justify-center font-bold text-sm tracking-wider">
-                                {displayInitials}
-                            </div>
-                            <div className="hidden md:flex flex-col items-start">
-                                <span className="font-medium text-tvs-dark-gray text-sm leading-tight">{displayName}</span>
-                                <span className="text-xs text-gray-500 leading-tight">{user?.department || 'Employee'}</span>
-                            </div>
-                            <ChevronDown size={16} className="text-gray-400" />
+                <div className="relative" ref={popoverRef}>
+                    <motion.div
+                        whileHover={{ y: -1 }}
+                        className="flex items-center gap-3 p-1.5 pl-3 rounded-2xl bg-gray-50/50 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-lg transition-all cursor-pointer group"
+                        onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                    >
+                        <div className="hidden md:flex flex-col items-end mr-1">
+                            <span className="font-bold text-gray-900 text-sm leading-tight group-hover:text-tvs-blue transition-colors">{displayName}</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter leading-tight">{user?.department || 'Employee'}</span>
                         </div>
+                        <div className="w-10 h-10 bg-gradient-to-br from-tvs-blue to-tvs-blue/80 text-white rounded-xl flex items-center justify-center font-black text-xs shadow-lg shadow-tvs-blue/20">
+                            {displayInitials}
+                        </div>
+                        <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isPopoverOpen ? 'rotate-180' : ''}`} />
+                    </motion.div>
 
+                    <AnimatePresence>
                         {isPopoverOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-[280px] bg-white border border-tvs-border rounded-xl shadow-lg z-modal overflow-hidden fade-in animate-in slide-in-from-top-2 duration-200">
-                                <div className="p-5 bg-gray-50 border-b border-tvs-border flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-tvs-blue text-white rounded-full flex items-center justify-center text-lg font-bold tracking-wider">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute top-full right-0 mt-3 w-72 glass-card rounded-2xl shadow-2xl z-modal overflow-hidden border border-white/50"
+                            >
+                                <div className="p-6 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100 flex flex-col items-center text-center">
+                                    <div className="w-16 h-16 bg-tvs-blue text-white rounded-2xl flex items-center justify-center text-xl font-black shadow-xl shadow-tvs-blue/20 mb-4">
                                         {displayInitials}
                                     </div>
-                                    <div className="flex flex-col overflow-hidden">
-                                        <h4 className="m-0 text-sm font-semibold text-tvs-dark-gray truncate" title={displayName}>{displayName}</h4>
-                                        <span className="text-xs text-gray-500 truncate" title={displayEmail}>{displayEmail}</span>
+                                    <h4 className="m-0 text-base font-black text-gray-900 font-outfit">{displayName}</h4>
+                                    <span className="text-xs font-medium text-gray-400 mt-1">{displayEmail}</span>
+                                    
+                                    <div className="flex gap-2 mt-4">
+                                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue text-[10px] font-black rounded-lg uppercase tracking-wider">{user?.role || 'User'}</span>
+                                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-lg uppercase tracking-wider">Active</span>
                                     </div>
                                 </div>
 
-                                <div className="p-3 border-t border-tvs-border">
+                                <div className="p-3 bg-white">
                                     <button
-                                        className="w-full flex items-center justify-center gap-2 p-3 bg-transparent text-tvs-red border border-tvs-red-muted rounded-lg font-semibold cursor-pointer transition-all hover:bg-tvs-red hover:text-white"
+                                        className="w-full flex items-center justify-center gap-3 p-3.5 bg-rose-50 text-rose-600 rounded-xl font-bold text-sm cursor-pointer transition-all hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-100 group"
                                         onClick={handleLogout}
                                     >
-                                        <LogOut size={16} />
-                                        <span>Logout</span>
+                                        <LogOut size={18} className="transition-transform group-hover:translate-x-1" />
+                                        <span>Sign Out</span>
                                     </button>
                                 </div>
-                            </div>
+                            </motion.div>
                         )}
-                    </div>
+                    </AnimatePresence>
                 </div>
             </div>
 
             {/* User Activity Modal */}
             <Modal
                 title={
-                    <div className="flex items-center gap-2 text-tvs-blue">
-                        <Activity size={20} />
-                        <span>My Login Activity Details</span>
+                    <div className="flex items-center gap-3 text-tvs-blue font-outfit py-2">
+                        <div className="w-10 h-10 rounded-xl bg-tvs-blue/10 flex items-center justify-center">
+                            <Activity size={20} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-lg font-black tracking-tight leading-none">Activity Log</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Personnel Session History</span>
+                        </div>
                     </div>
                 }
                 open={isActivityModalOpen}
                 onCancel={() => setIsActivityModalOpen(false)}
                 footer={null}
-                width={600}
+                width={650}
                 centered
+                className="custom-modal"
             >
                 {userActivity ? (
-                    <div className="py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
-                                <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Last Visit</p>
-                                <p className="text-base font-bold text-gray-800">
-                                    {userActivity.previousLoginAt ? formatDate(userActivity.previousLoginAt) : 'First Login'}
+                    <div className="py-6 space-y-8">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 text-center group hover:bg-white hover:shadow-xl hover:shadow-gray-200 transition-all duration-300">
+                                <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-[2px]">Last Visit</p>
+                                <p className="text-lg font-black text-gray-800 font-outfit">
+                                    {userActivity.previousLoginAt ? formatDate(userActivity.previousLoginAt) : 'Fresh Entry'}
                                 </p>
                             </div>
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-center">
-                                <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Visits</p>
-                                <p className="text-base font-bold text-gray-800">{userActivity.totalVisits}</p>
+                            <div className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 text-center group hover:bg-white hover:shadow-xl hover:shadow-gray-200 transition-all duration-300">
+                                <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-[2px]">Total Sessions</p>
+                                <p className="text-4xl font-black text-tvs-blue font-outfit tracking-tighter">
+                                    {userActivity.totalVisits}
+                                </p>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-3 ml-1">Recent Sessions History</h3>
-                            <div className="overflow-y-auto overflow-x-auto max-h-60 border border-gray-200 rounded-lg custom-scrollbar">
-                                <table className="min-w-full text-sm text-left text-gray-500 relative">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 z-10 shadow-sm">
+                            <div className="flex items-center justify-between mb-4 px-2">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Recent Session Log</h3>
+                                <span className="text-[10px] font-bold text-tvs-blue px-2 py-0.5 bg-tvs-blue/5 rounded-full">LIVE DATA</span>
+                            </div>
+                            <div className="overflow-hidden border border-gray-100 rounded-[2rem] shadow-sm">
+                                <table className="w-full text-sm text-left relative">
+                                    <thead className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 border-b border-gray-100">
                                         <tr>
-                                            <th className="px-4 py-3 border-b">Login Time</th>
-                                            <th className="px-4 py-3 border-b">Duration</th>
+                                            <th className="px-6 py-4">Timestamp</th>
+                                            <th className="px-6 py-4 text-right">Duration</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {userActivity.recentSessions?.map(session => (
-                                            <tr key={session._id} className="bg-white hover:bg-gray-50">
-                                                <td className="px-4 py-3 font-medium text-gray-900">
+                                    <tbody className="divide-y divide-gray-50">
+                                        {userActivity.recentSessions?.map((session, idx) => (
+                                            <tr key={session._id} className="bg-white hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-gray-700">
                                                     {formatDate(session.loginAt)}
                                                 </td>
-
-
-                                                <td className="px-4 py-3">
+                                                <td className="px-6 py-4 text-right">
                                                     {session.logoutAt
-                                                        ? formatDurationTime(session.sessionDuration)
-                                                        : <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Active</span>}
+                                                        ? <span className="text-xs font-semibold text-gray-500">{formatDurationTime(session.sessionDuration)}</span>
+                                                        : <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider animate-pulse">Online Now</span>}
                                                 </td>
                                             </tr>
                                         ))}
@@ -289,7 +320,10 @@ const Header = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="py-8 text-center text-gray-500">Loading activity details...</div>
+                    <div className="py-20 flex flex-col items-center justify-center text-gray-400 space-y-4">
+                        <div className="w-12 h-12 border-4 border-tvs-blue/10 border-t-tvs-blue rounded-full animate-spin"></div>
+                        <p className="text-sm font-bold uppercase tracking-widest animate-pulse">Accessing secure logs...</p>
+                    </div>
                 )}
             </Modal>
         </header>

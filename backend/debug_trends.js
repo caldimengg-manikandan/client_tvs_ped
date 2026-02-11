@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const AssetRequest = require('./models/AssetRequest');
+const MHRequest = require('./models/MHRequest');
 require('dotenv').config();
 
 const debugTrends = async () => {
@@ -7,13 +7,13 @@ const debugTrends = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB Connected');
 
-        // From 1st Dec to 17th Dec
+        // Check range
         const startDate = new Date('2025-12-01T00:00:00.000Z');
-        const endDate = new Date('2025-12-17T23:59:59.999Z');
+        const endDate = new Date('2026-12-31T23:59:59.999Z');
 
         console.log('Querying from:', startDate.toISOString(), 'to:', endDate.toISOString());
 
-        const requests = await AssetRequest.find({
+        const requests = await MHRequest.find({
             activeStatus: true,
             createdAt: {
                 $gte: startDate,
@@ -21,19 +21,19 @@ const debugTrends = async () => {
             }
         });
 
-        console.log(`Found ${requests.length} requests.`);
+        console.log(`Found ${requests.length} MH requests.`);
 
         requests.forEach(req => {
             const dateKey = new Date(req.createdAt).toISOString().slice(0, 10);
-            console.log(`- Request ${req.assetRequestId}: Created=${req.createdAt.toISOString()} Key=${dateKey} Status=${req.status}`);
+            console.log(`- Request ${req.mhRequestId}: Created=${req.createdAt.toISOString()} Key=${dateKey} Status=${req.status}`);
         });
 
         if (requests.length === 0) {
-            console.log('--- No requests found in date range ---');
-            console.log('Listing ALL active requests to verify dates:');
-            const all = await AssetRequest.find({ activeStatus: true }).limit(5);
+            console.log('--- No MH requests found in date range ---');
+            console.log('Listing ALL active MH requests to verify dates:');
+            const all = await MHRequest.find({ activeStatus: true }).limit(5);
             all.forEach(req => {
-                console.log(`  ${req.assetRequestId}: ${req.createdAt.toISOString()}`);
+                console.log(`  ${req.mhRequestId}: ${req.createdAt.toISOString()}`);
             });
         }
 

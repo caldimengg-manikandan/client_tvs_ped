@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
-const assetRequestController = require('../controllers/assetRequestController');
+const mhRequestController = require('../controllers/mhRequestController');
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -34,29 +34,29 @@ const upload = multer({
 router.use(protect);
 
 // @route   POST /api/asset-request
-// @desc    Create a new asset request
+// @desc    Create a new MH request
 // @access  Private
-router.post('/', protect, checkPermission('assetRequest'), upload.single('drawingFile'), assetRequestController.createAssetRequest);
+router.post('/', protect, checkPermission('assetRequest'), upload.single('drawingFile'), mhRequestController.createMHRequest);
 
 // @route   GET /api/asset-request
-// @desc    Get all active asset requests
+// @desc    Get all active MH requests
 // @access  Public
-router.get('/', assetRequestController.getAllAssetRequests);
+router.get('/', mhRequestController.getAllMHRequests);
 
 // @route   GET /api/asset-request/:id
-// @desc    Get single asset request by ID
+// @desc    Get single MH request by ID
 // @access  Public
-router.get('/:id', assetRequestController.getAssetRequestById);
+router.get('/:id', mhRequestController.getMHRequestById);
 
 // @route   PUT /api/asset-request/:id
-// @desc    Update asset request
+// @desc    Update MH request
 // @access  Public
-router.put('/:id', upload.single('drawingFile'), assetRequestController.updateAssetRequest);
+router.put('/:id', upload.single('drawingFile'), mhRequestController.updateMHRequest);
 
 // @route   DELETE /api/asset-request/:id
-// @desc    Soft delete asset request
+// @desc    Soft delete MH request
 // @access  Public
-router.delete('/:id', assetRequestController.deleteAssetRequest);
+router.delete('/:id', mhRequestController.deleteMHRequest);
 
 // Error handling middleware for Multer
 router.use((err, req, res, next) => {

@@ -1,12 +1,12 @@
-const AssetRequest = require('../models/AssetRequest');
+const MHRequest = require('../models/MHRequest');
 
 // @desc    Get dashboard statistics
 // @route   GET /api/dashboard/stats
 // @access  Private
 const getStats = async (req, res) => {
     try {
-        // Get all active asset requests
-        const allRequests = await AssetRequest.find({ activeStatus: true });
+        // Get all active MH requests
+        const allRequests = await MHRequest.find({ activeStatus: true });
 
         // KPI Cards Statistics
         const totalRequests = allRequests.filter(req => req.status === 'Active').length;
@@ -31,13 +31,19 @@ const getStats = async (req, res) => {
             ? ((productionStage / totalActiveRequests) * 100).toFixed(1)
             : 0;
 
-        // Category breakdown
-        const newProjects = allRequests.filter(req => req.category === 'New Project').length;
-        const currentProductSupport = allRequests.filter(req => req.category === 'Current Product Support').length;
+        // Category breakdown (Using productModel instead of category)
+        const productBreakdown = allRequests.reduce((acc, req) => {
+            const model = req.productModel || 'Other';
+            acc[model] = (acc[model] || 0) + 1;
+            return acc;
+        }, {});
 
         // Request type breakdown
-        const newRequests = allRequests.filter(req => req.requestType === 'New').length;
-        const modifyRequests = allRequests.filter(req => req.requestType === 'Modify').length;
+        const typeBreakdown = allRequests.reduce((acc, req) => {
+            const type = req.requestType || 'Other';
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+        }, {});
 
         // Recent activity (last 7 days)
         const sevenDaysAgo = new Date();
@@ -47,7 +53,6 @@ const getStats = async (req, res) => {
         ).length;
 
         // Calculate actual average processing time
-        // For requests that have reached Production stage, calculate days from creation
         const completedRequests = allRequests.filter(req => req.progressStatus === 'Production');
         let avgProcessingTime = 0;
 
@@ -78,10 +83,8 @@ const getStats = async (req, res) => {
             additionalStats: {
                 totalActiveRequests,
                 completionRate,
-                newProjects,
-                currentProductSupport,
-                newRequests,
-                modifyRequests,
+                productBreakdown,
+                typeBreakdown,
                 recentRequests,
                 avgProcessingTime
             }
@@ -99,10 +102,10 @@ const getRecentActivity = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
 
-        const recentRequests = await AssetRequest.find({ activeStatus: true })
+        const recentRequests = await MHRequest.find({ activeStatus: true })
             .sort({ createdAt: -1 })
             .limit(limit)
-            .select('assetRequestId userName departmentName status progressStatus createdAt');
+            .select('mhRequestId userName departmentName status progressStatus createdAt');
 
         res.json(recentRequests);
     } catch (err) {
@@ -118,7 +121,6 @@ const getTrends = async (req, res) => {
     try {
         const { from, to } = req.query;
 
-        // Set default date range (last 12 months) if not provided
         let startDate, endDate;
         let groupByDay = false;
 
@@ -136,8 +138,7 @@ const getTrends = async (req, res) => {
             groupByDay = false;
         }
 
-        // Fetch requests within date range
-        const requests = await AssetRequest.find({
+        const requests = await MHRequest.find({
             activeStatus: true,
             createdAt: {
                 $gte: startDate,
@@ -148,7 +149,6 @@ const getTrends = async (req, res) => {
         const trendsData = {};
 
         if (groupByDay) {
-            // Group by day for filtered date range
             let currentDate = new Date(startDate);
             while (currentDate <= endDate) {
                 const dateKey = currentDate.toISOString().slice(0, 10);
@@ -166,7 +166,6 @@ const getTrends = async (req, res) => {
                 currentDate.setDate(currentDate.getDate() + 1);
             }
 
-            // Count requests by day
             requests.forEach(req => {
                 const dateKey = new Date(req.createdAt).toISOString().slice(0, 10);
                 if (trendsData[dateKey]) {
@@ -177,7 +176,6 @@ const getTrends = async (req, res) => {
                 }
             });
         } else {
-            // Group by month for default view
             let currentDate = new Date(startDate);
             while (currentDate <= endDate) {
                 const monthKey = currentDate.toISOString().slice(0, 7);
@@ -194,7 +192,6 @@ const getTrends = async (req, res) => {
                 currentDate.setMonth(currentDate.getMonth() + 1);
             }
 
-            // Count requests by month
             requests.forEach(req => {
                 const monthKey = new Date(req.createdAt).toISOString().slice(0, 7);
                 if (trendsData[monthKey]) {
@@ -218,20 +215,18 @@ const getTrends = async (req, res) => {
 // @access  Private
 const fixDataDates = async (req, res) => {
     try {
-        const requests = await AssetRequest.find({});
+        const requests = await MHRequest.find({});
         const baseDate = new Date();
         let i = 0;
-        console.log(`[Fix] Found ${requests.length} requests to update.`);
 
         for (const req of requests) {
             const newDate = new Date(baseDate);
-            newDate.setDate(baseDate.getDate() - (i % 5)); // Spread over last 5 days
+            newDate.setDate(baseDate.getDate() - (i % 5));
             req.createdAt = newDate;
             await req.save();
             i++;
-            console.log(`[Fix] Updated ${req.assetRequestId} to ${newDate.toISOString()}`);
         }
-        res.json({ success: true, count: requests.length, message: "AssetRequest dates updated to recent values." });
+        res.json({ success: true, count: requests.length, message: "MH Request dates updated to recent values." });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error', error: err.message });

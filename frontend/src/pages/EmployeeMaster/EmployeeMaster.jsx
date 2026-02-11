@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Mail, User, Search, Filter, Download, RefreshCw, Eye, Shield } from 'lucide-react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { Plus, Edit, Trash2, Mail, User, Search, Filter, Download, RefreshCw, Eye, Shield, FileText, Upload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEmployees, deleteEmployee } from '../../redux/slices/employeeSlice';
 import { Modal } from 'antd';
+import { AgGridReact } from 'ag-grid-react';
+import * as XLSX from 'xlsx';
+import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createStatusColumn, createBoldColumn } from '../../config/agGridConfig';
+
+// AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
 const { confirm } = Modal;
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const DEPT_API = API_BASE_URL + '/departments';
@@ -14,6 +20,46 @@ const DEPT_API = API_BASE_URL + '/departments';
 const EmployeeMaster = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const gridRef = useRef();
+    const fileInputRef = useRef();
+
+    // Helper Functions for Employee Display
+    const getAccessLevelColor = (level) => {
+        switch (level?.toLowerCase()) {
+            case 'super admin': return 'bg-purple-100 text-purple-700 border-purple-200';
+            case 'admin': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'manager': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+            case 'employee': return 'bg-green-100 text-green-700 border-green-200';
+            case 'viewer': return 'bg-gray-100 text-gray-700 border-gray-200';
+            default: return 'bg-gray-50 text-gray-600 border-gray-100';
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Active': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'Inactive': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            case 'Suspended': return 'bg-red-100 text-red-700 border-red-200';
+            default: return 'bg-gray-100 text-gray-600 border-gray-200';
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Never';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const countPermissionCount = (permissions) => {
+        if (!permissions) return 0;
+        return Object.values(permissions).filter(val => val === true).length;
+    };
 
     // Redux State
     const { items: employees, loading, error } = useSelector((state) => state.employees);
@@ -21,13 +67,15 @@ const EmployeeMaster = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [accessFilter, setAccessFilter] = useState('all');
-    const [selectedRows, setSelectedRows] = useState([]);
     const [viewingEmployee, setViewingEmployee] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+    const [isImportModalVisible, setIsImportModalVisible] = useState(false);
+    const [importData, setImportData] = useState([]);
 
     const [departments, setDepartments] = useState([]);
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [newDeptName, setNewDeptName] = useState('');
+
 
     useEffect(() => {
         dispatch(fetchEmployees());
@@ -59,67 +107,171 @@ const EmployeeMaster = () => {
                 const result = await dispatch(deleteEmployee(id));
                 if (deleteEmployee.fulfilled.match(result)) {
                     toast.success('Employee deleted successfully');
-                    setSelectedRows(prev => prev.filter(rowId => rowId !== id));
                 }
             }
         });
     };
 
-    const handleBulkDelete = async () => {
-        if (selectedRows.length === 0) {
-            toast.error('Please select at least one employee to delete');
-            return;
-        }
 
-        confirm({
-            title: 'Bulk Delete',
-            content: `Are you sure you want to delete ${selectedRows.length} employee(s)?`,
-            okText: 'Yes',
-            okType: 'danger',
-            cancelText: 'No',
-            onOk: async () => {
-                // Dispatch delete for all selected rows
-                const deletePromises = selectedRows.map(id => dispatch(deleteEmployee(id)));
-                await Promise.all(deletePromises);
-
-                toast.success(`${selectedRows.length} employee(s) deleted/processed`);
-                setSelectedRows([]);
-            }
-        });
-    };
 
     const handleAddEmployee = () => {
         navigate('/employee-master/add');
     };
 
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedRows(filteredEmployees.map(emp => emp._id));
-        } else {
-            setSelectedRows([]);
-        }
+    const handleRefresh = () => {
+        dispatch(fetchEmployees());
+        toast.success('Refreshing data...');
     };
 
-    const handleSelectRow = (id) => {
-        setSelectedRows(prev =>
-            prev.includes(id)
-                ? prev.filter(rowId => rowId !== id)
-                : [...prev, id]
-        );
-    };
 
     const handleExport = () => {
         toast.success('Export feature coming soon...');
     };
 
-    // Filter employees
-    const filteredEmployees = employees.filter(emp => {
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                // Validate and transform data
+                const transformedData = jsonData.map((row, index) => ({
+                    employeeId: row['Employee ID'] || row['employeeId'] || '',
+                    employeeName: row['Employee Name'] || row['employeeName'] || '',
+                    departmentName: row['Department'] || row['departmentName'] || '',
+                    plantLocation: row['Location'] || row['plantLocation'] || '',
+                    accessLevel: row['Access Level'] || row['accessLevel'] || 'Employee',
+                    mailId: row['Email'] || row['mailId'] || '',
+                    status: row['Status'] || row['status'] || 'Active',
+                    password: row['Password'] || row['password'] || 'default123',
+                    permissions: {
+                        dashboard: row['Dashboard'] === 'Yes' || row['Dashboard'] === true || false,
+                        assetRequest: row['Asset Request'] === 'Yes' || row['Asset Request'] === true || false,
+                        requestTracker: row['Request Tracker'] === 'Yes' || row['Request Tracker'] === true || false,
+                        assetSummary: row['Asset Summary'] === 'Yes' || row['Asset Summary'] === true || false,
+                        employeeMaster: row['Employee Master'] === 'Yes' || row['Employee Master'] === true || false,
+                        vendorMaster: row['Vendor Master'] === 'Yes' || row['Vendor Master'] === true || false,
+                        settings: row['Settings'] === 'Yes' || row['Settings'] === true || false,
+                        reports: row['Reports'] === 'Yes' || row['Reports'] === true || false
+                    }
+                }));
+
+                // Validate required fields
+                const invalidRows = transformedData.filter(
+                    (row, idx) => !row.employeeId || !row.employeeName || !row.mailId
+                );
+
+                if (invalidRows.length > 0) {
+                    toast.error(`${invalidRows.length} rows have missing required fields (Employee ID, Name, or Email)`);
+                    return;
+                }
+
+                setImportData(transformedData);
+                setIsImportModalVisible(true);
+                toast.success(`${transformedData.length} employees ready to import`);
+            } catch (error) {
+                console.error('Error parsing file:', error);
+                toast.error('Error parsing file. Please check the format.');
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+        event.target.value = ''; // Reset file input
+    };
+
+    const handleConfirmImport = async () => {
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+            const token = localStorage.getItem('token');
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const employee of importData) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/employees`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(employee)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (err) {
+                    errorCount++;
+                }
+            }
+
+            setIsImportModalVisible(false);
+            setImportData([]);
+            dispatch(fetchEmployees());
+
+            if (successCount > 0) {
+                toast.success(`Successfully imported ${successCount} employee(s)`);
+            }
+            if (errorCount > 0) {
+                toast.error(`Failed to import ${errorCount} employee(s)`);
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            toast.error('Error importing employees');
+        }
+    };
+
+    const handleDownloadTemplate = () => {
+        const template = [
+            {
+                'Employee ID': 'EMP001',
+                'Employee Name': 'John Doe',
+                'Department': 'Engineering',
+                'Location': 'Plant A',
+                'Access Level': 'Employee',
+                'Email': 'john.doe@example.com',
+                'Status': 'Active',
+                'Password': 'default123',
+                'Dashboard': 'Yes',
+                'Asset Request': 'Yes',
+                'Request Tracker': 'Yes',
+                'Asset Summary': 'No',
+                'Employee Master': 'No',
+                'Vendor Master': 'No',
+                'Settings': 'No',
+                'Reports': 'No'
+            }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Employee Template');
+        XLSX.writeFile(wb, 'employee_import_template.xlsx');
+        toast.success('Template downloaded successfully');
+    };
+
+    // Filter employees with safety check
+    const filteredEmployees = (employees || []).filter(emp => {
         const matchesSearch =
-            emp.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            emp.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            emp.departmentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            emp.mailId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            emp.plantLocation?.toLowerCase().includes(searchTerm.toLowerCase());
+            String(emp.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(emp.employeeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(emp.departmentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(emp.mailId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(emp.plantLocation || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
         const matchesAccess = accessFilter === 'all' || emp.accessLevel === accessFilter;
@@ -127,102 +279,128 @@ const EmployeeMaster = () => {
         return matchesSearch && matchesStatus && matchesAccess;
     });
 
-    const getStatusClass = (status) => {
-        const baseClass = "px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 border";
-        switch (status?.toLowerCase()) {
-            case 'active': return `${baseClass} bg-green-50 text-green-700 border-green-200`;
-            case 'inactive': return `${baseClass} bg-yellow-50 text-yellow-700 border-yellow-200`;
-            case 'suspended': return `${baseClass} bg-red-50 text-red-700 border-red-200`;
-            default: return `${baseClass} bg-gray-50 text-gray-700 border-gray-200`;
-        }
-    };
-
-    const getAccessLevelClass = (level) => {
-        const baseClass = "px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 border";
-        switch (level?.toLowerCase()) {
-            case 'super admin': return `${baseClass} bg-purple-50 text-purple-700 border-purple-200`;
-            case 'admin': return `${baseClass} bg-blue-50 text-blue-700 border-blue-200`;
-            case 'manager': return `${baseClass} bg-indigo-50 text-indigo-700 border-indigo-200`;
-            case 'employee': return `${baseClass} bg-green-50 text-green-700 border-green-200`;
-            case 'viewer': return `${baseClass} bg-gray-50 text-gray-700 border-gray-200`;
-            default: return `${baseClass} bg-gray-50 text-gray-700 border-gray-200`;
-        }
-    };
-
-    const countPermissionCount = (permissions) => {
-        if (!permissions) return 0;
-        return Object.values(permissions).filter(Boolean).length;
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active': return 'bg-green-100 text-green-800';
-            case 'inactive': return 'bg-yellow-100 text-yellow-800';
-            case 'suspended': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getAccessLevelColor = (level) => {
-        switch (level?.toLowerCase()) {
-            case 'super admin': return 'bg-purple-100 text-purple-800';
-            case 'admin': return 'bg-blue-100 text-blue-800';
-            case 'manager': return 'bg-indigo-100 text-indigo-800';
-            case 'employee': return 'bg-green-100 text-green-800';
-            case 'viewer': return 'bg-gray-100 text-gray-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
+    const columnDefs = React.useMemo(() => [
+        createSerialNumberColumn(),
+        createBoldColumn('employeeId', 'EMPLOYEE ID', { width: 140 }),
+        createBoldColumn('employeeName', 'EMPLOYEE NAME', { width: 200 }),
+        { 
+            field: 'departmentName', 
+            headerName: 'DEPARTMENT', 
+            width: 150 
+        },
+        { 
+            field: 'plantLocation', 
+            headerName: 'LOCATION', 
+            width: 140 
+        },
+        {
+            field: 'accessLevel',
+            headerName: 'ACCESS LEVEL',
+            width: 150,
+            cellRenderer: (params) => {
+                const level = params.value;
+                const baseClass = "px-3 py-1 rounded-full text-[10px] font-black uppercase border inline-block";
+                let colorClass = "bg-gray-50 text-gray-700 border-gray-200";
+                
+                switch (level?.toLowerCase()) {
+                    case 'super admin': colorClass = "bg-purple-50 text-purple-700 border-purple-200"; break;
+                    case 'admin': colorClass = "bg-blue-50 text-blue-700 border-blue-200"; break;
+                    case 'manager': colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200"; break;
+                    case 'employee': colorClass = "bg-green-50 text-green-700 border-green-200"; break;
+                    case 'viewer': colorClass = "bg-gray-50 text-gray-600 border-gray-200"; break;
+                }
+                
+                return <span className={`${baseClass} ${colorClass}`}>{level}</span>;
+            }
+        },
+        { 
+            field: 'mailId', 
+            headerName: 'EMAIL', 
+            width: 220,
+            cellRenderer: (params) => (
+                <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline font-medium">
+                    {params.value}
+                </a>
+            )
+        },
+        createStatusColumn('status', 'STATUS'),
+        createActionColumn([
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
+                title: 'View Details',
+                className: 'p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all',
+                onClick: (data) => handleView(data)
+            },
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+                title: 'Edit Employee',
+                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
+                onClick: (data) => handleEdit(data)
+            },
+            {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
+                title: 'Delete Employee',
+                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
+                onClick: (data) => handleDelete(data._id)
+            }
+        ])
+    ], []);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
+        <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
             {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <h1 className="text-xl font-bold text-tvs-dark-gray m-0">Employee Master and Access</h1>
+            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-white via-gray-50/50 to-white">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-gradient-to-br from-tvs-blue to-blue-600 rounded-xl shadow-md">
+                            <User size={22} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-tvs-dark-gray m-0 tracking-tight">Employee Master</h1>
+                            <p className="text-sm text-gray-500 mt-0.5">Manage employee access and permissions</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleRefresh}
+                        className="ml-2 p-2.5 text-gray-400 hover:text-tvs-blue hover:bg-white rounded-xl transition-all shadow-sm border border-gray-200 hover:border-tvs-blue hover:shadow-md"
+                        title="Refresh List"
+                    >
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                </div>
                 <button
                     onClick={handleAddEmployee}
-                    className="flex items-center bg-tvs-blue px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer"
-                    style={{ color: 'white' }}
+                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
                 >
-                    <Plus size={18} style={{ marginRight: '0.5rem' }} /> Add Employee
+                    <Plus size={20} /> Add Employee
                 </button>
             </div>
 
             {/* Filters */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="relative md:col-span-1">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <Search size={18} className="text-gray-400" />
                         </div>
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Search by ID, name, department, or email..."
+                            className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all"
+                            placeholder="Search employees..."
                         />
                     </div>
 
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <Filter size={18} className="text-gray-400 mr-2" />
-                            <span className="text-sm font-medium text-gray-700">Status:</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                            <Filter size={16} className="text-gray-500" />
+                            <span className="text-sm font-semibold text-gray-600">Status:</span>
                         </div>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all font-medium"
                         >
                             <option value="all">All Status</option>
                             <option value="Active">Active</option>
@@ -231,17 +409,17 @@ const EmployeeMaster = () => {
                         </select>
                     </div>
 
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <Shield size={18} className="text-gray-400 mr-2" />
-                            <span className="text-sm font-medium text-gray-700">Access:</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                            <Shield size={16} className="text-gray-500" />
+                            <span className="text-sm font-semibold text-gray-600">Access:</span>
                         </div>
                         <select
                             value={accessFilter}
                             onChange={(e) => setAccessFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all font-medium"
                         >
-                            <option value="all">All Access Levels</option>
+                            <option value="all">All Levels</option>
                             <option value="Super Admin">Super Admin</option>
                             <option value="Admin">Admin</option>
                             <option value="Manager">Manager</option>
@@ -249,240 +427,165 @@ const EmployeeMaster = () => {
                             <option value="Viewer">Viewer</option>
                         </select>
                     </div>
-
-                    <div className="flex items-center justify-end gap-2">
-                        {selectedRows.length > 0 && (
-                            <button
-                                onClick={handleBulkDelete}
-                                disabled={loading}
-                                className="px-4 py-2.5 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors disabled:opacity-50"
-                            >
-                                Delete Selected ({selectedRows.length})
-                            </button>
-                        )}
-
-                    </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="w-full overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th className="w-12 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                <input
-                                    type="checkbox"
-                                    checked={filteredEmployees.length > 0 && selectedRows.length === filteredEmployees.length}
-                                    onChange={handleSelectAll}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                            </th>
-                            <th className="w-16 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                S.No
-                            </th>
-                            <th className="w-32 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Employee ID
-                            </th>
-                            <th className="w-48 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Employee Name
-                            </th>
-                            <th className="w-40 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Department
-                            </th>
-                            <th className="w-32 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Location
-                            </th>
-                            <th className="w-32 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Access Level
-                            </th>
-                            <th className="w-48 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Email
-                            </th>
-                            <th className="w-32 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Permissions
-                            </th>
-                            <th className="w-24 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Status
-                            </th>
-                            <th className="w-40 px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr>
-                                <td colSpan="11" className="p-8">
-                                    <div className="text-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                        <p className="mt-2 text-gray-600">Loading employees...</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : filteredEmployees.length > 0 ? (
-                            filteredEmployees.map((emp) => (
-                                <tr
-                                    key={emp._id}
-                                    className={`hover:bg-blue-50/50 transition-colors ${selectedRows.includes(emp._id) ? 'bg-blue-50' : ''}`}
-                                >
-                                    <td className="px-4 py-4 border-b border-gray-100">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedRows.includes(emp._id)}
-                                            onChange={() => handleSelectRow(emp._id)}
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <strong>{emp.sNo}</strong>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <strong>{emp.employeeId}</strong>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        {emp.employeeName}
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        {emp.departmentName}
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        {emp.plantLocation}
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <span className={getAccessLevelClass(emp.accessLevel)}>
-                                            {emp.accessLevel}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap truncate">
-                                        <a
-                                            href={`mailto:${emp.mailId}`}
-                                            className="text-tvs-blue hover:underline flex items-center gap-1"
-                                        >
-                                            <Mail size={14} /> {emp.mailId}
-                                        </a>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <Shield size={14} className="text-gray-400" />
-                                            <span className="font-medium">
-                                                {countPermissionCount(emp.permissions)}
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                                /8 permissions
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <span className={getStatusClass(emp.status)}>
-                                            {emp.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleView(emp)}
-                                                className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-                                                title="View Details"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleEdit(emp)}
-                                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all cursor-pointer"
-                                                title="Edit Employee"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(emp._id)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
-                                                title="Delete Employee"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="11" className="p-8">
-                                    <div className="text-center text-gray-500 font-medium bg-gray-50 rounded-lg py-8">
-                                        {searchTerm || statusFilter !== 'all' || accessFilter !== 'all' ? (
-                                            <div>
-                                                <p>No employees found matching your criteria.</p>
-                                                <button
-                                                    onClick={() => {
-                                                        setSearchTerm('');
-                                                        setStatusFilter('all');
-                                                        setAccessFilter('all');
-                                                    }}
-                                                    className="mt-2 text-tvs-blue hover:underline"
-                                                >
-                                                    Clear filters
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <p>No employees found.</p>
-                                                <button
-                                                    onClick={handleAddEmployee}
-                                                    className="mt-2 text-tvs-blue hover:underline"
-                                                >
-                                                    Add your first employee
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            {/* AG Grid Table */}
+            <div className="px-8 py-6">
+                {/* Toolbar with Export */}
+                <div className="mb-5 flex items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredEmployees?.length || 0}</span> employees</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleDownloadTemplate}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                        >
+                            <Download size={16} />
+                            Template
+                        </button>
+                        <button
+                            onClick={handleImportClick}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                        >
+                            <Upload size={16} />
+                            Import Excel
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            onChange={handleFileUpload}
+                            style={{ display: 'none' }}
+                        />
+                    </div>
+                </div>
+
+                {/* Clean Minimalist AG Grid */}
+                <div className="ag-theme-alpine w-full h-[620px]">
+                    <AgGridReact
+                        ref={gridRef}
+                        rowData={filteredEmployees}
+                        columnDefs={columnDefs}
+                        defaultColDef={globalDefaultColDef}
+                        {...defaultGridOptions}
+                        loading={loading}
+                    />
+                </div>
             </div>
 
+
+
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="text-sm text-gray-600">
-                        Showing <span className="font-semibold">{filteredEmployees.length}</span> of{' '}
-                        <span className="font-semibold">{employees.length}</span> employees
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-600">Showing</span>
+                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredEmployees?.length || 0}</span>
+                        <span className="text-gray-600">of</span>
+                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{employees?.length || 0}</span>
+                        <span className="text-gray-600">employees</span>
                     </div>
 
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                <span className="text-sm text-gray-600">Active</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
+                                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                                <span className="text-xs font-semibold text-green-700">Active</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                <span className="text-sm text-gray-600">Inactive</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                                <span className="text-xs font-semibold text-yellow-700">Inactive</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                <span className="text-sm text-gray-600">Suspended</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg border border-red-200">
+                                <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                <span className="text-xs font-semibold text-red-700">Suspended</span>
                             </div>
                         </div>
 
-                        <div className="text-sm text-gray-600">
-                            Total permissions granted: <span className="font-semibold">
-                                {employees.reduce((acc, emp) => acc + countPermissionCount(emp.permissions), 0)}
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                            <Shield size={16} className="text-purple-600" />
+                            <span className="text-sm font-bold text-purple-700">
+                                {(employees || []).reduce((acc, emp) => acc + countPermissionCount(emp.permissions), 0)}
                             </span>
+                            <span className="text-xs text-purple-600">permissions</span>
                         </div>
-                    </div>
-
-                    <div className="text-sm text-gray-600">
-                        {selectedRows.length > 0 && (
-                            <span className="font-semibold text-tvs-blue">
-                                {selectedRows.length} selected
-                            </span>
-                        )}
                     </div>
                 </div>
             </div>
 
+            {/* Import Preview Modal */}
+            <Modal
+                title={
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                        <Upload size={20} className="text-emerald-600" />
+                        <span className="text-xl font-bold text-gray-900">Import Preview</span>
+                    </div>
+                }
+                open={isImportModalVisible}
+                onCancel={() => {
+                    setIsImportModalVisible(false);
+                    setImportData([]);
+                }}
+                onOk={handleConfirmImport}
+                okText="Confirm Import"
+                cancelText="Cancel"
+                width={1000}
+                centered
+                okButtonProps={{
+                    className: 'bg-emerald-600 hover:bg-emerald-700'
+                }}
+            >
+                <div className="py-4">
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800 font-semibold">
+                            📊 Ready to import <span className="text-blue-900 font-bold">{importData.length}</span> employee(s)
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                            Review the data below and click "Confirm Import" to proceed.
+                        </p>
+                    </div>
+
+                    <div className="max-h-96 overflow-auto border border-gray-200 rounded-lg">
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">#</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Employee ID</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Name</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Email</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Department</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Access Level</th>
+                                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 border-b">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {importData.map((emp, index) => (
+                                    <tr key={index} className="hover:bg-gray-50 border-b">
+                                        <td className="px-3 py-2 text-gray-700">{index + 1}</td>
+                                        <td className="px-3 py-2 text-gray-900 font-semibold">{emp.employeeId}</td>
+                                        <td className="px-3 py-2 text-gray-900">{emp.employeeName}</td>
+                                        <td className="px-3 py-2 text-gray-700">{emp.mailId}</td>
+                                        <td className="px-3 py-2 text-gray-700">{emp.departmentName}</td>
+                                        <td className="px-3 py-2 text-gray-700">{emp.accessLevel}</td>
+                                        <td className="px-3 py-2">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                                emp.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                                            }`}>
+                                                {emp.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </Modal>
 
             {/* View Employee Modal */}
             <Modal

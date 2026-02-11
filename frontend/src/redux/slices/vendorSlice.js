@@ -8,7 +8,7 @@ export const fetchNextVendorId = createAsyncThunk(
     'vendors/fetchNextVendorId',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/api/vendors/next-id');
+            const response = await api.get('/vendors/next-id');
             return response.data.nextVendorId;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch next vendor ID');
@@ -20,7 +20,7 @@ export const fetchVendors = createAsyncThunk(
     'vendors/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/api/vendors');
+            const response = await api.get('/vendors');
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendors');
@@ -32,7 +32,7 @@ export const fetchVendorById = createAsyncThunk(
     'vendors/fetchById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/api/vendors/${id}`);
+            const response = await api.get(`/vendors/${id}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendor');
@@ -44,7 +44,7 @@ export const createVendor = createAsyncThunk(
     'vendors/create',
     async (vendorData, { rejectWithValue }) => {
         try {
-            const response = await api.post('/api/vendors', vendorData);
+            const response = await api.post('/vendors', vendorData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to create vendor');
@@ -56,7 +56,7 @@ export const updateVendor = createAsyncThunk(
     'vendors/update',
     async ({ id, vendorData }, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/api/vendors/${id}`, vendorData);
+            const response = await api.put(`/vendors/${id}`, vendorData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update vendor');
@@ -68,7 +68,7 @@ export const deleteVendor = createAsyncThunk(
     'vendors/delete',
     async (id, { rejectWithValue }) => {
         try {
-            await api.delete(`/api/vendors/${id}`);
+            await api.delete(`/vendors/${id}`);
             return id;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to delete vendor');

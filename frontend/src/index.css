@@ -1,39 +1,69 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
 @theme {
   --color-tvs-red: #FA1102;
   --color-tvs-red-muted: #ffe5e5;
   --color-tvs-blue: #253C80;
-  --color-tvs-light: #f7f7f7;
+  --color-tvs-light: #f8fafc;
   --color-tvs-gray: #B0BBBD;
-  --color-tvs-dark-gray: #1f2937;
-  --color-tvs-border: #e2e8f0;
+  --color-tvs-dark-gray: #0f172a;
+  --color-tvs-border: rgba(226, 232, 240, 0.8);
 
-  --spacing-sidebar: 260px;
-  --spacing-header: 70px;
+  --spacing-sidebar: 280px;
+  --spacing-header: 72px;
 
   --z-index-header: 900;
   --z-index-sidebar: 1000;
   --z-index-modal: 2000;
+
+  --font-inter: "Inter", sans-serif;
+  --font-outfit: "Outfit", sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-tvs-light text-tvs-dark-gray font-sans antialiased;
+    @apply bg-tvs-light text-tvs-dark-gray font-inter antialiased;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(37, 60, 128, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(250, 17, 2, 0.03) 0px, transparent 50%);
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-outfit;
   }
 }
 
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
 .fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.5s ease-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -56,4 +86,142 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: #94a3b8;
   }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* ============================================================================
+   AG GRID PREMIUM STYLING (Standardized Application-Wide)
+   ============================================================================ */
+
+.ag-theme-alpine {
+  --ag-header-background-color: #fafbfc !important;
+  --ag-header-foreground-color: #475569 !important;
+  --ag-header-cell-font-weight: 700 !important;
+  --ag-header-cell-font-size: 11px !important;
+  --ag-font-family: 'Inter', sans-serif !important;
+  --ag-border-color: #e2e8f0 !important;
+  --ag-row-border-color: #f1f5f9 !important;
+  --ag-row-hover-color: #f8fafc !important;
+  --ag-selected-row-background-color: #eff6ff !important;
+  --ag-font-size: 13.5px !important;
+  --ag-grid-size: 8px !important;
+  --ag-list-item-height: 40px !important;
+  --ag-control-panel-background-color: #ffffff !important;
+}
+
+.ag-theme-alpine .ag-root-wrapper {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
+  background-color: #ffffff !important;
+}
+
+.ag-theme-alpine .ag-header {
+  border-bottom: 2px solid #e2e8f0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background: linear-gradient(to bottom, #fafbfc 0%, #f8f9fa 100%) !important;
+}
+
+.ag-theme-alpine .ag-header-row {
+  border-bottom: none !important;
+}
+
+.ag-theme-alpine .ag-header-cell {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ag-theme-alpine .ag-header-cell-label {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.ag-theme-alpine .ag-row {
+  border-bottom: 1px solid #f1f5f9 !important;
+  transition: all 0.15s ease !important;
+}
+
+.ag-theme-alpine .ag-row:hover {
+  background-color: #f8fafc !important;
+  box-shadow: 0 0 0 1px #e2e8f0 inset !important;
+}
+
+.ag-theme-alpine .ag-row:last-child {
+  border-bottom: none !important;
+}
+
+.ag-theme-alpine .ag-cell {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  border: none !important;
+  color: #334155 !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.5 !important;
+}
+
+.ag-theme-alpine .ag-paging-panel {
+  border-top: 2px solid #f1f5f9 !important;
+  background-color: #fafbfc !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.025em !important;
+  padding: 14px 20px !important;
+}
+
+.ag-theme-alpine .ag-paging-button {
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+  font-weight: 600 !important;
+}
+
+.ag-theme-alpine .ag-paging-button:hover {
+  background-color: #e2e8f0 !important;
+  color: #253C80 !important;
+}
+
+.ag-theme-alpine .ag-paging-button:disabled {
+  opacity: 0.4 !important;
+}
+
+/* Remove checkbox selection styling */
+.ag-theme-alpine .ag-checkbox-input-wrapper,
+.ag-theme-alpine .ag-selection-checkbox {
+  display: none !important;
+}
+
+/* Centered Header utility */
+.tvs-ag-header-center .ag-header-cell-label {
+  justify-content: center !important;
+}
+
+/* Custom bold class for IDs and Names */
+.ag-cell-bold {
+  font-weight: 700 !important;
+  color: #0f172a !important;
 }

@@ -23,7 +23,7 @@ const seedData = async () => {
             employeeName: 'System Admin',
             departmentName: 'IT',
             plantLocation: 'Madurai',
-            mailId: 'logaprasath@caldimengg.in',
+            mailId: 'admin@tvs.com',
             designation: 'Administrator',
             dateOfJoining: new Date(),
             accessLevel: 'Admin',
@@ -49,7 +49,7 @@ const seedData = async () => {
         const adminUser = await User.create({
             userId: 'ADM001',
             employeeId: adminEmployee._id,
-            email: 'logaprasath@caldimengg.in',
+            email: 'admin@tvs.com',
             passwordHash: hashedPassword,
             role: 'Admin',
             permissions: {

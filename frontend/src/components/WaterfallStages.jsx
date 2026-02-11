@@ -1,7 +1,6 @@
 import React from 'react';
-import { Steps } from 'antd';
-import { CheckCircle, Clock, Settings, Package, Rocket } from 'lucide-react';
-import 'antd/dist/reset.css';
+import { motion } from 'framer-motion';
+import { CheckCircle, Clock, Settings, Package, Rocket, ChevronRight } from 'lucide-react';
 
 const WaterfallStages = ({ stats }) => {
     const stages = [
@@ -9,97 +8,126 @@ const WaterfallStages = ({ stats }) => {
             title: 'Request',
             count: stats?.requestStage || 0,
             id: 'request',
-            description: `${stats?.requestStage || 0} requests`,
-            icon: <Package size={20} />
+            description: 'Assets Received',
+            icon: Package,
+            color: 'blue'
         },
         {
             title: 'Design',
             count: stats?.designStage || 0,
             id: 'design',
-            description: `${stats?.designStage || 0} in design`,
-            icon: <Settings size={20} />
+            description: 'Engineering',
+            icon: Settings,
+            color: 'purple'
         },
         {
-            title: 'Design Approved',
+            title: 'Approval',
             count: stats?.designApprovedStage || 0,
             id: 'design_approved',
-            description: `${stats?.designApprovedStage || 0} approved`,
-            icon: <CheckCircle size={20} />
+            description: 'QC Validated',
+            icon: CheckCircle,
+            color: 'emerald'
         },
         {
             title: 'Implementation',
             count: stats?.implementationStage || 0,
             id: 'implementation',
-            description: `${stats?.implementationStage || 0} implementing`,
-            icon: <Clock size={20} />
+            description: 'Workshop',
+            icon: Clock,
+            color: 'amber'
         },
         {
             title: 'Production',
             count: stats?.productionStage || 0,
             id: 'production',
-            description: `${stats?.productionStage || 0} in production`,
-            icon: <Rocket size={20} />
+            description: 'Deployed',
+            icon: Rocket,
+            color: 'tvs-red'
         },
     ];
 
-    // Convert stages to Ant Design Steps format
-    const items = stages.map((stage, index) => ({
-        title: (
-            <div className="flex flex-col items-center">
-                <span className="font-semibold text-gray-800">{stage.title}</span>
-            </div>
-        ),
-        description: (
-            <div className="text-center mt-2">
-                <div className="text-2xl font-bold text-tvs-blue">{stage.count}</div>
-                <div className="text-xs text-gray-500 mt-1">{stage.description}</div>
-            </div>
-        ),
-        icon: stage.icon,
-        status: stage.count > 0 ? 'process' : 'wait',
-    }));
-
     return (
-        <div className="bg-white rounded-lg p-8">
-            {/* Ant Design Steps Component */}
-            <Steps
-                current={-1}
-                items={items}
-                className="custom-steps"
-                size="default"
-            />
+        <div className="relative py-8">
+            {/* Connection Line */}
+            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-[60px] hidden md:block z-0"></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+                {stages.map((stage, index) => {
+                    const Icon = stage.icon;
+                    const isActive = stage.count > 0;
+                    
+                    return (
+                        <motion.div
+                            key={stage.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex flex-col items-center"
+                        >
+                            {/* Icon Circle */}
+                            <div className="relative mb-6">
+                                <motion.div
+                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-500 z-20 relative
+                                        ${isActive 
+                                            ? `bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500 text-white shadow-${stage.color === 'tvs-red' ? 'rose' : stage.color}-200` 
+                                            : 'bg-white text-gray-300 border border-gray-100'
+                                        }`}
+                                >
+                                    <Icon size={24} />
+                                </motion.div>
+                                
+                                {isActive && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0 }}
+                                        animate={{ opacity: [0, 0.5, 0], scale: [1, 1.5, 2] }}
+                                        transition={{ repeat: Infinity, duration: 2 }}
+                                        className={`absolute inset-0 rounded-2xl bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500 -z-10`}
+                                    />
+                                )}
+                            </div>
 
-            {/* Custom Styling for Steps */}
-            <style jsx>{`
-                :global(.custom-steps .ant-steps-item-icon) {
-                    background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
-                    border-color: #1677ff;
-                }
-                
-                :global(.custom-steps .ant-steps-item-process .ant-steps-item-icon) {
-                    background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
-                    border-color: #52c41a;
-                }
-                
-                :global(.custom-steps .ant-steps-item-wait .ant-steps-item-icon) {
-                    background: #f0f0f0;
-                    border-color: #d9d9d9;
-                }
-                
-                :global(.custom-steps .ant-steps-item-finish .ant-steps-item-icon) {
-                    background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
-                    border-color: #1677ff;
-                }
-                
-                :global(.custom-steps .ant-steps-item-title) {
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                }
-                
-                :global(.custom-steps .ant-steps-item-description) {
-                    font-size: 12px !important;
-                }
-            `}</style>
+                            {/* Stage Content */}
+                            <div className={`p-5 rounded-[2rem] border w-full text-center transition-all duration-300 group
+                                ${isActive 
+                                    ? 'bg-white border-gray-100 shadow-xl shadow-gray-100/50' 
+                                    : 'bg-gray-50/50 border-transparent opacity-60'
+                                }`}
+                            >
+                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stage.description}</div>
+                                <h3 className={`text-sm font-black font-outfit truncate ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    {stage.title}
+                                </h3>
+                                
+                                <div className="mt-4 flex items-center justify-center gap-2">
+                                    <span className={`text-2xl font-black font-outfit ${isActive ? `text-${stage.color === 'tvs-red' ? 'rose' : stage.color}-600` : 'text-gray-300'}`}>
+                                        {stage.count}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Units</span>
+                                </div>
+
+                                {isActive && (
+                                    <div className={`mt-3 h-1 w-12 mx-auto rounded-full bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500/20`}>
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '100%' }}
+                                            transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
+                                            className={`h-full rounded-full bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500`}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Connector Arrow (desktop only) */}
+                            {index < stages.length - 1 && (
+                                <div className="hidden md:flex absolute right-[-15px] top-[20px] text-gray-200 z-0">
+                                    <ChevronRight size={30} />
+                                </div>
+                            )}
+                        </motion.div>
+                    );
+                })}
+            </div>
         </div>
     );
 };
