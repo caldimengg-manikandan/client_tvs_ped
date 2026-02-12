@@ -4,11 +4,11 @@ const connectDB = async () => {
     try {
         // --- Database Connection Strings ---
 
-        // 1. Local Connection
-        // const dbURI = process.env.MONGO_URI;
+        // 1. Local Connection (Default)
+        const dbURI = process.env.MONGO_URI;
 
-        // 2. Atlas Connection (Default)
-        const dbURI = process.env.ATLAS_URI;
+        // 2. Atlas Connection
+        // const dbURI = process.env.ATLAS_URI;
 
         // -----------------------------------
 

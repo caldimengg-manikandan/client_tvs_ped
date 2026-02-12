@@ -27,6 +27,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/asset-request', require('./routes/assetRequestRoutes'));
+app.use('/api/asset-management', require('./routes/assetManagementRoutes'));
 app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));

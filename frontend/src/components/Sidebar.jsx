@@ -13,18 +13,19 @@ const Sidebar = () => {
         { name: 'Employee Master', icon: Users, path: '/employee-master', permission: 'employeeMaster' },
         { name: 'MH Requests', icon: FileText, path: '/mh-requests', permission: 'assetRequest' },
         { name: 'Request Tracker', icon: ClipboardList, path: '/request-tracker', permission: 'requestTracker' },
-        { 
-            name: 'Vendor Master', 
-            icon: Shield, 
+        {
+            name: 'Vendor Master',
+            icon: Shield,
             path: '#', // Header just toggles or acts as group
             permission: 'vendorMaster',
-            isHeader: true 
+            isHeader: true
         },
         { name: 'Vendor Scoring', icon: ChevronRight, path: '/vendor-master/scoring', permission: 'vendorMaster', isSubItem: true },
         { name: 'Loading Chart', icon: ChevronRight, path: '/vendor-master/loading', permission: 'vendorMaster', isSubItem: true },
         { name: 'Asset Progress', icon: Activity, path: '/asset-progress', permission: 'assetSummary' },
+        { name: 'Asset Management Update', icon: ClipboardList, path: '/asset-management-update', permission: 'assetSummary' },
         { name: 'Asset Summary', icon: ClipboardList, path: '/asset-summary', permission: 'assetSummary' },
-        
+
         { name: 'Settings', icon: Settings, path: '/settings', permission: 'settings' }
     ];
 
@@ -35,9 +36,9 @@ const Sidebar = () => {
             {/* Logo Section */}
             <div className="h-header flex items-center px-6 border-b border-gray-50 bg-white/50 backdrop-blur-md overflow-hidden">
                 <div className="flex items-center gap-3 group cursor-pointer w-full">
-                    <motion.div 
+                    <motion.div
                         className="relative flex items-center justify-center"
-                        whileHover={{ 
+                        whileHover={{
                             scale: 1.1,
                             rotate: [0, -5, 5, 0],
                             transition: { duration: 0.5 }
@@ -54,9 +55,9 @@ const Sidebar = () => {
                         <motion.div
                             className="absolute inset-0 bg-tvs-blue/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                         />
-                        <img 
-                            src={tvsLogo} 
-                            alt="TVS Logo" 
+                        <img
+                            src={tvsLogo}
+                            alt="TVS Logo"
                             className="h-10 w-auto object-contain drop-shadow-md relative z-10"
                         />
                     </motion.div>
@@ -111,7 +112,7 @@ const Sidebar = () => {
                                                 <span className={`${item.isSubItem ? 'text-xs font-bold' : 'font-inter'}`}>{item.name}</span>
                                             </div>
                                             {isActive && item.path !== '#' && (
-                                                <motion.div 
+                                                <motion.div
                                                     layoutId="active-nav"
                                                     className="w-1.5 h-1.5 rounded-full bg-tvs-blue shadow-[0_0_8px_rgba(30,58,138,0.4)]"
                                                 />
