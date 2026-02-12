@@ -62,6 +62,10 @@ const mhRequestSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    mailId: {
+        type: String,
+        required: true
+    },
     status: {
         type: String,
         default: 'Active',
@@ -79,7 +83,7 @@ const mhRequestSchema = new mongoose.Schema({
     },
     assignedVendor: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Vendor',
+        ref: 'VendorScoring',
         default: null
     },
     designReceiptFromVendor: {

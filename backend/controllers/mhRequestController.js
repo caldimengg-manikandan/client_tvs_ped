@@ -95,6 +95,7 @@ const createMHRequest = async (req, res) => {
             from,
             to,
             volumePerDay: Number(volumePerDay),
+            mailId: sanitizedData.mailId || req.user.email,
             user: req.user.id,
             history: [{
                 action: 'Created',

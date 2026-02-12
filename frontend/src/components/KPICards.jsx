@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, CheckCircle, XCircle, Cog, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Package, CheckCircle, XCircle, Cog, ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const KPICards = ({ stats, onCardClick }) => {
@@ -12,7 +12,7 @@ const KPICards = ({ stats, onCardClick }) => {
             icon: Package,
             color: 'blue',
             bgColor: 'bg-white',
-            iconBg: 'bg-blue-50',
+            iconBg: 'bg-blue-500/10',
             iconColor: 'text-blue-600',
             textColor: 'text-blue-900',
             accentColor: 'blue'
@@ -25,7 +25,7 @@ const KPICards = ({ stats, onCardClick }) => {
             icon: CheckCircle,
             color: 'green',
             bgColor: 'bg-white',
-            iconBg: 'bg-emerald-50',
+            iconBg: 'bg-emerald-500/10',
             iconColor: 'text-emerald-600',
             textColor: 'text-emerald-900',
             accentColor: 'emerald'
@@ -38,7 +38,7 @@ const KPICards = ({ stats, onCardClick }) => {
             icon: Cog,
             color: 'purple',
             bgColor: 'bg-white',
-            iconBg: 'bg-indigo-50',
+            iconBg: 'bg-indigo-500/10',
             iconColor: 'text-indigo-600',
             textColor: 'text-indigo-900',
             accentColor: 'indigo'
@@ -51,7 +51,7 @@ const KPICards = ({ stats, onCardClick }) => {
             icon: XCircle,
             color: 'red',
             bgColor: 'bg-white',
-            iconBg: 'bg-rose-50',
+            iconBg: 'bg-rose-500/10',
             iconColor: 'text-rose-600',
             textColor: 'text-rose-900',
             accentColor: 'rose'
@@ -72,50 +72,49 @@ const KPICards = ({ stats, onCardClick }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1, duration: 0.5 }}
-                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                        className={`group relative overflow-hidden glass-card p-6 rounded-3xl cursor-pointer`}
+                        whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
+                        className="group relative overflow-hidden glass-card p-6 rounded-[2rem] cursor-pointer border border-white/40 shadow-xl hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300"
                         onClick={() => onCardClick && onCardClick(kpi.id)}
                     >
                         {/* Decorative background glow */}
-                        <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity bg-${kpi.accentColor}-500`}></div>
+                        <div className={`absolute -right-10 -top-10 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity bg-${kpi.accentColor}-500/50`}></div>
                         
-                        <div className="relative flex flex-col h-full">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`${kpi.iconBg} p-3 rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
-                                    <Icon className={kpi.iconColor} size={22} />
+                        <div className="relative flex flex-col h-full z-10">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className={`${kpi.iconBg} p-4 rounded-2xl group-hover:rotate-6 transition-transform duration-500`}>
+                                    <Icon className={kpi.iconColor} size={24} />
                                 </div>
-                                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-600 transition-colors">
+                                <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-tvs-blue transition-colors">
                                     {kpi.label}
-                                    <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                                 </div>
                             </div>
 
                             <div className="mt-auto">
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className={`text-3xl font-bold font-outfit ${kpi.textColor}`}>
+                                    <h3 className={`text-4xl font-black font-outfit tracking-tighter ${kpi.textColor}`}>
                                         {kpi.value}
                                     </h3>
-                                    {/* Optional secondary metric */}
-                                    <span className="text-xs font-medium text-gray-400">requests</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 opacity-60">Reqs</span>
                                 </div>
                                 
-                                <p className="text-sm font-semibold text-gray-600 mt-1 font-inter">
+                                <p className="text-sm font-bold text-gray-500 mt-1 font-inter">
                                     {kpi.title}
                                 </p>
 
                                 {/* Progress Indicator */}
-                                <div className="mt-4">
-                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div className="mt-6">
+                                    <div className="h-1.5 w-full bg-gray-100/50 rounded-full overflow-hidden p-[1px]">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${Math.min(progressPercent, 100)}%` }}
-                                            transition={{ delay: 0.5 + index * 0.1, duration: 1 }}
-                                            className={`h-full rounded-full bg-${kpi.accentColor}-500/80 shadow-[0_0_8px_rgba(0,0,0,0.05)]`}
+                                            transition={{ delay: 0.8 + index * 0.1, duration: 1.5, ease: "easeOut" }}
+                                            className={`h-full rounded-full bg-gradient-to-r from-${kpi.accentColor}-400 to-${kpi.accentColor}-600 shadow-[0_0_12px_rgba(0,0,0,0.1)]`}
                                         ></motion.div>
                                     </div>
-                                    <div className="flex justify-between items-center mt-2 group-hover:opacity-100 transition-opacity duration-300">
-                                        <span className="text-[10px] font-medium text-gray-400">Relative Volume</span>
-                                        <span className="text-[10px] font-bold text-gray-500">{Math.round(progressPercent)}%</span>
+                                    <div className="flex justify-between items-center mt-3">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Relative Weight</span>
+                                        <span className={`text-[10px] font-black ${kpi.iconColor}`}>{Math.round(progressPercent)}%</span>
                                     </div>
                                 </div>
                             </div>
