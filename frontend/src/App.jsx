@@ -8,7 +8,8 @@ import AssetProgressTracker from './pages/AssetProgressTracker';
 import EmployeeMaster from './pages/EmployeeMaster/EmployeeMaster';
 import EmployeeForm from './pages/EmployeeMaster/EmployeeForm';
 import EmployeeView from './pages/EmployeeMaster/EmployeeView';
-import VendorMaster from './pages/VendorMaster/VendorMaster';
+import VendorScoring from './pages/VendorMaster/VendorScoring';
+import VendorLoadingChart from './pages/VendorMaster/VendorLoadingChart';
 import VendorForm from './pages/VendorMaster/VendorForm';
 import VendorView from './pages/VendorMaster/VendorView';
 
@@ -104,24 +105,14 @@ function App() {
             </Route>
 
             <Route path="vendor-master">
-              <Route index element={
+              <Route path="scoring" element={
                 <ProtectedRoute permission="vendorMaster">
-                  <VendorMaster />
+                  <VendorScoring />
                 </ProtectedRoute>
               } />
-              <Route path="add" element={
+              <Route path="loading" element={
                 <ProtectedRoute permission="vendorMaster">
-                  <VendorForm mode="add" />
-                </ProtectedRoute>
-              } />
-              <Route path="edit/:id" element={
-                <ProtectedRoute permission="vendorMaster">
-                  <VendorForm mode="edit" />
-                </ProtectedRoute>
-              } />
-              <Route path="view/:id" element={
-                <ProtectedRoute permission="vendorMaster">
-                  <VendorView />
+                  <VendorLoadingChart />
                 </ProtectedRoute>
               } />
             </Route>

@@ -22,6 +22,16 @@ const transporter = nodemailer.createTransport({
 const sendRequestEmail = asyncHandler(async (req, res) => {
     const { requestId, recipients } = req.body;
 
+    console.log(`Starting email notification for request: ${requestId} to recipients: ${recipients}`);
+
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+        console.error('CRITICAL: SMTP configurations are missing in .env file!');
+        return res.status(500).json({
+            message: 'Email service not configured. Please contact administrator.',
+            error: 'Missing SMTP credentials'
+        });
+    }
+
     if (!requestId || !recipients || recipients.length === 0) {
         res.status(400);
         throw new Error('Request ID and recipients are required');
@@ -34,29 +44,22 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
         throw new Error('MH Request not found');
     }
 
-    // ===== VALIDATION: Only allow notification for Rejected status =====
-    if (request.status === 'Active') {
-        res.status(400);
-        throw new Error('Cannot send notification. Request status is Active. Notifications can only be sent for Rejected requests.');
-    }
-
-    if (request.status === 'Accepted') {
-        res.status(400);
-        throw new Error('Cannot send notification. Request status is Accepted. Notifications are only sent for Rejected requests.');
-    }
-
-    // At this point, status must be 'Rejected'
-    if (request.status !== 'Rejected') {
-        res.status(400);
-        throw new Error('Cannot send notification. Notifications can only be sent for Rejected requests.');
-    }
-    // ===== END VALIDATION =====
-
-    // Determine if this is a rejection notification
+    // Determine if this is a specialized notification
     const isRejection = request.status === 'Rejected';
-    const notificationTitle = isRejection ? 'MH Request Rejected' : 'MH Request Notification';
-    const headerColor = isRejection ? '#dc2626' : '#1a2b5e';
-    const statusColor = isRejection ? '#dc2626' : '#1a2b5e';
+    const isAccepted = request.status === 'Accepted';
+
+    let notificationTitle = 'MH Request Notification';
+    let headerColor = '#1a2b5e';
+
+    if (isRejection) {
+        notificationTitle = 'MH Request Rejected';
+        headerColor = '#dc2626';
+    } else if (isAccepted) {
+        notificationTitle = 'MH Request Accepted';
+        headerColor = '#059669';
+    }
+
+    const statusColor = headerColor;
 
     // HTML Template
     const htmlContent = `
@@ -72,7 +75,7 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
             .details-table th, .details-table td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
             .details-table th { background-color: #f2f2f2; color: #555; width: 40%; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #777; }
-            .alert-box { background-color: ${isRejection ? '#fee2e2' : '#dbeafe'}; border-left: 4px solid ${headerColor}; padding: 12px; margin: 15px 0; border-radius: 4px; }
+            .alert-box { background-color: ${isRejection ? '#fee2e2' : isAccepted ? '#ecfdf5' : '#dbeafe'}; border-left: 4px solid ${headerColor}; padding: 12px; margin: 15px 0; border-radius: 4px; }
         </style>
     </head>
     <body>
@@ -87,8 +90,13 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
                     <p style="margin: 0; color: #991b1b; font-weight: bold;">⚠️ Your MH Request has been REJECTED</p>
                     <p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 14px;">Please review the details below and contact your supervisor for more information.</p>
                 </div>
+                ` : isAccepted ? `
+                <div class="alert-box">
+                    <p style="margin: 0; color: #065f46; font-weight: bold;">✅ Your MH Request has been ACCEPTED</p>
+                    <p style="margin: 5px 0 0 0; color: #064e3b; font-size: 14px;">The request has been approved and moved to the next processing stage.</p>
+                </div>
                 ` : `
-                <p>You have been assigned to review the following MH Request:</p>
+                <p>Status Update for your MH Request:</p>
                 `}
                 
                 <table class="details-table">
@@ -163,6 +171,21 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
     res.status(200).json({ message: 'Email sent successfully', messageId: info.messageId });
 });
 
+const testSMTPConnection = asyncHandler(async (req, res) => {
+    try {
+        await transporter.verify();
+        res.status(200).json({ success: true, message: 'SMTP connection verified successfully!' });
+    } catch (error) {
+        console.error('SMTP Verification Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to connect to email server',
+            error: error.message
+        });
+    }
+});
+
 module.exports = {
-    sendRequestEmail
+    sendRequestEmail,
+    testSMTPConnection
 };
