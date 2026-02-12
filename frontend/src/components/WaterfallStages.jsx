@@ -47,14 +47,15 @@ const WaterfallStages = ({ stats }) => {
     ];
 
     return (
-        <div className="relative py-8">
+        <div className="relative py-12">
             {/* Connection Line */}
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-[60px] hidden md:block z-0"></div>
+            <div className="absolute top-1/2 left-10 right-10 h-0.5 bg-gray-100 -translate-y-[80px] hidden md:block z-0 opacity-50"></div>
             
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
                 {stages.map((stage, index) => {
                     const Icon = stage.icon;
                     const isActive = stage.count > 0;
+                    const stageColor = stage.color === 'tvs-red' ? 'rose' : stage.color;
                     
                     return (
                         <motion.div
@@ -62,57 +63,62 @@ const WaterfallStages = ({ stats }) => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: index * 0.1 }}
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center group/stage"
                         >
                             {/* Icon Circle */}
-                            <div className="relative mb-6">
+                            <div className="relative mb-8">
                                 <motion.div
-                                    whileHover={{ scale: 1.1, rotate: 5 }}
-                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-500 z-20 relative
+                                    whileHover={{ scale: 1.15, rotate: 8 }}
+                                    className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-500 z-20 relative
                                         ${isActive 
-                                            ? `bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500 text-white shadow-${stage.color === 'tvs-red' ? 'rose' : stage.color}-200` 
+                                            ? `bg-${stageColor}-500 text-white shadow-${stageColor}-200` 
                                             : 'bg-white text-gray-300 border border-gray-100'
                                         }`}
                                 >
-                                    <Icon size={24} />
+                                    <Icon size={28} className={isActive ? 'animate-pulse' : ''} />
                                 </motion.div>
                                 
                                 {isActive && (
-                                    <motion.div 
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: [0, 0.5, 0], scale: [1, 1.5, 2] }}
-                                        transition={{ repeat: Infinity, duration: 2 }}
-                                        className={`absolute inset-0 rounded-2xl bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500 -z-10`}
-                                    />
+                                    <>
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: [0, 0.4, 0], scale: [1, 1.4, 1.8] }}
+                                            transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                                            className={`absolute inset-0 rounded-2xl bg-${stageColor}-400 -z-10`}
+                                        />
+                                        <div className={`absolute -inset-4 bg-${stageColor}-500/5 rounded-full blur-2xl -z-20 opacity-0 group-hover/stage:opacity-100 transition-opacity duration-500`}></div>
+                                    </>
                                 )}
                             </div>
 
                             {/* Stage Content */}
-                            <div className={`p-5 rounded-[2rem] border w-full text-center transition-all duration-300 group
+                            <div className={`p-6 rounded-[2.5rem] border w-full text-center transition-all duration-500 backdrop-blur-sm relative overflow-hidden
                                 ${isActive 
-                                    ? 'bg-white border-gray-100 shadow-xl shadow-gray-100/50' 
-                                    : 'bg-gray-50/50 border-transparent opacity-60'
+                                    ? 'bg-white/80 border-gray-100 shadow-xl shadow-gray-200/50' 
+                                    : 'bg-gray-50/30 border-transparent opacity-40'
                                 }`}
                             >
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stage.description}</div>
+                                {isActive && <div className={`absolute top-0 left-0 w-full h-1 bg-${stageColor}-500/30`}></div>}
+                                
+                                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-2">{stage.description}</div>
                                 <h3 className={`text-sm font-black font-outfit truncate ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
                                     {stage.title}
                                 </h3>
                                 
-                                <div className="mt-4 flex items-center justify-center gap-2">
-                                    <span className={`text-2xl font-black font-outfit ${isActive ? `text-${stage.color === 'tvs-red' ? 'rose' : stage.color}-600` : 'text-gray-300'}`}>
+                                <div className="mt-5 flex flex-col items-center gap-1">
+                                    <span className={`text-3xl font-black font-outfit tracking-tighter ${isActive ? `text-${stageColor}-600` : 'text-gray-300'}`}>
                                         {stage.count}
                                     </span>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Units</span>
+                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Units</span>
                                 </div>
 
                                 {isActive && (
-                                    <div className={`mt-3 h-1 w-12 mx-auto rounded-full bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500/20`}>
+                                    <div className={`mt-4 h-1 w-16 mx-auto rounded-full bg-gray-100 overflow-hidden`}>
                                         <motion.div 
                                             initial={{ width: 0 }}
                                             animate={{ width: '100%' }}
-                                            transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
-                                            className={`h-full rounded-full bg-${stage.color === 'tvs-red' ? 'rose' : stage.color}-500`}
+                                            transition={{ duration: 1.5, delay: 0.5 + index * 0.1 }}
+                                            className={`h-full rounded-full bg-gradient-to-r from-${stageColor}-400 to-${stageColor}-600`}
                                         />
                                     </div>
                                 )}
@@ -120,8 +126,8 @@ const WaterfallStages = ({ stats }) => {
                             
                             {/* Connector Arrow (desktop only) */}
                             {index < stages.length - 1 && (
-                                <div className="hidden md:flex absolute right-[-15px] top-[20px] text-gray-200 z-0">
-                                    <ChevronRight size={30} />
+                                <div className="hidden md:flex absolute right-[-20px] top-[30px] text-gray-200 z-0">
+                                    <ChevronRight size={32} className="opacity-30 group-hover/stage:opacity-100 group-hover/stage:translate-x-2 transition-all duration-500" />
                                 </div>
                             )}
                         </motion.div>

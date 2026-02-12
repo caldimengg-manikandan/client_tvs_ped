@@ -54,7 +54,8 @@ const CreateMHRequestList = () => {
         form.setFieldsValue({
             departmentName: user.department || 'N/A',
             location: user.location || 'N/A',
-            userName: user.name || 'N/A'
+            userName: user.name || 'N/A',
+            mailId: user.email || ''
         });
         setIsModalOpen(true);
     };
@@ -83,14 +84,15 @@ const CreateMHRequestList = () => {
         }
     };
 
-    // Column Definitions for AG Grid - Only User Input Fields
+    // Column Definitions for AG Grid - All Input Fields
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
         { 
             headerName: 'MH ID', 
             field: 'mhRequestId', 
             width: 140,
-            cellClass: 'ag-cell-bold'
+            cellClass: 'ag-cell-bold',
+            pinned: 'left'
         },
         createBoldColumn('departmentName', 'DEPT', { width: 120 }),
         { 
@@ -100,7 +102,12 @@ const CreateMHRequestList = () => {
             cellClass: 'ag-cell-bold'
         },
         { 
-            headerName: 'PRODUCT MODEL', 
+            headerName: 'PLANT', 
+            field: 'plantLocation', 
+            width: 160 
+        },
+        { 
+            headerName: 'PRODUCT', 
             field: 'productModel', 
             width: 180 
         },
@@ -110,11 +117,34 @@ const CreateMHRequestList = () => {
             width: 160 
         },
         { 
-            headerName: 'HANDLING LOCATION', 
+            headerName: 'HANDLING LOC', 
             field: 'materialHandlingLocation', 
             width: 180 
         },
-        createBoldColumn('userName', 'USER NAME', { width: 150 })
+        { 
+            headerName: 'FLOW', 
+            width: 150,
+            valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
+            cellClass: 'font-bold text-tvs-blue'
+        },
+        { 
+            headerName: 'VOL/DAY', 
+            field: 'volumePerDay', 
+            width: 100,
+            cellClass: 'text-center font-black'
+        },
+        { 
+            headerName: 'PROBLEM STATEMENT', 
+            field: 'problemStatement', 
+            width: 250,
+            tooltipField: 'problemStatement'
+        },
+        createBoldColumn('userName', 'USER NAME', { width: 150 }),
+        { 
+            headerName: 'USER LOC', 
+            field: 'location', 
+            width: 140 
+        }
     ], []);
 
 
@@ -263,6 +293,10 @@ const CreateMHRequestList = () => {
                             productModel: ['Scooter']
                         }}
                     >
+                        {/* Hidden Fields */}
+                        <Form.Item name="mailId" hidden>
+                            <Input />
+                        </Form.Item>
                         {/* Section: Personnel Info */}
                         <div className="mb-10">
                             <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[3px] mb-6 flex items-center gap-3">

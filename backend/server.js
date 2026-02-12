@@ -20,12 +20,15 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/vendor-scoring', require('./routes/vendorScoringRoutes'));
+app.use('/api/vendor-loading', require('./routes/vendorLoadingRoutes'));
+app.use('/api/vendors', require('./routes/vendorRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/asset-request', require('./routes/assetRequestRoutes'));
+app.use('/api/asset-management', require('./routes/assetManagementRoutes'));
 app.use('/api/employees', employeeRoutes);
-app.use('/api/vendors', require('./routes/vendorRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/user-activity', require('./routes/userActivityRoutes'));

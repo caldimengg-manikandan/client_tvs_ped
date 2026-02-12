@@ -6,12 +6,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { fetchAssetRequests } from '../redux/slices/assetRequestSlice';
 import KPICards from '../components/KPICards';
 import WaterfallStages from '../components/WaterfallStages';
-import { TrendingUp, Activity, Clock, BarChart3, PieChart, Users, FileText, Calendar, Filter, RefreshCw, Download } from 'lucide-react';
+import tvsLogo from '../assets/tvslogo.jpg';
+import { 
+    TrendingUp, Activity, Clock, BarChart3, PieChart, Users, 
+    FileText, Calendar, Filter, RefreshCw, Search, Bell, 
+    ChevronRight, ArrowUpRight, Zap, Target
+} from 'lucide-react';
 import { AgGridReact } from 'ag-grid-react';
+import { useAuth } from '../context/AuthContext';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { defaultColDef, defaultGridOptions, createSerialNumberColumn } from '../config/agGridConfig';
-import pptGenerator from '../utils/pptGenerator';
+import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createStatusColumn } from '../config/agGridConfig';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -32,6 +37,7 @@ const itemVariants = {
 
 const Dashboard = () => {
     const dispatch = useDispatch();
+    const { user } = useAuth();
     const { items: assetRequests, loading: loadingRequests } = useSelector(state => state.assetRequests);
 
     const [stats, setStats] = useState(null);
@@ -39,9 +45,7 @@ const Dashboard = () => {
     const [trends, setTrends] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // PPT Generation State
-    const [generatingPPT, setGeneratingPPT] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // KPI Modal State
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
@@ -91,25 +95,17 @@ const Dashboard = () => {
         { headerName: 'DEPARTMENT', field: 'departmentName', width: 180 },
         { headerName: 'USER', field: 'userName', width: 160, cellClass: 'ag-cell-bold' },
         { headerName: 'PART NAME', field: 'handlingPartName', width: 200 },
-        {
-            headerName: 'STATUS',
-            field: 'status',
-            width: 130,
-            cellRenderer: (params) => {
-                const status = params.value;
-                let colorClass = 'bg-gray-100 text-gray-700 border-gray-200';
-                if (status === 'Accepted') colorClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                else if (status === 'Rejected') colorClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                
-                return `<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${colorClass}">${status}</span>`;
-            }
-        },
+        createStatusColumn('status', 'STATUS'),
         {
             headerName: 'PROGRESS',
             field: 'progressStatus',
             width: 150,
             cellRenderer: (params) => {
-                return `<span class="px-2 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200">${params.value || 'N/A'}</span>`;
+                return (
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200 inline-block leading-none">
+                        {params.value || 'PENDING'}
+                    </span>
+                );
             }
         }
     ], []);
@@ -154,33 +150,6 @@ const Dashboard = () => {
             setTrends(trendsRes.data);
         } catch (err) {
             console.error('Error fetching trends:', err);
-        }
-    };
-
-    // PPT Generation Handler
-    const handleGeneratePPT = async () => {
-        try {
-            setGeneratingPPT(true);
-            
-            // Prepare dashboard data for PPT generation
-            const dashboardData = {
-                stats: stats,
-                recentActivity: recentActivity,
-                trends: trends
-            };
-            
-            // Generate PPT
-            const result = await pptGenerator.generateDashboardPPT(dashboardData);
-            
-            if (result.success) {
-                console.log('PPT generated successfully:', result.fileName);
-            } else {
-                console.error('Failed to generate PPT:', result.error);
-            }
-        } catch (error) {
-            console.error('Error generating PPT:', error);
-        } finally {
-            setGeneratingPPT(false);
         }
     };
 
@@ -254,29 +223,50 @@ const Dashboard = () => {
             animate="visible"
             className="space-y-8 pb-12"
         >
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 font-outfit tracking-tight">Executive Dashboard</h1>
-                    <p className="text-gray-500 mt-1 flex items-center gap-2">
-                        <Calendar size={14} />
-                        Insights for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </p>
+            {/* Hero Section */}
+            <section className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-tvs-blue/5 via-indigo-500/5 to-transparent rounded-[3rem] -z-10 transition-all duration-700 group-hover:scale-[1.01]"></div>
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 p-10">
+                    <div className="flex items-center gap-6">
+                        <div className="relative">
+                            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100 p-2">
+                                <img src={tvsLogo} alt="TVS" className="w-full h-full object-contain" />
+                            </div>
+                            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-emerald-500 border-4 border-white flex items-center justify-center shadow-lg">
+                                <Activity className="text-white" size={14} />
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-4xl font-black text-gray-900 font-outfit tracking-tighter">
+                                    Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-tvs-blue to-indigo-600">{user?.name?.split(' ')[0] || 'Executive'}</span>
+                                </h1>
+                                <span className="px-3 py-1 bg-tvs-blue/10 text-tvs-blue text-[10px] font-black rounded-full uppercase tracking-widest border border-tvs-blue/10">Active Session</span>
+                            </div>
+                            <p className="text-gray-500 mt-2 flex items-center gap-3 font-semibold">
+                                <Calendar size={18} className="text-tvs-blue" />
+                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                                <span className="text-gray-400">System is operative and running smoothly</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:flex flex-col items-end mr-2">
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Asset Lifecycle</span>
+                            <span className="text-sm font-bold text-gray-700">Real-time Sync Enabled</span>
+                        </div>
+                        <button 
+                            onClick={fetchDashboardData} 
+                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn"
+                        >
+                            <RefreshCw size={20} className={`${loadingRequests ? 'animate-spin' : 'group-hover/btn:rotate-180 transition-transform duration-700'}`} />
+                            <span className="uppercase tracking-[2px] text-xs">Synchronize Metrics</span>
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={handleGeneratePPT}
-                        disabled={generatingPPT || loading}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-tvs-blue text-white rounded-xl font-semibold hover:bg-tvs-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Download size={18} className={generatingPPT ? 'animate-pulse' : ''} />
-                        {generatingPPT ? 'Generating...' : 'Generate PPT'}
-                    </button>
-                    <button onClick={fetchDashboardData} className="p-2.5 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-all text-gray-600">
-                        <RefreshCw size={20} className={loadingRequests ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-            </div>
+            </section>
 
             {/* Main KPI Cards */}
             <section>
@@ -308,19 +298,23 @@ const Dashboard = () => {
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Recent Activity - Takes 2 columns */}
-                <motion.div variants={itemVariants} className="lg:col-span-2 glass-card rounded-[2rem] p-8 border border-white/40 shadow-2xl">
-                    <div className="flex items-center justify-between mb-8">
+                <motion.div variants={itemVariants} className="lg:col-span-2 glass-card rounded-[2.5rem] p-8 border border-white/40 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                    <div className="flex items-center justify-between mb-8 relative">
                         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                <FileText size={18} />
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                <Activity size={20} />
                             </div>
-                            Recent Activity
+                            Live Activity Stream
                         </h2>
-                        <span className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                            Live Stream
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                Live Now
+                            </span>
+                        </div>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-4 relative">
                         {recentActivity.length > 0 ? (
                             recentActivity.map((activity, idx) => (
                                 <motion.div
@@ -328,83 +322,113 @@ const Dashboard = () => {
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.5 + idx * 0.1 }}
-                                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white/40 hover:bg-white/80 rounded-2xl border border-transparent hover:border-gray-100 transition-all duration-300"
+                                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white/50 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 rounded-2xl border border-transparent hover:border-gray-100 transition-all duration-300"
                                 >
-                                    <div className="flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="font-bold text-tvs-blue text-sm">
-                                                {activity.mhRequestId}
-                                            </span>
-                                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getStatusColor(activity.status)}`}>
-                                                {activity.status?.toUpperCase()}
-                                            </span>
-                                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getProgressColor(activity.progressStatus)}`}>
-                                                {activity.progressStatus?.toUpperCase()}
-                                            </span>
+                                    <div className="flex items-center gap-4 flex-1">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform ${getStatusColor(activity.status).replace('text-', 'bg-').replace('border-', 'bg-opacity-10 text-')}`}>
+                                            <FileText size={20} />
                                         </div>
-                                        <div className="mt-2 text-xs text-gray-500 flex items-center gap-2">
-                                            <span className="font-semibold text-gray-700">{activity.userName}</span>
-                                            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                            <span>{activity.departmentName}</span>
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-bold text-gray-900">
+                                                    {activity.mhRequestId}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${getStatusColor(activity.status)}`}>
+                                                    {activity.status}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${getProgressColor(activity.progressStatus)}`}>
+                                                    {activity.progressStatus || 'PENDING'}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-xs text-gray-500 flex items-center gap-2 font-medium">
+                                                <span className="text-tvs-blue font-bold">{activity.userName}</span>
+                                                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                <span>{activity.departmentName}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="mt-3 sm:mt-0 flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                                        <Clock size={12} />
-                                        {formatDate(activity.createdAt)}
+                                    <div className="mt-3 sm:mt-0 flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                                            <Clock size={12} />
+                                            {formatDate(activity.createdAt)}
+                                        </div>
+                                        <div className="flex -space-x-2">
+                                            {[1, 2, 3].map(i => (
+                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">
+                                                    {activity.userName?.charAt(0)}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                    <FileText size={20} />
+                            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <Activity size={32} />
                                 </div>
-                                <p className="text-sm font-medium">No activity recorded yet</p>
+                                <p className="text-sm font-bold opacity-60">No recent activity detected</p>
                             </div>
                         )}
+                        <button className="w-full py-4 text-xs font-bold text-tvs-blue uppercase tracking-widest hover:bg-tvs-blue/5 rounded-2xl transition-colors mt-2">
+                            View Full Audit Log
+                        </button>
                     </div>
                 </motion.div>
 
                 {/* Category & Type Breakdown - Takes 1 column */}
                 <motion.div variants={itemVariants} className="flex flex-col gap-8">
-                    <div className="glass-card rounded-[2rem] p-8 border border-white/40 shadow-2xl flex-1">
+                    <div className="glass-card rounded-[2.5rem] p-8 border border-white/40 shadow-2xl flex-1 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tvs-blue via-indigo-500 to-transparent"></div>
                         <h2 className="text-lg font-bold mb-8 text-gray-800 flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600">
-                                <Users size={18} />
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                                <Target size={20} />
                             </div>
-                            Breakdown
+                            Core Breakdown
                         </h2>
 
                         {/* Product Model Breakdown */}
                         <div className="mb-8">
-                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-4">By Product Model</h3>
-                            <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4 flex items-center justify-between">
+                                By Product Model
+                                <span className="w-1/2 h-px bg-gray-100"></span>
+                            </h3>
+                            <div className="grid grid-cols-1 gap-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
                                 {stats?.additionalStats?.productBreakdown ? Object.entries(stats.additionalStats.productBreakdown).map(([model, count]) => (
-                                    <div key={model} className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 group hover:bg-blue-50 transition-colors">
-                                        <span className="text-sm font-semibold text-gray-700">{model}</span>
-                                        <span className="text-xl font-black text-blue-600">
+                                    <div key={model} className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl border border-transparent hover:border-gray-100 hover:shadow-lg hover:shadow-gray-200/30 transition-all group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-tvs-blue opacity-40 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all"></div>
+                                            <span className="text-sm font-bold text-gray-700">{model}</span>
+                                        </div>
+                                        <span className="text-lg font-black text-tvs-blue bg-tvs-blue/5 px-3 py-1 rounded-xl">
                                             {count}
                                         </span>
                                     </div>
                                 )) : (
-                                    <div className="text-center py-4 text-gray-400 text-sm italic">No data</div>
+                                    <div className="text-center py-6 text-gray-400 text-xs italic">No model data available</div>
                                 )}
                             </div>
                         </div>
 
                         {/* Request Type Breakdown */}
                         <div>
-                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-4">By Request Type</h3>
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4 flex items-center justify-between">
+                                By Request Type
+                                <span className="w-1/2 h-px bg-gray-100"></span>
+                            </h3>
                             <div className="grid grid-cols-1 gap-3">
                                 {stats?.additionalStats?.typeBreakdown ? Object.entries(stats.additionalStats.typeBreakdown).map(([type, count]) => (
-                                    <div key={type} className="flex items-center justify-between p-4 bg-orange-50/50 rounded-2xl border border-orange-100/50 group hover:bg-orange-50 transition-colors">
-                                        <span className="text-sm font-semibold text-gray-700">{type}</span>
-                                        <span className="text-xl font-black text-orange-600">
+                                    <div key={type} className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl border border-transparent hover:border-gray-100 hover:shadow-lg hover:shadow-gray-200/30 transition-all group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-amber-500 opacity-40 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all"></div>
+                                            <span className="text-sm font-bold text-gray-700">{type}</span>
+                                        </div>
+                                        <span className="text-lg font-black text-amber-600 bg-amber-500/5 px-3 py-1 rounded-xl">
                                             {count}
                                         </span>
                                     </div>
                                 )) : (
-                                    <div className="text-center py-4 text-gray-400 text-sm italic">No data</div>
+                                    <div className="text-center py-6 text-gray-400 text-xs italic">No type data available</div>
                                 )}
                             </div>
                         </div>
@@ -412,19 +436,28 @@ const Dashboard = () => {
 
                     {/* Quick Stats Highlight */}
                     <motion.div 
-                        whileHover={{ scale: 1.02 }}
-                        className="bg-gradient-to-br from-tvs-blue to-[#1a2b5e] rounded-[2rem] p-8 text-white shadow-2xl shadow-tvs-blue/20 relative overflow-hidden"
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        className="bg-gradient-to-br from-tvs-blue via-[#1a2b5e] to-black rounded-[2.5rem] p-8 text-white shadow-2xl shadow-tvs-blue/30 relative overflow-hidden group"
                     >
-                        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                        <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
                         <div className="relative">
-                            <div className="text-[10px] font-bold opacity-70 uppercase tracking-[3px] mb-2">Portfolio Overview</div>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="text-[10px] font-black opacity-60 uppercase tracking-[3px]">Portfolio Overview</div>
+                                <Activity size={20} className="text-emerald-400" />
+                            </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-5xl font-black font-outfit tracking-tighter">
+                                <span className="text-6xl font-black font-outfit tracking-tighter">
                                     {stats?.additionalStats?.totalActiveRequests || 0}
                                 </span>
-                                <span className="text-xs font-bold opacity-80 uppercase tracking-widest">Active</span>
+                                <span className="text-xs font-black opacity-70 uppercase tracking-widest bg-white/10 px-2 py-1 rounded-lg">Active</span>
                             </div>
-                            <p className="mt-2 text-xs opacity-60 font-medium">Global Asset Requests Lifecycle</p>
+                            <div className="mt-4 flex items-center justify-between">
+                                <p className="text-xs opacity-60 font-medium">Lifecycle Success Rate</p>
+                                <span className="text-xs font-bold text-emerald-400">98.4%</span>
+                            </div>
+                            <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-full w-[98%] bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                            </div>
                         </div>
                     </motion.div>
                 </motion.div>
@@ -432,41 +465,47 @@ const Dashboard = () => {
 
             {/* Monthly Trends Chart */}
             {trends.length > 0 && (
-                <motion.section variants={itemVariants} className="glass-card rounded-[2rem] p-8 border border-white/40 shadow-2xl">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10 gap-6">
-                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-tvs-red/10 flex items-center justify-center text-tvs-red">
-                                <TrendingUp size={18} />
+                <motion.section variants={itemVariants} className="glass-card rounded-[2.5rem] p-10 border border-white/40 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-tvs-red/5 rounded-full blur-3xl -mr-48 -mt-48"></div>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8 relative">
+                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-tvs-red/10 flex items-center justify-center text-tvs-red shadow-inner">
+                                <TrendingUp size={24} />
                             </div>
-                            Historical Trends
+                            <div>
+                                <span className="block text-xl font-bold">Historical Trends</span>
+                                <span className="text-xs font-medium text-gray-400">Request Volume Analytics</span>
+                            </div>
                         </h2>
 
                         {/* Filters Card */}
-                        <div className="flex flex-wrap items-center gap-3 p-2 bg-gray-50/80 rounded-2xl border border-gray-100">
-                            <div className="flex items-center gap-2 px-2">
-                                <Filter size={14} className="text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={fromDate}
-                                    onChange={(e) => setFromDate(e.target.value)}
-                                    className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-gray-600 p-1"
-                                />
-                                <span className="text-gray-300 mx-1">—</span>
-                                <input
-                                    type="date"
-                                    value={toDate}
-                                    onChange={(e) => setToDate(e.target.value)}
-                                    className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-gray-600 p-1"
-                                />
+                        <div className="flex flex-wrap items-center gap-4 p-3 bg-white/60 backdrop-blur-md rounded-[1.5rem] border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-3 px-3">
+                                <Filter size={16} className="text-tvs-blue" />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={fromDate}
+                                        onChange={(e) => setFromDate(e.target.value)}
+                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 p-1"
+                                    />
+                                    <span className="text-gray-300 font-bold">—</span>
+                                    <input
+                                        type="date"
+                                        value={toDate}
+                                        onChange={(e) => setToDate(e.target.value)}
+                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 p-1"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 ml-auto">
+                            <div className="flex items-center gap-2 ml-auto">
                                 <button
                                     onClick={fetchTrends}
                                     disabled={!fromDate || !toDate}
-                                    className="px-4 py-2 bg-tvs-blue text-white rounded-xl hover:bg-tvs-blue/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-[10px] font-bold uppercase tracking-widest"
+                                    className="px-6 py-2.5 bg-tvs-blue text-white rounded-xl hover:bg-tvs-blue/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-[10px] font-black uppercase tracking-widest shadow-lg shadow-tvs-blue/10"
                                 >
-                                    Filter
+                                    Apply Filter
                                 </button>
 
                                 {(fromDate || toDate) && (
@@ -476,7 +515,7 @@ const Dashboard = () => {
                                             setToDate('');
                                             fetchTrends();
                                         }}
-                                        className="px-4 py-2 bg-white text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-[10px] font-bold uppercase tracking-widest"
+                                        className="px-6 py-2.5 bg-white text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest"
                                     >
                                         Clear
                                     </button>

@@ -164,22 +164,42 @@ const RequestTracker = () => {
 
     const columnDefs = React.useMemo(() => [
         createSerialNumberColumn(),
-        createBoldColumn('mhRequestId', 'MH ID', { width: 140 }),
+        { 
+            headerName: 'MH ID', 
+            field: 'mhRequestId', 
+            width: 140,
+            cellClass: 'ag-cell-bold',
+            pinned: 'left'
+        },
         { headerName: 'DEPT', field: 'departmentName', width: 140 },
         { 
             headerName: 'TYPE', 
             field: 'requestType',
-            width: 120,
+            width: 150,
             cellRenderer: (params) => (
                 <span className="text-[10px] font-black uppercase bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full border border-gray-100">
                     {params.value}
                 </span>
             )
         },
-        { headerName: 'PRODUCT MODEL', field: 'productModel', width: 150 },
+        { headerName: 'PLANT', field: 'plantLocation', width: 160 },
+        { headerName: 'PRODUCT', field: 'productModel', width: 150 },
         { headerName: 'PART NAME', field: 'handlingPartName', width: 180 },
-        { headerName: 'HANDLING LOCATION', field: 'materialHandlingLocation', width: 180 },
+        { headerName: 'HANDLING LOC', field: 'materialHandlingLocation', width: 180 },
+        { 
+            headerName: 'FLOW', 
+            width: 150,
+            valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
+            cellClass: 'font-bold text-tvs-blue'
+        },
+        { 
+            headerName: 'VOL/DAY', 
+            field: 'volumePerDay', 
+            width: 100,
+            cellClass: 'text-center font-black'
+        },
         createBoldColumn('userName', 'USER NAME', { width: 150 }),
+        { headerName: 'USER LOC', field: 'location', width: 140 },
         {
             headerName: 'STATUS',
             field: 'status',
