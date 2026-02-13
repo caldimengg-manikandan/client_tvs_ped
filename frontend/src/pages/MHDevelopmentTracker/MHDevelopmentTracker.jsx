@@ -148,7 +148,8 @@ const MHDevelopmentTracker = () => {
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
         const link = document.createElement('a');
-        link.href = `http://localhost:5000/${drawingUrl}`;
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+        link.href = `${API_BASE_URL}/${drawingUrl}`;
         link.download = fileName;
         link.click();
     };
