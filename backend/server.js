@@ -32,6 +32,8 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/user-activity', require('./routes/userActivityRoutes'));
 app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
+app.use('/api/mh-development-tracker', require('./routes/mhDevelopmentTrackerRoutes'));
+
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
