@@ -248,10 +248,13 @@ const uploadDrawing = async (req, res) => {
         }
 
         // Update tracker with new file info
-        tracker.drawingUrl = req.file.path.replace(/\\/g, '/');
+        const relativePath = req.file.path.replace(/\\/g, '/');
+        tracker.drawingUrl = relativePath;
         tracker.drawingFileName = req.file.originalname;
 
         await tracker.save();
+
+        console.log(`File uploaded: ${req.file.originalname}, Saved path: ${relativePath}`);
 
         res.status(200).json({
             success: true,

@@ -147,11 +147,31 @@ const MHDevelopmentTracker = () => {
     };
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
-        const link = document.createElement('a');
+        if (!drawingUrl) return;
+        
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-        link.href = `${API_BASE_URL}/${drawingUrl}`;
-        link.download = fileName;
+        
+        // Normalize slashes (replace backslashes with forward slashes)
+        let normalizedUrl = drawingUrl.replace(/\\/g, '/');
+        
+        // Remove leading slash if present to avoid double slashes when joining
+        if (normalizedUrl.startsWith('/')) {
+            normalizedUrl = normalizedUrl.slice(1);
+        }
+        
+        // Construct full URL
+        const fullUrl = `${API_BASE_URL.replace(/\/$/, '')}/${normalizedUrl}`;
+        
+        console.log('Downloading file from:', fullUrl);
+        
+        // Use window.open for better compatibility, or fetch blob if needed
+        const link = document.createElement('a');
+        link.href = fullUrl;
+        link.download = fileName || normalizedUrl.split('/').pop() || 'drawing.pdf';
+        link.target = '_blank'; // Open in new tab if download fails
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
 
     // Filter trackers
