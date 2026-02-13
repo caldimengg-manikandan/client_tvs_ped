@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AgGridReact } from 'ag-grid-react';
-import { Modal, Form, Input, Select, DatePicker, Button, Upload, message } from 'antd';
+import { Modal, Form, Input, Select, DatePicker, Button, Upload, message, Tag } from 'antd';
 import { 
     Plus, Search, Download, Upload as UploadIcon, Eye, Edit, Trash2, 
     FileText, Calendar, MapPin, Package, TrendingUp, AlertCircle,
@@ -26,6 +26,8 @@ import ProjectPlanModal from './ProjectPlanModal';
 const { Option } = Select;
 const { TextArea } = Input;
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const MHDevelopmentTracker = () => {
     const dispatch = useDispatch();
     const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
@@ -41,6 +43,7 @@ const MHDevelopmentTracker = () => {
     const [selectedPlantLocation, setSelectedPlantLocation] = useState(null);
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [fileList, setFileList] = useState([]);
+    const [reviewMode, setReviewMode] = useState(false);
 
     // Fetch trackers on mount
     useEffect(() => {
@@ -62,17 +65,38 @@ const MHDevelopmentTracker = () => {
             form.resetFields();
             setEditingTracker(null);
             setFileList([]);
+            setReviewMode(false);
         }
     }, [error, success, dispatch, form]);
 
     // Handlers
     const handleAddClick = () => {
+        setReviewMode(false);
         setEditingTracker(null);
         form.resetFields();
         setIsModalVisible(true);
     };
 
     const handleEditClick = (data) => {
+        setReviewMode(false);
+        setEditingTracker(data);
+        form.setFieldsValue({
+            departmentName: data.departmentName,
+            userName: data.userName,
+            assetRequestId: data.assetRequestId,
+            requestType: data.requestType,
+            productModel: data.productModel,
+            plantLocation: data.plantLocation,
+            implementationTarget: data.implementationTarget ? dayjs(data.implementationTarget) : null,
+            status: data.status,
+            currentStage: data.currentStage,
+            remarks: data.remarks
+        });
+        setIsModalVisible(true);
+    };
+
+    const handleReviewClick = (data) => {
+        setReviewMode(true);
         setEditingTracker(data);
         form.setFieldsValue({
             departmentName: data.departmentName,
@@ -148,8 +172,10 @@ const MHDevelopmentTracker = () => {
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
         const link = document.createElement('a');
-        link.href = `http://localhost:5000/${drawingUrl}`;
+        const baseUrl = API_BASE_URL.replace('/api', '');
+        link.href = `${baseUrl}${drawingUrl}`;
         link.download = fileName;
+        link.target = '_blank';
         link.click();
     };
 
@@ -317,6 +343,12 @@ const MHDevelopmentTracker = () => {
         },
         createActionColumn([
             {
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.349a12.35 12.35 0 0 1 0-4.698 12.333 12.333 0 0 1 19.876 0c.5.8.5 1.8 0 2.6a12.333 12.333 0 0 1-19.876 2.098Z"/><circle cx="12" cy="12" r="3"/></svg>',
+                title: 'Review Tracker',
+                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
+                onClick: (data) => handleReviewClick(data)
+            },
+            {
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
                 title: 'Edit Tracker',
                 className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all',
@@ -329,7 +361,7 @@ const MHDevelopmentTracker = () => {
                 onClick: (data) => handleDeleteClick(data._id)
             }
         ])
-    ], []);
+    ], [handleReviewClick, handleEditClick, handleDeleteClick, handleVendorSelect, handleProjectPlan, handleDownloadDrawing, handleFileUpload]);
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
@@ -394,71 +426,239 @@ const MHDevelopmentTracker = () => {
             {/* Modals */}
             <Modal
                 title={
-                    <div className="flex items-center gap-3 pb-4 border-b">
-                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue">
-                            <Plus size={20} />
+                    <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                        <div className={`p-2 rounded-lg ${reviewMode ? 'bg-tvs-blue/5 text-tvs-blue' : 'bg-tvs-blue/10 text-tvs-blue'}`}>
+                            {reviewMode ? <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg> : (editingTracker ? <Edit size={20} /> : <Plus size={20} />)}
                         </div>
-                        <span className="text-xl font-bold">{editingTracker ? 'Update Tracker' : 'Add New Tracker'}</span>
+                        <span className="text-xl font-bold">
+                            {reviewMode ? 'Project Tracker Details' : (editingTracker ? 'Update Tracker' : 'Add New Tracker')}
+                        </span>
                     </div>
                 }
                 open={isModalVisible}
                 onOk={handleModalOk}
-                onCancel={() => setIsModalVisible(false)}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setReviewMode(false);
+                }}
                 okText={editingTracker ? "Update" : "Create"}
+                footer={reviewMode ? [
+                    <Button key="close" type="primary" onClick={() => setIsModalVisible(false)} className="bg-gray-900 hover:bg-black border-none px-8 h-10 rounded-lg text-sm font-bold">
+                        Close Window
+                    </Button>
+                ] : undefined}
                 width={800}
                 centered
                 className="custom-modal"
             >
-                <Form form={form} layout="vertical" className="mt-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Form.Item name="departmentName" label={<span className="text-xs font-bold uppercase text-gray-500">Department Name</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. Production" />
-                        </Form.Item>
-                        <Form.Item name="userName" label={<span className="text-xs font-bold uppercase text-gray-500">User Name</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. John Doe" />
-                        </Form.Item>
-                        <Form.Item name="assetRequestId" label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. REQ-001" />
-                        </Form.Item>
-                        <Form.Item name="requestType" label={<span className="text-xs font-bold uppercase text-gray-500">Request Type</span>} rules={[{ required: true }]}>
-                            <Select size="large" placeholder="Select type">
-                                <Option value="New MH">New MH</Option>
-                                <Option value="Modification">Modification</Option>
-                                <Option value="Replacement">Replacement</Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item name="productModel" label={<span className="text-xs font-bold uppercase text-gray-500">Product Model</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. Model X" />
-                        </Form.Item>
-                        <Form.Item name="plantLocation" label={<span className="text-xs font-bold uppercase text-gray-500">Plant Location</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. Chennai" />
-                        </Form.Item>
-                        <Form.Item name="implementationTarget" label={<span className="text-xs font-bold uppercase text-gray-500">Implementation Target</span>}>
-                            <DatePicker size="large" className="w-full" format="DD-MMM-YYYY" />
-                        </Form.Item>
-                        <Form.Item name="status" label={<span className="text-xs font-bold uppercase text-gray-500">Status</span>} initialValue="Not Started">
-                            <Select size="large">
-                                <Option value="On Track">On Track</Option>
-                                <Option value="Likely Delay">Likely Delay</Option>
-                                <Option value="Delayed">Delayed</Option>
-                                <Option value="Not Started">Not Started</Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item name="currentStage" label={<span className="text-xs font-bold uppercase text-gray-500">Current Stage</span>} initialValue="Not Started">
-                            <Select size="large">
-                                <Option value="Design">Design</Option>
-                                <Option value="PR/PO">PR/PO</Option>
-                                <Option value="Sample Production">Sample Production</Option>
-                                <Option value="Production Ready">Production Ready</Option>
-                                <Option value="Completed">Completed</Option>
-                                <Option value="Not Started">Not Started</Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item name="remarks" label={<span className="text-xs font-bold uppercase text-gray-500">Remarks</span>} className="col-span-2">
-                            <TextArea rows={3} placeholder="Add any special instructions or milestones..." />
-                        </Form.Item>
+                {reviewMode ? (
+                    <div className="mt-6 flex flex-col gap-8 bg-gray-50/30 -mx-6 -mb-6 p-8">
+                        {/* Section: Project Information */}
+                        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                            <div className="flex items-center gap-2 mb-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">PROJECT INFORMATION</h3>
+                            </div>
+                            <div className="grid grid-cols-3 gap-y-10 gap-x-6">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">ASSET REQUEST ID</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">{editingTracker?.assetRequestId || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">REQUEST TYPE</label>
+                                    <div>
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-tvs-blue border border-blue-100 uppercase">
+                                            {editingTracker?.requestType || 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">PRODUCT MODEL</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">{editingTracker?.productModel || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">USER NAME</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">{editingTracker?.userName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">DEPARTMENT</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">{editingTracker?.departmentName || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">PLANT LOCATION</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">{editingTracker?.plantLocation || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section: Status & Timeline */}
+                        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                            <div className="flex items-center gap-2 mb-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">STATUS & TIMELINE</h3>
+                            </div>
+                            <div className="grid grid-cols-3 gap-y-10 gap-x-6">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">CURRENT STATUS</label>
+                                    <div>
+                                        <Tag color={
+                                            editingTracker?.status === 'On Track' ? 'success' : 
+                                            editingTracker?.status === 'Delayed' ? 'error' : 
+                                            editingTracker?.status === 'Likely Delay' ? 'warning' : 'default'
+                                        } className="rounded-full font-black px-3 py-0.5 uppercase text-[10px]">
+                                            {editingTracker?.status || 'NOT STARTED'}
+                                        </Tag>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">CURRENT STAGE</label>
+                                    <div>
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-100 uppercase">
+                                            {editingTracker?.currentStage || 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">TARGET DATE</label>
+                                    <p className="text-base font-bold text-gray-900 m-0">
+                                        {editingTracker?.implementationTarget ? dayjs(editingTracker.implementationTarget).format('DD MMM YYYY') : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section: Project Execution Plan */}
+                        {(editingTracker?.projectPlan && editingTracker.projectPlan.length > 0) && (
+                            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                                <div className="flex items-center gap-2 mb-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                    <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">PROJECT EXECUTION PLAN</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Activity</th>
+                                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Owner</th>
+                                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Plan Timeline</th>
+                                                <th className="py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Delay</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {editingTracker.projectPlan.map((item, idx) => (
+                                                <tr key={idx} className="group">
+                                                    <td className="py-4 pr-4">
+                                                        <p className="text-sm font-bold text-gray-800 m-0">{item.activity}</p>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{item.responsibility}</span>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <div className="flex items-center gap-2 text-[11px] font-bold text-gray-600">
+                                                            {item.planStart ? dayjs(item.planStart).format('DD MMM') : '-'}
+                                                            <ChevronRight size={12} className="text-gray-300" />
+                                                            {item.planEnd ? dayjs(item.planEnd).format('DD MMM YYYY') : '-'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <span className={`text-[10px] font-black ${item.delay > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                            {item.delay > 0 ? `+${item.delay} DAYS` : 'ON TIME'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Section: Project Drawing / Image */}
+                        <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                            <div className="flex items-center gap-2 mb-8">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">DOCUMENTATION & DRAWINGS</h3>
+                            </div>
+                            <div className="flex items-center justify-between bg-gray-50/50 p-6 rounded-2xl border border-gray-100 border-dashed">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-tvs-blue shadow-sm border border-gray-100">
+                                        <TrendingUp size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-gray-900 m-0">{editingTracker?.drawingFileName || 'No drawing attached'}</h4>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Technical Spec / Layout Drawing</p>
+                                    </div>
+                                </div>
+                                {editingTracker?.drawingUrl && (
+                                    <button 
+                                        onClick={() => handleDownloadDrawing(editingTracker.drawingUrl, editingTracker.drawingFileName)}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-tvs-blue text-white font-bold rounded-xl shadow-lg shadow-tvs-blue/10 hover:scale-[1.05] transition-all text-xs"
+                                    >
+                                        <Download size={14} /> DOWNLOAD FILE
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="mt-8">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">REMARKS</label>
+                                <p className="text-sm font-medium text-gray-600 bg-gray-50/50 p-5 rounded-xl border border-gray-100 leading-relaxed italic m-0">
+                                    "{editingTracker?.remarks || 'No remarks provided'}"
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </Form>
+                ) : (
+                    <Form form={form} layout="vertical" className="mt-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Form.Item name="departmentName" label={<span className="text-xs font-bold uppercase text-gray-500">Department Name</span>} rules={[{ required: true }]}>
+                                <Input size="large" placeholder="E.g. Production" />
+                            </Form.Item>
+                            <Form.Item name="userName" label={<span className="text-xs font-bold uppercase text-gray-500">User Name</span>} rules={[{ required: true }]}>
+                                <Input size="large" placeholder="E.g. John Doe" />
+                            </Form.Item>
+                            <Form.Item name="assetRequestId" label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>} rules={[{ required: true }]}>
+                                <Input size="large" placeholder="E.g. REQ-001" />
+                            </Form.Item>
+                            <Form.Item name="requestType" label={<span className="text-xs font-bold uppercase text-gray-500">Request Type</span>} rules={[{ required: true }]}>
+                                <Select size="large" placeholder="Select type">
+                                    <Option value="New MH">New MH</Option>
+                                    <Option value="Modification">Modification</Option>
+                                    <Option value="Replacement">Replacement</Option>
+                                </Select>
+                            </Form.Item>
+                            <Form.Item name="productModel" label={<span className="text-xs font-bold uppercase text-gray-500">Product Model</span>} rules={[{ required: true }]}>
+                                <Input size="large" placeholder="E.g. Model X" />
+                            </Form.Item>
+                            <Form.Item name="plantLocation" label={<span className="text-xs font-bold uppercase text-gray-500">Plant Location</span>} rules={[{ required: true }]}>
+                                <Input size="large" placeholder="E.g. Chennai" />
+                            </Form.Item>
+                            <Form.Item name="implementationTarget" label={<span className="text-xs font-bold uppercase text-gray-500">Implementation Target</span>}>
+                                <DatePicker size="large" className="w-full" format="DD-MMM-YYYY" />
+                            </Form.Item>
+                            <Form.Item name="status" label={<span className="text-xs font-bold uppercase text-gray-500">Status</span>} initialValue="Not Started">
+                                <Select size="large">
+                                    <Option value="On Track">On Track</Option>
+                                    <Option value="Likely Delay">Likely Delay</Option>
+                                    <Option value="Delayed">Delayed</Option>
+                                    <Option value="Not Started">Not Started</Option>
+                                </Select>
+                            </Form.Item>
+                            <Form.Item name="currentStage" label={<span className="text-xs font-bold uppercase text-gray-500">Current Stage</span>} initialValue="Not Started">
+                                <Select size="large">
+                                    <Option value="Design">Design</Option>
+                                    <Option value="PR/PO">PR/PO</Option>
+                                    <Option value="Sample Production">Sample Production</Option>
+                                    <Option value="Production Ready">Production Ready</Option>
+                                    <Option value="Completed">Completed</Option>
+                                    <Option value="Not Started">Not Started</Option>
+                                </Select>
+                            </Form.Item>
+                            <Form.Item name="remarks" label={<span className="text-xs font-bold uppercase text-gray-500">Remarks</span>} className="col-span-2">
+                                <TextArea rows={3} placeholder="Add any special instructions or milestones..." />
+                            </Form.Item>
+                        </div>
+                    </Form>
+                )}
             </Modal>
 
             {/* Vendor Selection Popup */}

@@ -20,6 +20,7 @@ const RequestTracker = () => {
 
     // Local UI State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -140,6 +141,10 @@ const RequestTracker = () => {
             toast.error(errorMessage);
         }
     };
+    const handleReviewClick = (request) => {
+        setSelectedRequest(request);
+        setIsReviewModalOpen(true);
+    };
 
     // Helper to get file URL
     const getFileUrl = (path) => {
@@ -240,6 +245,23 @@ const RequestTracker = () => {
                     </div>
                 );
             }
+        },
+        {
+            headerName: 'REVIEW',
+            width: 90,
+            sortable: false,
+            filter: false,
+            cellRenderer: (params) => (
+                <div className="flex items-center justify-center h-full">
+                    <button
+                        onClick={() => handleReviewClick(params.data)}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        title="Review Details"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.349a12.35 12.35 0 0 1 0-4.698 12.333 12.333 0 0 1 19.876 0c.5.8.5 1.8 0 2.6a12.333 12.333 0 0 1-19.876 2.098Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+            )
         },
         {
             headerName: 'NOTIFY',
@@ -440,6 +462,134 @@ const RequestTracker = () => {
                                     Send Email{selectedMembers.length !== 1 ? 's' : ''}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Review Details Modal */}
+            {isReviewModalOpen && selectedRequest && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-4xl rounded-[1.5rem] shadow-2xl overflow-hidden transform transition-all animate-in zoom-in-95">
+                        <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-tvs-blue/5 text-tvs-blue rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                                </div>
+                                <h2 className="text-xl font-bold text-gray-900 m-0">MH Request Details</h2>
+                            </div>
+                            <button onClick={() => setIsReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-all p-1 hover:bg-gray-100 rounded-lg">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-8 max-h-[75vh] overflow-y-auto custom-scrollbar bg-gray-50/30">
+                            {/* Inner Container: Basic Information */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm mb-8">
+                                <div className="flex items-center gap-2 mb-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                    <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">BASIC INFORMATION</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 gap-x-6">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">MH REQUEST ID</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.mhRequestId}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">FULL NAME</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.userName || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">DEPARTMENT</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.departmentName || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">REQUEST TYPE</label>
+                                        <div>
+                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-tvs-blue border border-blue-100 uppercase">
+                                                {selectedRequest.requestType}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">PLANT LOCATION</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.plantLocation}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">STATUS</label>
+                                        <div>
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                                selectedRequest.status === 'Accepted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                selectedRequest.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                'bg-blue-50 text-tvs-blue border-blue-200'
+                                            }`}>
+                                                {selectedRequest.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Inner Container: Technical Specifications */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm mb-8">
+                                <div className="flex items-center gap-2 mb-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                    <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">TECHNICAL SPECIFICATIONS</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 gap-x-6 mb-10">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">PRODUCT MODEL</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.productModel}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">HANDLING PART NAME</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.handlingPartName}</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">PROBLEM STATEMENT / REQUIREMENT</label>
+                                    <p className="text-sm font-medium text-gray-600 bg-gray-50/50 p-5 rounded-xl border border-gray-100 leading-relaxed italic m-0">
+                                        "{selectedRequest.problemStatement}"
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Inner Container: Logistics & Capacity */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                                <div className="flex items-center gap-2 mb-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                                    <h3 className="text-sm font-black text-gray-800 tracking-wider m-0">LOGISTICS & CAPACITY</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 gap-x-6">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">HANDLING ZONE</label>
+                                        <p className="text-base font-bold text-gray-900 m-0">{selectedRequest.materialHandlingLocation}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">FLOW ROUTE</label>
+                                        <p className="text-base font-black text-tvs-blue m-0">
+                                            {selectedRequest.from} → {selectedRequest.to}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">VOLUME PER DAY</label>
+                                        <p className="text-base font-black text-gray-900 m-0">{selectedRequest.volumePerDay}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-white border-t border-gray-100 flex justify-end">
+                            <button 
+                                onClick={() => setIsReviewModalOpen(false)}
+                                className="px-10 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all text-sm"
+                            >
+                                Close Window
+                            </button>
                         </div>
                     </div>
                 </div>

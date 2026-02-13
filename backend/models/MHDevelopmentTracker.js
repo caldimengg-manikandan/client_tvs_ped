@@ -57,20 +57,8 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
 
     // Project Planning
     projectPlan: {
-        milestones: [{
-            name: String,
-            targetDate: Date,
-            status: String
-        }],
-        timelines: [{
-            phase: String,
-            startDate: Date,
-            endDate: Date
-        }],
-        details: {
-            type: String,
-            default: ''
-        }
+        type: mongoose.Schema.Types.Mixed,
+        default: []
     },
 
     // Implementation Tracking
