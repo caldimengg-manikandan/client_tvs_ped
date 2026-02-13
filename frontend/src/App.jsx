@@ -4,10 +4,13 @@ import Dashboard from './pages/Dashboard';
 import CreateMHRequestList from './pages/CreateMHRequest/CreateMHRequestList';
 import MHRequestForm from './components/Forms/MHRequestForm';
 import RequestTracker from './pages/RequestTracker';
+import MHDevelopmentTracker from './pages/MHDevelopmentTracker/MHDevelopmentTracker';
 import AssetProgressTracker from './pages/AssetProgressTracker';
+
 import EmployeeMaster from './pages/EmployeeMaster/EmployeeMaster';
 import EmployeeForm from './pages/EmployeeMaster/EmployeeForm';
 import EmployeeView from './pages/EmployeeMaster/EmployeeView';
+import VendorMaster from './pages/VendorMaster/VendorMaster';
 import VendorScoring from './pages/VendorMaster/VendorScoring';
 import VendorLoadingChart from './pages/VendorMaster/VendorLoadingChart';
 import VendorForm from './pages/VendorMaster/VendorForm';
@@ -60,6 +63,14 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* MH Development Tracker */}
+            <Route path="mh-development-tracker" element={
+              <ProtectedRoute permission="mhDevelopmentTracker">
+                <MHDevelopmentTracker />
+              </ProtectedRoute>
+            } />
+
+
             <Route path="asset-progress" element={
               <ProtectedRoute permission="assetSummary">
                 <AssetProgressTracker />
@@ -110,6 +121,26 @@ function App() {
             </Route>
 
             <Route path="vendor-master">
+              <Route index element={
+                <ProtectedRoute permission="vendorMaster">
+                  <VendorMaster />
+                </ProtectedRoute>
+              } />
+              <Route path="add" element={
+                <ProtectedRoute permission="vendorMaster">
+                  <VendorForm mode="add" />
+                </ProtectedRoute>
+              } />
+              <Route path="edit/:id" element={
+                <ProtectedRoute permission="vendorMaster">
+                  <VendorForm mode="edit" />
+                </ProtectedRoute>
+              } />
+              <Route path="view/:id" element={
+                <ProtectedRoute permission="vendorMaster">
+                  <VendorView />
+                </ProtectedRoute>
+              } />
               <Route path="scoring" element={
                 <ProtectedRoute permission="vendorMaster">
                   <VendorScoring />

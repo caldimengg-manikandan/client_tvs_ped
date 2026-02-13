@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Settings, FileText, Bell, ClipboardList, Activity, Users, Shield, BarChart, ChevronRight } from 'lucide-react';
+import { Home, Settings, FileText, Bell, ClipboardList, Activity, Users, Shield, BarChart, ChevronRight, TrendingUp } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -13,13 +13,22 @@ const Sidebar = () => {
         { name: 'Employee Master', icon: Users, path: '/employee-master', permission: 'employeeMaster' },
         { name: 'MH Requests', icon: FileText, path: '/mh-requests', permission: 'assetRequest' },
         { name: 'Request Tracker', icon: ClipboardList, path: '/request-tracker', permission: 'requestTracker' },
+
+        { name: 'MH Dev Tracker', icon: TrendingUp, path: '/mh-development-tracker', permission: 'mhDevelopmentTracker' },
+        
+        { 
+            name: 'Vendor Master', 
+            icon: Shield, 
         {
             name: 'Vendor Master',
             icon: Shield,
+
             path: '#', // Header just toggles or acts as group
             permission: 'vendorMaster',
             isHeader: true
         },
+
+        { name: 'Vendor Master', icon: ChevronRight, path: '/vendor-master', permission: 'vendorMaster', isSubItem: true },
         { name: 'Vendor Scoring', icon: ChevronRight, path: '/vendor-master/scoring', permission: 'vendorMaster', isSubItem: true },
         { name: 'Loading Chart', icon: ChevronRight, path: '/vendor-master/loading', permission: 'vendorMaster', isSubItem: true },
         { name: 'Asset Progress', icon: Activity, path: '/asset-progress', permission: 'assetSummary' },
@@ -90,6 +99,7 @@ const Sidebar = () => {
                             <li key={item.name}>
                                 <NavLink
                                     to={item.path}
+                                    end
                                     className={({ isActive }) =>
                                         `group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm
                                          ${item.isSubItem ? 'ml-4 py-2.5' : ''}
@@ -111,8 +121,13 @@ const Sidebar = () => {
                                                 )}
                                                 <span className={`${item.isSubItem ? 'text-xs font-bold' : 'font-inter'}`}>{item.name}</span>
                                             </div>
+
+                                            {isActive && item.path !== '#' && !item.isSubItem && (
+                                                <motion.div 
+
                                             {isActive && item.path !== '#' && (
                                                 <motion.div
+
                                                     layoutId="active-nav"
                                                     className="w-1.5 h-1.5 rounded-full bg-tvs-blue shadow-[0_0_8px_rgba(30,58,138,0.4)]"
                                                 />

@@ -27,9 +27,9 @@ export const createVendorScore = createAsyncThunk(
 
 export const updateVendorScore = createAsyncThunk(
     'vendorScoring/update',
-    async ({ id, vendorData }, { rejectWithValue }) => {
+    async ({ id, scoreData }, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/vendor-scoring/${id}`, vendorData);
+            const response = await api.put(`/vendor-scoring/${id}`, scoreData);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update vendor score');
@@ -61,6 +61,18 @@ export const bulkImportVendorScores = createAsyncThunk(
     }
 );
 
+export const fetchVendorPerformance = createAsyncThunk(
+    'vendorScoring/fetchPerformance',
+    async ({ vendorId, year }, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/vendor-scoring/analytics/${vendorId}${year ? `?year=${year}` : ''}`);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendor performance');
+        }
+    }
+);
+
 const vendorScoringSlice = createSlice({
     name: 'vendorScoring',
     initialState: {
@@ -84,7 +96,7 @@ const vendorScoringSlice = createSlice({
             })
             .addCase(fetchVendorScores.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload;
+                state.items = action.payload.data || action.payload;
             })
             .addCase(fetchVendorScores.rejected, (state, action) => {
                 state.loading = false;
@@ -97,7 +109,7 @@ const vendorScoringSlice = createSlice({
             .addCase(createVendorScore.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
-                state.items.unshift(action.payload);
+                state.items.unshift(action.payload.data || action.payload);
             })
             .addCase(createVendorScore.rejected, (state, action) => {
                 state.loading = false;
@@ -110,9 +122,10 @@ const vendorScoringSlice = createSlice({
             .addCase(updateVendorScore.fulfilled, (state, action) => {
                 state.loading = false;
                 state.success = true;
-                const index = state.items.findIndex(item => item._id === action.payload._id);
+                const updatedItem = action.payload.data || action.payload;
+                const index = state.items.findIndex(item => item._id === updatedItem._id);
                 if (index !== -1) {
-                    state.items[index] = action.payload;
+                    state.items[index] = updatedItem;
                 }
             })
             .addCase(updateVendorScore.rejected, (state, action) => {
@@ -131,6 +144,17 @@ const vendorScoringSlice = createSlice({
                 state.success = true;
             })
             .addCase(bulkImportVendorScores.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(fetchVendorPerformance.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchVendorPerformance.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(fetchVendorPerformance.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
