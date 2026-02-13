@@ -171,6 +171,83 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
     res.status(200).json({ message: 'Email sent successfully', messageId: info.messageId });
 });
 
+const sendVendorAllocationEmail = asyncHandler(async (vendorEmail, projectDetails) => {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+        console.error('SMTP configuration missing');
+        return;
+    }
+
+    const { projectId, department, plant } = projectDetails;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; }
+            .header { background-color: #253C80; color: white; padding: 25px; text-align: center; border-radius: 12px 12px 0 0; }
+            .content { padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; }
+            .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+            .label { font-weight: bold; width: 140px; color: #64748b; }
+            .value { font-weight: 600; color: #1e293b; }
+            .footer { text-align: center; margin-top: 25px; font-size: 12px; color: #94a3b8; }
+            .btn { display: inline-block; padding: 12px 24px; background-color: #253C80; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin:0; font-size: 24px;">New Project Allocated</h1>
+            </div>
+            <div class="content">
+                <p>Dear Vendor,</p>
+                <p>A new Material Handling (MH) project has been successfully allocated to you. Please find the preliminary details below:</p>
+                
+                <div style="margin: 25px 0; background: #f8fafc; padding: 20px; border-radius: 12px;">
+                    <div class="detail-row">
+                        <span class="label">Project ID:</span>
+                        <span class="value">${projectId}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Department:</span>
+                        <span class="value">${department}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Plant:</span>
+                        <span class="value">${plant}</span>
+                    </div>
+                </div>
+
+                <p>Please log in to the system to review the full requirements and proceed with the <strong>Design Stage</strong>.</p>
+                
+                <div style="text-align: center;">
+                    <a href="http://localhost:5173/login" class="btn">Log In to Portal</a>
+                </div>
+
+                <p style="margin-top: 30px;">Regards,<br><strong>TVS MH System Team</strong></p>
+            </div>
+            <div class="footer">
+                <p>This is an automated notification. Please do not reply directly to this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    try {
+        await transporter.sendMail({
+            from: `"TVS MH Selection" <${process.env.SMTP_USER}>`,
+            to: vendorEmail,
+            subject: `New Project Allocated - ${projectId}`,
+            html: htmlContent
+        });
+        console.log(`Allocation email sent to vendor: ${vendorEmail}`);
+    } catch (error) {
+        console.error('Error sending allocation email:', error);
+    }
+});
+
 const testSMTPConnection = asyncHandler(async (req, res) => {
     try {
         await transporter.verify();
@@ -187,5 +264,6 @@ const testSMTPConnection = asyncHandler(async (req, res) => {
 
 module.exports = {
     sendRequestEmail,
-    testSMTPConnection
+    testSMTPConnection,
+    sendVendorAllocationEmail
 };

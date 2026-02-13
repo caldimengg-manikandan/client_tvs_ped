@@ -74,12 +74,25 @@ export const uploadDrawing = createAsyncThunk(
 
 export const fetchVendorsForSelection = createAsyncThunk(
     'mhDevelopmentTracker/fetchVendors',
-    async (_, { rejectWithValue }) => {
+    async (location, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/vendors`);
+            const url = location ? `${API_URL}/vendors?location=${encodeURIComponent(location)}` : `${API_URL}/vendors`;
+            const response = await axios.get(url);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendors');
+        }
+    }
+);
+
+export const allocateVendor = createAsyncThunk(
+    'mhDevelopmentTracker/allocateVendor',
+    async ({ id, vendorData }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`${API_URL}/${id}/allocate-vendor`, vendorData);
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to allocate vendor');
         }
     }
 );
@@ -194,6 +207,23 @@ const mhDevelopmentTrackerSlice = createSlice({
                 state.vendors = action.payload;
             })
             .addCase(fetchVendorsForSelection.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Allocate vendor
+            .addCase(allocateVendor.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(allocateVendor.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.trackers.findIndex(t => t._id === action.payload._id);
+                if (index !== -1) {
+                    state.trackers[index] = action.payload;
+                }
+                state.success = true;
+            })
+            .addCase(allocateVendor.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

@@ -37,8 +37,9 @@ const MHDevelopmentTracker = () => {
     const [editingTracker, setEditingTracker] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [vendorPopupVisible, setVendorPopupVisible] = useState(false);
-    const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
+    const [selectedPlantLocation, setSelectedPlantLocation] = useState(null);
+    const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [fileList, setFileList] = useState([]);
 
     // Fetch trackers on mount
@@ -120,23 +121,10 @@ const MHDevelopmentTracker = () => {
         }
     };
 
-    const handleVendorSelect = (trackerId) => {
+    const handleVendorSelect = (trackerId, plantLocation) => {
         setSelectedTrackerId(trackerId);
+        setSelectedPlantLocation(plantLocation);
         setVendorPopupVisible(true);
-    };
-
-    const handleVendorSelected = (vendor) => {
-        if (selectedTrackerId) {
-            dispatch(updateTracker({
-                id: selectedTrackerId,
-                data: {
-                    vendorCode: vendor.vendorCode,
-                    vendorName: vendor.vendorName,
-                    vendorLocation: vendor.location,
-                    vendorId: vendor._id
-                }
-            }));
-        }
     };
 
     const handleProjectPlan = (trackerId) => {
@@ -234,7 +222,7 @@ const MHDevelopmentTracker = () => {
                             size="small" 
                             type="primary" 
                             className="bg-tvs-blue text-[10px] h-6"
-                            onClick={() => handleVendorSelect(params.data._id)}
+                            onClick={() => handleVendorSelect(params.data._id, params.data.plantLocation)}
                         >
                             Select Vendor
                         </Button>
@@ -476,8 +464,12 @@ const MHDevelopmentTracker = () => {
             {/* Vendor Selection Popup */}
             <VendorSelectionPopup 
                 visible={vendorPopupVisible}
-                onCancel={() => setVendorPopupVisible(false)}
-                onSelect={handleVendorSelected}
+                onCancel={() => {
+                    setVendorPopupVisible(false);
+                    setSelectedPlantLocation(null);
+                }}
+                trackerId={selectedTrackerId}
+                plantLocation={selectedPlantLocation}
             />
 
             {/* Project Plan Modal */}

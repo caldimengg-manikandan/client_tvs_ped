@@ -270,11 +270,27 @@ const uploadDrawing = async (req, res) => {
     }
 };
 
+const { sendVendorAllocationEmail } = require('./emailController');
+
+// ... (existing code)
+
 // Get vendors for selection (from Vendor Scoring)
 const getVendorsForSelection = async (req, res) => {
     try {
-        // Get all vendors with their latest scores
-        const vendors = await Vendor.find();
+        const { location } = req.query;
+
+        let query = {};
+        if (location) {
+            query.vendorLocation = { $regex: new RegExp(`^${location}$`, 'i') };
+        }
+
+        // Get vendors matching the location
+        const vendors = await Vendor.find(query);
+
+        // Get all active projects to calculate current load
+        const allActiveProjects = await MHDevelopmentTracker.find({
+            status: { $nin: ['Completed', 'Cancelled'] }
+        });
 
         // Get latest scores for each vendor
         const vendorsWithScores = await Promise.all(
@@ -283,16 +299,22 @@ const getVendorsForSelection = async (req, res) => {
                     .sort({ scoringYear: -1, scoringMonth: -1 })
                     .limit(1);
 
+                // Calculate current load (number of active projects)
+                const currentLoad = allActiveProjects.filter(p =>
+                    p.vendorId?.toString() === vendor._id.toString()
+                ).length;
+
                 return {
                     _id: vendor._id,
                     vendorCode: vendor.vendorCode,
                     vendorName: vendor.vendorName,
                     location: vendor.vendorLocation,
+                    vendorMailId: vendor.vendorMailId,
                     qcdScore: latestScore?.qcdScore || 0,
                     qsrScore: latestScore?.qsrScore || 0,
                     costScore: latestScore?.costScore || 0,
                     deliveryScore: latestScore?.deliveryScore || 0,
-                    currentLoad: 0 // TODO: Calculate from active projects
+                    currentLoad: currentLoad
                 };
             })
         );
@@ -314,6 +336,53 @@ const getVendorsForSelection = async (req, res) => {
     }
 };
 
+// Allocate Vendor to Project
+const allocateVendor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { vendorId, vendorCode, vendorName, vendorLocation, vendorMailId } = req.body;
+
+        const tracker = await MHDevelopmentTracker.findById(id);
+        if (!tracker) {
+            return res.status(404).json({
+                success: false,
+                message: 'Project record not found'
+            });
+        }
+
+        // 1. Update project record
+        tracker.vendorId = vendorId;
+        tracker.vendorCode = vendorCode;
+        tracker.vendorName = vendorName;
+        tracker.vendorLocation = vendorLocation;
+        tracker.currentStage = 'Design';
+        tracker.status = 'On Track';
+
+        await tracker.save();
+
+        // 2. Send notification to vendor
+        if (vendorMailId) {
+            await sendVendorAllocationEmail(vendorMailId, {
+                projectId: tracker.assetRequestId,
+                department: tracker.departmentName,
+                plant: tracker.plantLocation
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Vendor allocated and notified successfully',
+            data: tracker
+        });
+    } catch (error) {
+        console.error('Error allocating vendor:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to allocate vendor'
+        });
+    }
+};
+
 module.exports = {
     getAllTrackers,
     getTrackerById,
@@ -322,5 +391,6 @@ module.exports = {
     deleteTracker,
     uploadDrawing,
     getVendorsForSelection,
+    allocateVendor,
     upload
 };

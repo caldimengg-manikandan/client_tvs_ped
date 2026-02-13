@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -7,18 +7,46 @@ import InactivityTracker from './InactivityTracker';
 
 const Layout = () => {
     const location = useLocation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    // Handle responsiveness
+    useEffect(() => {
+        const handleResize = () => {
+            const width = window.innerWidth;
+            setWindowWidth(width);
+            if (width <= 1024) {
+                setIsSidebarOpen(false);
+            } else if (width > 1024 && !isSidebarOpen && !window.sidebarToggledManually) {
+                // Auto open only if not manually closed by user
+                setIsSidebarOpen(true);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isSidebarOpen]);
+
+    const handleToggleSidebar = (state) => {
+        window.sidebarToggledManually = true;
+        setIsSidebarOpen(state);
+    };
 
     return (
-        <div className="flex h-screen bg-tvs-light selection:bg-tvs-blue/10 selection:text-tvs-blue font-inter">
+        <div className="flex h-screen bg-tvs-light selection:bg-tvs-blue/10 selection:text-tvs-blue font-inter overflow-hidden">
             <InactivityTracker />
-            <Sidebar />
+            <Sidebar 
+                isSidebarOpen={isSidebarOpen} 
+                setIsSidebarOpen={handleToggleSidebar} 
+                windowWidth={windowWidth} 
+            />
             
-            <div className="flex-1 pl-sidebar flex flex-col min-h-screen transition-all duration-300 relative overflow-hidden">
+            <div className={`flex-1 ${isSidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[72px]'} pl-0 flex flex-col min-h-screen transition-all duration-300 relative overflow-hidden`}>
                 {/* Global decorative background elements */}
                 <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-tvs-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
                 <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[30%] bg-tvs-red/5 rounded-full blur-[100px] pointer-events-none"></div>
                 
-                <Header />
+                <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={handleToggleSidebar} />
                 
                 <main className="flex-1 overflow-x-hidden p-8 mt-20 relative z-10 custom-scrollbar">
                     <AnimatePresence mode="wait">

@@ -1,5 +1,6 @@
 const VendorScoring = require('../models/VendorScoring');
 const Vendor = require('../models/Vendor');
+const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 
 // @desc    Get all vendor scores with vendor details
 // @route   GET /api/vendor-scoring
@@ -240,8 +241,6 @@ const getVendorPerformance = async (req, res) => {
                     avgQsrScore: { $avg: '$qsrScore' },
                     avgCostScore: { $avg: '$costScore' },
                     avgDeliveryScore: { $avg: '$deliveryScore' },
-                    avgCompletionRate: { $avg: '$completionRate' },
-                    avgDelayRate: { $avg: '$delayRate' },
                     count: { $sum: 1 }
                 }
             },
@@ -249,11 +248,29 @@ const getVendorPerformance = async (req, res) => {
         ]);
 
         // Calculate overall statistics
-        const allScores = await VendorScoring.find({ vendorId });
+        const allScores = await VendorScoring.find({ vendorId }).sort({ scoringYear: 1, scoringMonth: 1 });
         const totalScores = allScores.length;
+
         const avgOverallScore = totalScores > 0
             ? allScores.reduce((sum, s) => sum + s.qcdScore, 0) / totalScores
             : 0;
+
+        const avgQSR = totalScores > 0
+            ? allScores.reduce((sum, s) => sum + s.qsrScore, 0) / totalScores
+            : 0;
+
+        const avgCost = totalScores > 0
+            ? allScores.reduce((sum, s) => sum + s.costScore, 0) / totalScores
+            : 0;
+
+        // NEW: Real-time Project Performance from MH Tracker
+        const liveProjects = await MHDevelopmentTracker.find({ vendorId: vendor._id });
+        const liveProjectCount = liveProjects.length;
+        const completedProjects = liveProjects.filter(p => p.currentStage === 'Completed').length;
+        const onTrackProjects = liveProjects.filter(p => p.status === 'On Track' || p.currentStage === 'Completed').length;
+
+        const onTrackRate = liveProjectCount > 0 ? (onTrackProjects / liveProjectCount) * 100 : 0;
+        const completionRate = liveProjectCount > 0 ? (completedProjects / liveProjectCount) * 100 : 0;
 
         res.status(200).json({
             success: true,
@@ -265,12 +282,36 @@ const getVendorPerformance = async (req, res) => {
                     vendorLocation: vendor.vendorLocation
                 },
                 currentYear,
-                monthlyPerformance: monthlyScores,
-                yearlyPerformance: yearlyScores,
+                monthlyPerformance: monthlyScores.map(m => ({
+                    month: m.scoringMonth,
+                    avgScore: m.qcdScore,
+                    avgQSR: m.qsrScore,
+                    avgCost: m.costScore,
+                    avgDelivery: m.deliveryScore
+                })),
+                yearlyPerformance: yearlyScores.map(y => ({
+                    year: y._id,
+                    avgScore: parseFloat(y.avgQcdScore.toFixed(2)),
+                    avgQSR: parseFloat(y.avgQsrScore.toFixed(2)),
+                    avgCost: parseFloat(y.avgCostScore.toFixed(2)),
+                    avgDelivery: parseFloat(y.avgDeliveryScore.toFixed(2)),
+                    totalScores: y.count
+                })),
                 overallStats: {
                     totalScores,
                     avgOverallScore: parseFloat(avgOverallScore.toFixed(2)),
+                    avgQSR: parseFloat(avgQSR.toFixed(2)),
+                    avgCost: parseFloat(avgCost.toFixed(2)),
+                    avgDelivery: parseFloat(avgDelivery.toFixed(2)),
                     latestScore: allScores.length > 0 ? allScores[allScores.length - 1].qcdScore : 0
+                },
+                liveInsight: {
+                    totalActiveProjects: liveProjectCount,
+                    completedProjects,
+                    onTrackRate: parseFloat(onTrackRate.toFixed(1)),
+                    completionRate: parseFloat(completionRate.toFixed(1)),
+                    reliabilityIndex: onTrackRate >= 90 ? 'High' : onTrackRate >= 70 ? 'Moderate' : 'Critical',
+                    statusColor: onTrackRate >= 90 ? 'emerald' : onTrackRate >= 70 ? 'blue' : 'rose'
                 }
             }
         });

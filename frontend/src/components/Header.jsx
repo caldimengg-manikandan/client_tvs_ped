@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, LogOut, ChevronDown, Clock, Activity, Search, Bell } from 'lucide-react';
+import { ChevronRight, LogOut, ChevronDown, Clock, Activity, Search, Bell, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Modal } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,7 +8,7 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-const Header = () => {
+const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
     const location = useLocation();
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const { user, logout } = useAuth();
@@ -100,14 +100,18 @@ const Header = () => {
                 else return;
             } else {
                 switch (value) {
+                    case 'employee-master': name = 'Employee Master'; break;
                     case 'mh-requests': name = 'MH Requests'; break;
                     case 'request-tracker': name = 'Request Tracker'; break;
-                    case 'asset-progress': name = 'Asset Progress'; break;
-                    case 'asset-summary': name = 'Asset Summary'; break;
-                    case 'employee-master': name = 'Employee Master'; break;
+                    case 'mh-development-tracker': name = 'MH Dev Tracker'; break;
                     case 'vendor-master': name = 'Vendor Master'; break;
                     case 'settings': name = 'Settings'; break;
-                    default: name = value.charAt(0).toUpperCase() + value.slice(1);
+                    case 'scoring': name = 'Vendor Scoring'; break;
+                    case 'loading': name = 'Loading Chart'; break;
+                    case 'asset-progress': name = 'Asset Progress'; break;
+                    case 'asset-management-update': name = 'Management Update'; break;
+                    case 'asset-summary': name = 'Asset Summary'; break;
+                    default: name = value.charAt(0).toUpperCase() + value.slice(1).replace('-', ' ');
                 }
             }
 
@@ -135,10 +139,17 @@ const Header = () => {
     };
 
     return (
-        <header className="h-header fixed top-0 right-0 left-sidebar bg-white/70 backdrop-blur-xl border-b border-gray-100/50 z-header px-8 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all duration-300">
+        <header className={`h-header fixed top-0 right-0 ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-[72px]'} left-0 bg-white/70 backdrop-blur-xl border-b border-gray-100/50 z-header px-4 lg:px-8 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all duration-300`}>
             {/* Left side - Breadcrumbs & Title */}
-            <div className="flex flex-col justify-center">
-                <nav className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="p-2 hover:bg-gray-100 rounded-lg text-tvs-blue lg:hidden transition-colors"
+                >
+                    <Menu size={20} />
+                </button>
+                <div className="flex flex-col justify-center">
+                    <nav className="hidden md:flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                     {location.pathname === '/' ? (
                         <span className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md">
                             <Activity size={10} className="text-tvs-blue" />
@@ -161,6 +172,7 @@ const Header = () => {
                 <h2 className="text-xl font-black text-gray-900 font-outfit m-0 leading-none">
                     {currentPageTitle}
                 </h2>
+                </div>
             </div>
 
             {/* Right side - Actions & Profile */}
