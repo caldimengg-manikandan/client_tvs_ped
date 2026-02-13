@@ -17,6 +17,7 @@ import VendorForm from './pages/VendorMaster/VendorForm';
 import VendorView from './pages/VendorMaster/VendorView';
 
 import AssetSummary from './pages/AssetSummary';
+import AssetManagementUpdate from './pages/AssetManagementUpdate';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
@@ -76,7 +77,11 @@ function App() {
               </ProtectedRoute>
             } />
 
-
+            <Route path="asset-management-update" element={
+              <ProtectedRoute permission="assetSummary">
+                <AssetManagementUpdate />
+              </ProtectedRoute>
+            } />
 
             <Route path="asset-summary" element={
               <ProtectedRoute permission="assetSummary">
