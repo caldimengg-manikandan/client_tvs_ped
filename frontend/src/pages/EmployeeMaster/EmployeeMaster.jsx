@@ -8,6 +8,8 @@ import { Modal } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import * as XLSX from 'xlsx';
 import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createStatusColumn, createBoldColumn } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -281,27 +283,41 @@ const EmployeeMaster = () => {
 
     const columnDefs = React.useMemo(() => [
         createSerialNumberColumn(),
-        createBoldColumn('employeeId', 'EMPLOYEE ID', { width: 140 }),
-        createBoldColumn('employeeName', 'EMPLOYEE NAME', { width: 200 }),
-        { 
-            field: 'departmentName', 
-            headerName: 'DEPARTMENT', 
-            width: 150 
+        {
+            ...createBoldColumn('employeeId', 'EMPLOYEE ID', { width: 140 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            field: 'plantLocation', 
-            headerName: 'LOCATION', 
-            width: 140 
+        {
+            ...createBoldColumn('employeeName', 'EMPLOYEE NAME', { width: 200 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'departmentName',
+            headerName: 'DEPARTMENT',
+            width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'plantLocation',
+            headerName: 'LOCATION',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             field: 'accessLevel',
             headerName: 'ACCESS LEVEL',
             width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => {
                 const level = params.value;
                 const baseClass = "px-3 py-1 rounded-full text-[10px] font-black uppercase border inline-block";
                 let colorClass = "bg-gray-50 text-gray-700 border-gray-200";
-                
+
                 switch (level?.toLowerCase()) {
                     case 'super admin': colorClass = "bg-purple-50 text-purple-700 border-purple-200"; break;
                     case 'admin': colorClass = "bg-blue-50 text-blue-700 border-blue-200"; break;
@@ -309,21 +325,27 @@ const EmployeeMaster = () => {
                     case 'employee': colorClass = "bg-green-50 text-green-700 border-green-200"; break;
                     case 'viewer': colorClass = "bg-gray-50 text-gray-600 border-gray-200"; break;
                 }
-                
+
                 return <span className={`${baseClass} ${colorClass}`}>{level}</span>;
             }
         },
-        { 
-            field: 'mailId', 
-            headerName: 'EMAIL', 
+        {
+            field: 'mailId',
+            headerName: 'EMAIL',
             width: 220,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline font-medium">
                     {params.value}
                 </a>
             )
         },
-        createStatusColumn('status', 'STATUS'),
+        {
+            ...createStatusColumn('status', 'STATUS'),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
         createActionColumn([
             {
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -348,87 +370,6 @@ const EmployeeMaster = () => {
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
-            {/* Header */}
-            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-white via-gray-50/50 to-white">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-tvs-blue to-blue-600 rounded-xl shadow-md">
-                            <User size={22} className="text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-tvs-dark-gray m-0 tracking-tight">Employee Master</h1>
-                            <p className="text-sm text-gray-500 mt-0.5">Manage employee access and permissions</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="ml-2 p-2.5 text-gray-400 hover:text-tvs-blue hover:bg-white rounded-xl transition-all shadow-sm border border-gray-200 hover:border-tvs-blue hover:shadow-md"
-                        title="Refresh List"
-                    >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-                <button
-                    onClick={handleAddEmployee}
-                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={20} /> Add Employee
-                </button>
-            </div>
-
-            {/* Filters */}
-            <div className="px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative md:col-span-1">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Search size={18} className="text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all"
-                            placeholder="Search employees..."
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-                            <Filter size={16} className="text-gray-500" />
-                            <span className="text-sm font-semibold text-gray-600">Status:</span>
-                        </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all font-medium"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Suspended">Suspended</option>
-                        </select>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-                            <Shield size={16} className="text-gray-500" />
-                            <span className="text-sm font-semibold text-gray-600">Access:</span>
-                        </div>
-                        <select
-                            value={accessFilter}
-                            onChange={(e) => setAccessFilter(e.target.value)}
-                            className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all font-medium"
-                        >
-                            <option value="all">All Levels</option>
-                            <option value="Super Admin">Super Admin</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Employee">Employee</option>
-                            <option value="Viewer">Viewer</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
             {/* AG Grid Table */}
             <div className="px-8 py-6">
@@ -447,6 +388,13 @@ const EmployeeMaster = () => {
                         >
                             <Download size={16} />
                             Template
+                        </button>
+                        <button
+                            onClick={handleAddEmployee}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                        >
+                            <Plus size={16} />
+                            Add Employee
                         </button>
                         <button
                             onClick={handleImportClick}
@@ -574,9 +522,8 @@ const EmployeeMaster = () => {
                                         <td className="px-3 py-2 text-gray-700">{emp.departmentName}</td>
                                         <td className="px-3 py-2 text-gray-700">{emp.accessLevel}</td>
                                         <td className="px-3 py-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                                emp.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${emp.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                                                }`}>
                                                 {emp.status}
                                             </span>
                                         </td>
