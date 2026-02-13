@@ -50,6 +50,12 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Export app for Vercel
+module.exports = app;
+
+// Only listen if not running in Vercel (or similar environment where module.exports is used)
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
