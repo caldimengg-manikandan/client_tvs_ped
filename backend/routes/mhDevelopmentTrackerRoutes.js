@@ -8,6 +8,7 @@ const {
     deleteTracker,
     uploadDrawing,
     getVendorsForSelection,
+    allocateVendor,
     upload
 } = require('../controllers/mhDevelopmentTrackerController');
 
@@ -17,6 +18,7 @@ router.get('/vendors', getVendorsForSelection);
 router.get('/:id', getTrackerById);
 router.post('/', createTracker);
 router.put('/:id', updateTracker);
+router.put('/:id/allocate-vendor', allocateVendor);
 router.delete('/:id', deleteTracker);
 
 // File upload route

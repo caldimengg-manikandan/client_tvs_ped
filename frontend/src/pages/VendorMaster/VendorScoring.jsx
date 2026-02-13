@@ -801,59 +801,57 @@ const VendorScoring = () => {
                             </div>
                         </div>
 
-                        {/* Key Metrics Grid */}
-                        <div className="grid grid-cols-4 gap-4 mb-6">
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border-2 border-blue-200 hover:shadow-lg transition-shadow">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="text-xs font-bold text-blue-700 uppercase">Total Scores</div>
-                                    <BarChart size={20} className="text-blue-500" />
+                        {/* Live Production Insights (NEW) */}
+                        {performanceData.liveInsight && (
+                            <div className="bg-gray-900 rounded-2xl p-6 mb-6 overflow-hidden relative shadow-xl">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Zap size={120} className="text-white" />
                                 </div>
-                                <div className="text-3xl font-black text-blue-900">{performanceData.overallStats.totalScores}</div>
-                                <div className="text-xs text-blue-600 mt-1">Evaluation periods</div>
-                            </div>
-                            
-                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-5 rounded-xl border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="text-xs font-bold text-emerald-700 uppercase">Average QCD</div>
-                                    <Star size={20} className="text-emerald-500" />
-                                </div>
-                                <div className="text-3xl font-black text-emerald-900">{performanceData.overallStats.avgOverallScore}</div>
-                                <div className="text-xs text-emerald-600 mt-1">Out of 5.0</div>
-                            </div>
-                            
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-shadow">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="text-xs font-bold text-purple-700 uppercase">Latest Score</div>
-                                    <TrendingUp size={20} className="text-purple-500" />
-                                </div>
-                                <div className="text-3xl font-black text-purple-900">{performanceData.overallStats.latestScore}</div>
-                                <div className="text-xs text-purple-600 mt-1">
-                                    {performanceData.overallStats.latestScore > performanceData.overallStats.avgOverallScore ? 
-                                        '📈 Above average' : '📉 Below average'}
-                                </div>
-                            </div>
-                            
-                            <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-5 rounded-xl border-2 border-amber-200 hover:shadow-lg transition-shadow">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="text-xs font-bold text-amber-700 uppercase">Trend</div>
-                                    <TrendingUp size={20} className="text-amber-500" />
-                                </div>
-                                <div className="text-3xl font-black text-amber-900">
-                                    {performanceData.monthlyPerformance && performanceData.monthlyPerformance.length >= 2 ? (
-                                        performanceData.monthlyPerformance[performanceData.monthlyPerformance.length - 1].avgScore >
-                                        performanceData.monthlyPerformance[performanceData.monthlyPerformance.length - 2].avgScore ? 
-                                        '↗️' : '↘️'
-                                    ) : '➡️'}
-                                </div>
-                                <div className="text-xs text-amber-600 mt-1">
-                                    {performanceData.monthlyPerformance && performanceData.monthlyPerformance.length >= 2 ? (
-                                        performanceData.monthlyPerformance[performanceData.monthlyPerformance.length - 1].avgScore >
-                                        performanceData.monthlyPerformance[performanceData.monthlyPerformance.length - 2].avgScore ? 
-                                        'Improving' : 'Declining'
-                                    ) : 'Stable'}
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black uppercase rounded shadow-sm">Live Strategy</div>
+                                        <h4 className="text-lg font-black text-white uppercase tracking-tight">Production Execution Intelligence</h4>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">On-Track Rate</span>
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-3xl font-black text-white">{performanceData.liveInsight.onTrackRate}%</span>
+                                                <div className={`mb-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-${performanceData.liveInsight.statusColor}-500/20 text-${performanceData.liveInsight.statusColor}-400`}>
+                                                    {performanceData.liveInsight.reliabilityIndex} Reliability
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col border-l border-gray-800 pl-6">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jobs Completed</span>
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-3xl font-black text-white">{performanceData.liveInsight.completedProjects}</span>
+                                                <span className="text-xs text-gray-500 mb-1">of {performanceData.liveInsight.totalActiveProjects} total</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col border-l border-gray-800 pl-6">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Execution Efficiency</span>
+                                            <div className="w-full bg-gray-800 h-2 rounded-full mt-3 overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000"
+                                                    style={{ width: `${performanceData.liveInsight.completionRate}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="text-[10px] text-gray-500 mt-1 font-bold">{performanceData.liveInsight.completionRate}% Efficiency Index</span>
+                                        </div>
+                                        <div className="flex items-center justify-end">
+                                            <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
+                                                <div className="flex flex-col text-right">
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase">Live Pulse</span>
+                                                    <span className="text-xs font-black text-emerald-400 uppercase">Synchronized</span>
+                                                </div>
+                                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Score Breakdown */}
                         <div className="grid grid-cols-3 gap-4 mb-6">
