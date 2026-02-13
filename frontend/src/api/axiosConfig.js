@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const serverUrl = import.meta.env.VITE_API_BASE_URL || '';
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    baseURL: serverUrl ? `${serverUrl}/api` : '/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -9,7 +11,7 @@ const api = axios.create({
 
 // For file uploads, we often need a different instance or override headers
 export const uploadApi = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    baseURL: serverUrl ? `${serverUrl}/api` : '/api',
     headers: {
         'Content-Type': 'multipart/form-data',
     },

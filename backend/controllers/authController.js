@@ -173,9 +173,73 @@ const generateToken = (id) => {
     });
 };
 
+// @desc    Seed database (Auto-fix for empty DB)
+// @route   GET /api/auth/seed
+// @access  Public
+const seedDatabase = asyncHandler(async (req, res) => {
+    const userCount = await User.countDocuments();
+    if (userCount > 0 && !req.query.force) {
+        return res.json({ message: 'Database already initialized. Use ?force=true to reset.' });
+    }
+
+    if (req.query.force) {
+        await User.deleteMany();
+        await Employee.deleteMany();
+    }
+
+    // 1. Create Admin Employee
+    const adminEmployee = await Employee.create({
+        employeeId: 'EMP001',
+        employeeName: 'System Admin',
+        departmentName: 'IT',
+        plantLocation: 'Madurai',
+        mailId: 'admin@tvs.com',
+        designation: 'Administrator',
+        dateOfJoining: new Date(),
+        accessLevel: 'Admin',
+        permissions: {
+            dashboard: true,
+            assetRequest: true,
+            requestTracker: true,
+            assetSummary: true,
+            reports: true,
+            employeeMaster: true,
+            vendorMaster: true,
+            settings: true
+        },
+        status: 'Active'
+    });
+
+    // 2. Create Admin User
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('admin123', salt);
+
+    await User.create({
+        userId: 'ADM001',
+        employeeId: adminEmployee._id,
+        email: 'admin@tvs.com',
+        passwordHash: hashedPassword,
+        role: 'Admin',
+        permissions: {
+            dashboard: true,
+            assetRequest: true,
+            requestTracker: true,
+            assetSummary: true,
+            reports: true,
+            employeeMaster: true,
+            vendorMaster: true,
+            settings: true
+        },
+        status: 'Active'
+    });
+
+    res.status(201).json({ message: 'Database seeded successfully. You can now login with admin@tvs.com / admin123' });
+});
+
 module.exports = {
     loginUser,
     registerUser,
     getMe,
-    logoutUser
+    logoutUser,
+    seedDatabase
 };

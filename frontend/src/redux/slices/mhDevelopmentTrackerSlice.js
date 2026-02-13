@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 
-const API_URL = 'http://localhost:5000/api/mh-development-tracker';
+const API_URL = '/mh-development-tracker';
 
 // Async thunks
 export const fetchTrackers = createAsyncThunk(
     'mhDevelopmentTracker/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.get(API_URL);
+            const response = await api.get(API_URL);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch trackers');
@@ -20,7 +20,7 @@ export const createTracker = createAsyncThunk(
     'mhDevelopmentTracker/create',
     async (trackerData, { rejectWithValue }) => {
         try {
-            const response = await axios.post(API_URL, trackerData);
+            const response = await api.post(API_URL, trackerData);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to create tracker');
@@ -32,7 +32,7 @@ export const updateTracker = createAsyncThunk(
     'mhDevelopmentTracker/update',
     async ({ id, data }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/${id}`, data);
+            const response = await api.put(`${API_URL}/${id}`, data);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update tracker');
@@ -44,7 +44,7 @@ export const deleteTracker = createAsyncThunk(
     'mhDevelopmentTracker/delete',
     async (id, { rejectWithValue }) => {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await api.delete(`${API_URL}/${id}`);
             return id;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to delete tracker');
@@ -59,7 +59,7 @@ export const uploadDrawing = createAsyncThunk(
             const formData = new FormData();
             formData.append('drawing', file);
 
-            const response = await axios.post(`${API_URL}/${id}/upload-drawing`, formData, {
+            const response = await api.post(`${API_URL}/${id}/upload-drawing`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -77,7 +77,7 @@ export const fetchVendorsForSelection = createAsyncThunk(
     async (location, { rejectWithValue }) => {
         try {
             const url = location ? `${API_URL}/vendors?location=${encodeURIComponent(location)}` : `${API_URL}/vendors`;
-            const response = await axios.get(url);
+            const response = await api.get(url);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendors');
@@ -89,7 +89,7 @@ export const allocateVendor = createAsyncThunk(
     'mhDevelopmentTracker/allocateVendor',
     async ({ id, vendorData }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`${API_URL}/${id}/allocate-vendor`, vendorData);
+            const response = await api.put(`${API_URL}/${id}/allocate-vendor`, vendorData);
             return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to allocate vendor');

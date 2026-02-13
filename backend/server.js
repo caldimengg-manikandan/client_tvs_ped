@@ -19,6 +19,12 @@ initializeScheduler();
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // Routes
 app.use('/api/vendor-scoring', require('./routes/vendorScoringRoutes'));
 app.use('/api/vendor-loading', require('./routes/vendorLoadingRoutes'));
@@ -44,6 +50,12 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Export app for Vercel
+module.exports = app;
+
+// Only listen if not running in Vercel (or similar environment where module.exports is used)
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}

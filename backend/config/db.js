@@ -12,8 +12,10 @@ const connectDB = async () => {
 
         // -----------------------------------
 
-        await mongoose.connect(dbURI);
-        console.log('MongoDB Connected Successfully');
+        await mongoose.connect(dbURI, {
+            dbName: 'tvs-ped'
+        });
+        console.log('MongoDB Connected Successfully to tvs-ped');
         // console.log(`Connected to: ${dbURI}`); 
     } catch (err) {
         console.error('MongoDB connection error:', err.message);
