@@ -37,7 +37,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             {/* Mobile Overlay */}
             <AnimatePresence>
                 {isSidebarOpen && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -47,9 +47,9 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 )}
             </AnimatePresence>
 
-            <motion.aside 
+            <motion.aside
                 initial={false}
-                animate={{ 
+                animate={{
                     width: isSidebarOpen ? 280 : 72,
                     x: (isSidebarOpen || (windowWidth && windowWidth > 1024)) ? 0 : -280
                 }}
@@ -78,7 +78,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                         <img src={tvsLogo} alt="TVS Logo" className="h-12 w-full object-cover drop-shadow-sm" />
                                     </motion.div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setIsSidebarOpen(false)}
                                     className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-tvs-blue transition-colors"
                                 >
@@ -104,7 +104,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             {/* Navigation Section */}
             <nav className="flex-1 overflow-y-auto py-8 custom-scrollbar">
                 {isSidebarOpen && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="px-8 mb-4"
@@ -133,7 +133,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                         }
 
                         return (
-                            <motion.li 
+                            <motion.li
                                 key={item.name}
                                 initial={item.isSubItem && isSidebarOpen ? { opacity: 0, x: -10 } : false}
                                 animate={item.isSubItem && isSidebarOpen ? { opacity: 1, x: 0 } : false}

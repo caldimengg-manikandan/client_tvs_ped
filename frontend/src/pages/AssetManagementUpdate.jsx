@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { AgGridReact } from 'ag-grid-react';
-import { Plus, Edit2, Trash2, Upload, FileText, X, Search, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, FileText, X, Download } from 'lucide-react';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn } from '../config/agGridConfig';
+import CustomCheckboxFilter from '../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../components/AgGridCustom/CustomHeader';
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -11,7 +13,7 @@ const AssetManagementUpdate = () => {
     const { user } = useAuth();
     const [assets, setAssets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentAsset, setCurrentAsset] = useState(null);
@@ -191,20 +193,7 @@ const AssetManagementUpdate = () => {
         window.open(`${API_BASE_URL}/${filePath}`, '_blank');
     };
 
-    // Filter assets
-    const filteredAssets = useMemo(() => {
-        return assets.filter(asset => {
-            const term = searchTerm.toLowerCase();
-            return (
-                asset.assetId?.toLowerCase().includes(term) ||
-                asset.assetName?.toLowerCase().includes(term) ||
-                asset.vendorName?.toLowerCase().includes(term) ||
-                asset.departmentName?.toLowerCase().includes(term) ||
-                asset.plantLocation?.toLowerCase().includes(term) ||
-                asset.assetLocation?.toLowerCase().includes(term)
-            );
-        });
-    }, [assets, searchTerm]);
+
 
     // File Renderer Component
     const FileRenderer = ({ data, fileType }) => {
@@ -251,32 +240,44 @@ const AssetManagementUpdate = () => {
             headerName: 'ASSET ID',
             field: 'assetId',
             width: 120,
-            cellClass: 'ag-cell-bold'
+            cellClass: 'ag-cell-bold',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'VENDOR NAME',
             field: 'vendorName',
-            width: 180
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'DEPARTMENT',
             field: 'departmentName',
-            width: 150
+            width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'PLANT LOCATION',
             field: 'plantLocation',
-            width: 150
+            width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'ASSET LOCATION',
             field: 'assetLocation',
-            width: 150
+            width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'ASSET NAME',
             field: 'assetName',
-            width: 180
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         {
             headerName: 'SIGN-OFF DOC',
@@ -318,11 +319,13 @@ const AssetManagementUpdate = () => {
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <h1 className="text-xl font-bold text-tvs-dark-gray m-0">Asset Management Update</h1>
-                <div className="flex items-center gap-4">
-                    <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                        Total Assets: {filteredAssets.length}
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-bold text-gray-700">Total Assets: <span className="text-emerald-700">{assets.length}</span></span>
                     </div>
+                </div>
+                <div>
                     <button
                         onClick={openAddModal}
                         className="flex items-center gap-2 px-4 py-2.5 bg-tvs-blue text-white rounded-lg hover:bg-opacity-90 transition-all shadow-sm font-semibold"
@@ -333,28 +336,12 @@ const AssetManagementUpdate = () => {
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <div className="relative max-w-md">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search size={18} className="text-gray-400" />
-                    </div>
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Search by ID, Name, Vendor, Department..."
-                    />
-                </div>
-            </div>
-
             {/* AG Grid */}
             <div className="ag-theme-alpine w-full h-[600px]">
                 <AgGridReact
                     ref={gridRef}
                     theme="legacy"
-                    rowData={filteredAssets}
+                    rowData={assets}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}
                     {...defaultGridOptions}

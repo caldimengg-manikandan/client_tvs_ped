@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Edit2, Check, ExternalLink, Search, Filter, Warehouse } from 'lucide-react';
+import { Edit2, Check, ExternalLink, Warehouse } from 'lucide-react';
 import { message, Select } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendors } from '../redux/slices/vendorSlice';
 import { fetchAssetRequests, updateAssetRequest } from '../redux/slices/assetRequestSlice';
 import { AgGridReact } from 'ag-grid-react';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn } from '../config/agGridConfig';
+import CustomCheckboxFilter from '../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../components/AgGridCustom/CustomHeader';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -21,9 +23,7 @@ const AssetProgressTracker = () => {
     const [editForm, setEditForm] = useState({});
 
     // Search and Filter State
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [progressFilter, setProgressFilter] = useState('all');
+
 
     useEffect(() => {
         dispatch(fetchAssetRequests());
@@ -136,30 +136,34 @@ const AssetProgressTracker = () => {
             return false;
         }
 
-        const term = (searchTerm || '').toLowerCase();
-        const matchesSearch =
-            String(req.mhRequestId || '').toLowerCase().includes(term) ||
-            String(req.departmentName || '').toLowerCase().includes(term) ||
-            String(req.location || '').toLowerCase().includes(term) ||
-            String(req.allocationAssetId || '').toLowerCase().includes(term);
-
-        const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
-        const matchesProgress = progressFilter === 'all' || req.progressStatus === progressFilter;
-
-        return matchesSearch && matchesStatus && matchesProgress;
+        return true;
     });
 
     const columnDefs = React.useMemo(() => [
         createSerialNumberColumn(),
-        { 
-            headerName: 'MH REQUEST ID', 
-            field: 'mhRequestId', 
+        {
+            headerName: 'MH REQUEST ID',
+            field: 'mhRequestId',
             width: 140,
-            cellClass: 'ag-cell-bold'
+            cellClass: 'ag-cell-bold',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { headerName: 'PLANT LOCATION', field: 'location', width: 140 },
-        { headerName: 'DEPARTMENT', field: 'departmentName', width: 160 },
-        
+        {
+            headerName: 'PLANT LOCATION',
+            field: 'location',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'DEPARTMENT',
+            field: 'departmentName',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+
         // Progress Switches
         ...(['designReceiptFromVendor', 'designApproval', 'production', 'implementation'].map(field => ({
             headerName: field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
@@ -203,7 +207,7 @@ const AssetProgressTracker = () => {
             cellRenderer: (params) => {
                 const { editingId, editForm, vendors, setEditForm } = params.context;
                 const isEditing = editingId === params.data._id;
-                
+
                 if (isEditing) {
                     return (
                         <div className="flex flex-col justify-center h-full py-1">
@@ -242,12 +246,14 @@ const AssetProgressTracker = () => {
             headerName: 'STATUS',
             field: 'status',
             width: 120,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => {
                 const status = params.value;
                 let colorClass = 'bg-gray-100 text-gray-700 border-gray-200';
                 if (status === 'Accepted') colorClass = 'bg-green-50 text-green-700 border-green-200';
                 else if (status === 'Rejected') colorClass = 'bg-red-50 text-red-700 border-red-200';
-                
+
                 return <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${colorClass}`}>{status}</span>;
             }
         },
@@ -255,11 +261,20 @@ const AssetProgressTracker = () => {
             headerName: 'PROGRESS',
             field: 'progressStatus',
             width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => {
                 return <span className="px-2 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200 inline-block">{params.value}</span>;
             }
         },
-        { headerName: 'ASSET ID', field: 'allocationAssetId', width: 140, cellStyle: { fontFamily: 'monospace' } },
+        {
+            headerName: 'ASSET ID',
+            field: 'allocationAssetId',
+            width: 140,
+            cellStyle: { fontFamily: 'monospace' },
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
         {
             headerName: 'REMARKS',
             field: 'remark',
@@ -267,7 +282,7 @@ const AssetProgressTracker = () => {
             cellRenderer: (params) => {
                 const { editingId, editForm, setEditForm } = params.context;
                 const isEditing = editingId === params.data._id;
-                
+
                 if (isEditing) {
                     return (
                         <input
@@ -333,65 +348,9 @@ const AssetProgressTracker = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-            <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <div>
-                    <h1 className="text-xl font-bold text-tvs-dark-gray m-0 mb-1">MH Progress Summary</h1>
-                    <p className="text-sm text-gray-500">Track design and production milestones for MH requests</p>
-                </div>
-                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    Total Assets: {filteredRequests.length}
-                </div>
-            </div>
 
-            {/* Search and Filters */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search size={18} className="text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Search by ID, department, location..."
-                        />
-                    </div>
 
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                            <Filter size={18} className="text-gray-400 mr-2" />
-                            <span className="text-sm font-medium text-gray-700">Status:</span>
-                        </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="Accepted">Accepted</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
 
-                    <div className="flex items-center space-x-4">
-                        <span className="text-sm font-medium text-gray-700">Progress:</span>
-                        <select
-                            value={progressFilter}
-                            onChange={(e) => setProgressFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="all">All Progress</option>
-                            <option value="Initial">Initial</option>
-                            <option value="Design">Design</option>
-                            <option value="Design Approved">Design Approved</option>
-                            <option value="Production">Production</option>
-                            <option value="Implementation">Implementation</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
             <div className="ag-theme-alpine w-full h-[600px]">
                 <AgGridReact

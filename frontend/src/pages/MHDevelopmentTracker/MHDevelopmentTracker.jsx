@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AgGridReact } from 'ag-grid-react';
 import { Modal, Form, Input, Select, DatePicker, Button, Upload, message } from 'antd';
-import { 
-    Plus, Search, Download, Upload as UploadIcon, Eye, Edit, Trash2, 
+import {
+    Plus, Search, Download, Upload as UploadIcon, Eye, Edit, Trash2,
     FileText, Calendar, MapPin, Package, TrendingUp, AlertCircle,
     CheckCircle, Clock, XCircle, Users
 } from 'lucide-react';
@@ -20,6 +20,8 @@ import {
     clearSuccess
 } from '../../redux/slices/mhDevelopmentTrackerSlice';
 import { createSerialNumberColumn, createBoldColumn, createActionColumn, defaultColDef, defaultGridOptions } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 import VendorSelectionPopup from './VendorSelectionPopup';
 import ProjectPlanModal from './ProjectPlanModal';
 
@@ -105,7 +107,7 @@ const MHDevelopmentTracker = () => {
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
-            
+
             const trackerData = {
                 ...values,
                 implementationTarget: values.implementationTarget ? values.implementationTarget.toISOString() : null
@@ -148,22 +150,22 @@ const MHDevelopmentTracker = () => {
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
         if (!drawingUrl) return;
-        
+
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-        
+
         // Normalize slashes (replace backslashes with forward slashes)
         let normalizedUrl = drawingUrl.replace(/\\/g, '/');
-        
+
         // Remove leading slash if present to avoid double slashes when joining
         if (normalizedUrl.startsWith('/')) {
             normalizedUrl = normalizedUrl.slice(1);
         }
-        
+
         // Construct full URL
         const fullUrl = `${API_BASE_URL.replace(/\/$/, '')}/${normalizedUrl}`;
-        
+
         console.log('Downloading file from:', fullUrl);
-        
+
         // Use window.open for better compatibility, or fetch blob if needed
         const link = document.createElement('a');
         link.href = fullUrl;
@@ -221,15 +223,49 @@ const MHDevelopmentTracker = () => {
     // Column Definitions
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
-        { field: 'departmentName', headerName: 'DEPT NAME', width: 140 },
-        { field: 'userName', headerName: 'USER NAME', width: 140 },
-        createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 160 }),
-        { field: 'requestType', headerName: 'REQ TYPE', width: 140 },
-        { field: 'productModel', headerName: 'PRODUCT MODEL', width: 160 },
-        { field: 'plantLocation', headerName: 'PLANT LOCATION', width: 160 },
-        { 
-            field: 'vendorSelection', 
-            headerName: 'VENDOR SELECTION', 
+        {
+            field: 'departmentName',
+            headerName: 'DEPT NAME',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'userName',
+            headerName: 'USER NAME',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            ...createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 160 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'requestType',
+            headerName: 'REQ TYPE',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'productModel',
+            headerName: 'PRODUCT MODEL',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'plantLocation',
+            headerName: 'PLANT LOCATION',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'vendorSelection',
+            headerName: 'VENDOR SELECTION',
             width: 200,
             cellRenderer: (params) => (
                 <div className="flex flex-col gap-1 py-1">
@@ -239,9 +275,9 @@ const MHDevelopmentTracker = () => {
                             <span className="text-[10px] text-gray-500 truncate">{params.data.vendorName}</span>
                         </div>
                     ) : (
-                        <Button 
-                            size="small" 
-                            type="primary" 
+                        <Button
+                            size="small"
+                            type="primary"
                             className="bg-tvs-blue text-[10px] h-6"
                             onClick={() => handleVendorSelect(params.data._id, params.data.plantLocation)}
                         >
@@ -256,8 +292,8 @@ const MHDevelopmentTracker = () => {
             headerName: 'PROJECT PLAN',
             width: 140,
             cellRenderer: (params) => (
-                <Button 
-                    size="small" 
+                <Button
+                    size="small"
                     icon={<Edit size={12} />}
                     className="flex items-center gap-1 text-[10px]"
                     onClick={() => handleProjectPlan(params.data._id)}
@@ -266,62 +302,76 @@ const MHDevelopmentTracker = () => {
                 </Button>
             )
         },
-        { 
-            field: 'implementationTarget', 
-            headerName: 'IMP. TARGET', 
+        {
+            field: 'implementationTarget',
+            headerName: 'IMP. TARGET',
             width: 140,
-            valueFormatter: (params) => params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-'
+            valueFormatter: (params) => params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            field: 'status', 
-            headerName: 'STATUS', 
+        {
+            field: 'status',
+            headerName: 'STATUS',
             width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(params.value)}`}>
                     {params.value}
                 </span>
             )
         },
-        { 
-            field: 'implementationVisibility', 
-            headerName: 'IMP. VISIBILITY', 
+        {
+            field: 'implementationVisibility',
+            headerName: 'IMP. VISIBILITY',
             width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="w-full flex flex-col gap-1">
                     <div className="flex justify-between text-[10px] font-bold">
                         <span>Progress</span>
                         <span>{params.value || 0}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                            className="h-full bg-tvs-blue transition-all duration-300" 
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                            className="bg-tvs-blue h-1.5 rounded-full transition-all"
                             style={{ width: `${params.value || 0}%` }}
                         />
                     </div>
                 </div>
             )
         },
-        { 
-            field: 'currentStage', 
-            headerName: 'CURRENT STAGE', 
+        {
+            field: 'currentStage',
+            headerName: 'CURRENT STAGE',
             width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStageColor(params.value)}`}>
                     {params.value}
                 </span>
             )
         },
-        { field: 'remarks', headerName: 'REMARKS', width: 200 },
-        { 
-            field: 'drawing', 
-            headerName: 'DRAWING', 
+        {
+            field: 'remarks',
+            headerName: 'REMARKS',
+            width: 200,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'drawing',
+            headerName: 'DRAWING',
             width: 140,
             cellRenderer: (params) => (
                 <div className="flex items-center gap-2">
                     {params.data.drawingUrl ? (
-                        <Button 
-                            size="small" 
-                            icon={<Download size={14} />} 
+                        <Button
+                            size="small"
+                            icon={<Download size={14} />}
                             className="text-tvs-blue"
                             onClick={() => handleDownloadDrawing(params.data.drawingUrl, params.data.drawingFileName)}
                         />
@@ -354,60 +404,35 @@ const MHDevelopmentTracker = () => {
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-tvs-blue rounded-2xl shadow-lg shadow-tvs-blue/20 flex items-center justify-center">
-                        <TrendingUp size={28} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">MH Development Tracker</h1>
-                        <p className="text-gray-500 font-medium">Monitor MH requests from initiation to implementation</p>
-                    </div>
-                </div>
-                <button
-                    onClick={handleAddClick}
-                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={20} /> Add Tracker
-                </button>
-            </div>
-
             {/* Content Section */}
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                {/* Search & Stats */}
-                <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/30">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="relative flex-1 max-w-md">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search size={18} className="text-gray-400" />
-                            </div>
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-tvs-blue/20 focus:border-tvs-blue shadow-sm hover:shadow-md transition-all bg-white"
-                                placeholder="Search by ID, Vendor, Model..."
+                {/* Stats & Actions */}
+                <div className="p-6" style={{ backgroundColor: '#fafafa' }}>
+                    <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span>Showing <span className="text-gray-900 font-bold">{filteredTrackers.length}</span> active requests</span>
+                        </div>
+                        <button
+                            onClick={handleAddClick}
+                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
+                        >
+                            <Plus size={20} /> Add Tracker
+                        </button>
+                    </div>
+
+                    {/* Grid */}
+                    <div className="px-8 py-6">
+                        <div className="ag-theme-alpine w-full h-[600px]">
+                            <AgGridReact
+                                ref={gridRef}
+                                rowData={filteredTrackers}
+                                columnDefs={columnDefs}
+                                defaultColDef={defaultColDef}
+                                {...defaultGridOptions}
+                                loading={loading}
                             />
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-200 shadow-sm">
-                            <span className="text-sm text-gray-500">Total Requests:</span>
-                            <span className="text-sm font-bold text-tvs-blue">{filteredTrackers.length}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Grid */}
-                <div className="px-8 py-6">
-                    <div className="ag-theme-alpine w-full h-[600px]">
-                        <AgGridReact
-                            ref={gridRef}
-                            rowData={filteredTrackers}
-                            columnDefs={columnDefs}
-                            defaultColDef={defaultColDef}
-                            {...defaultGridOptions}
-                            loading={loading}
-                        />
                     </div>
                 </div>
             </div>
@@ -483,7 +508,7 @@ const MHDevelopmentTracker = () => {
             </Modal>
 
             {/* Vendor Selection Popup */}
-            <VendorSelectionPopup 
+            <VendorSelectionPopup
                 visible={vendorPopupVisible}
                 onCancel={() => {
                     setVendorPopupVisible(false);
