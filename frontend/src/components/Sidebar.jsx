@@ -75,7 +75,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                         transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
                                         className="relative"
                                     >
-                                        <img src={tvsLogo} alt="TVS Logo" className="h-10 w-auto object-contain drop-shadow-sm" />
+                                        <img src={tvsLogo} alt="TVS Logo" className="h-12 w-full object-cover drop-shadow-sm" />
                                     </motion.div>
                                 </div>
                                 <button 
