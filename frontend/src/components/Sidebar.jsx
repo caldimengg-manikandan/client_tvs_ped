@@ -57,6 +57,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-colors duration-300`}
             >
                 {/* Logo Section */}
+<<<<<<< HEAD
                 <div className={`h-header flex items-center ${isSidebarOpen ? 'px-4' : 'px-0 justify-center'} border-b border-gray-50 bg-white/50 backdrop-blur-md overflow-hidden transition-all duration-300`}>
                     <div className={`flex items-center gap-3 group cursor-pointer ${isSidebarOpen ? 'w-full' : ''}`}>
                         <AnimatePresence mode="wait">
@@ -67,6 +68,32 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     className="relative flex items-center justify-center w-full h-full"
+=======
+                <div className={`h-header flex items-center ${isSidebarOpen ? 'px-6' : 'px-0 justify-center'} border-b border-gray-50 bg-white/50 backdrop-blur-md overflow-hidden transition-all duration-300`}>
+                <div className={`flex items-center gap-3 group cursor-pointer ${isSidebarOpen ? 'w-full' : ''}`}>
+                    <AnimatePresence mode="wait">
+                        {isSidebarOpen ? (
+                            <motion.div
+                                key="full-logo"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="flex items-center justify-between w-full"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <motion.div
+                                        whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+                                        animate={{ y: [0, -2, 0] }}
+                                        transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
+                                        className="relative"
+                                    >
+                                        <img src={tvsLogo} alt="TVS Logo" className="h-12 w-full object-cover drop-shadow-sm" />
+                                    </motion.div>
+                                </div>
+                                <button 
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-tvs-blue transition-colors"
+>>>>>>> 6486497852c9e9702d5d5fe4a09dd8258075c867
                                 >
                                     <div className="flex items-center justify-center w-full h-full">
                                         <motion.div

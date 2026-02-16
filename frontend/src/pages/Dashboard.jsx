@@ -229,8 +229,8 @@ const Dashboard = () => {
                 <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 p-10">
                     <div className="flex items-center gap-6">
                         <div className="relative">
-                            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100 p-2">
-                                <img src={tvsLogo} alt="TVS" className="w-full h-full object-contain" />
+                            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100">
+                                <img src={tvsLogo} alt="TVS" className="w-full h-full object-cover" />
                             </div>
                             <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-emerald-500 border-4 border-white flex items-center justify-center shadow-lg">
                                 <Activity className="text-white" size={14} />
