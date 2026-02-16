@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Download, UserPlus, X, Check, Search, Filter, ChevronDown } from 'lucide-react';
+import { Download, UserPlus, X, Check, ArrowRight, Paperclip, Package } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAssetRequests, updateAssetRequest, sendEmailNotification } from '../redux/slices/assetRequestSlice';
 import { fetchEmployees } from '../redux/slices/employeeSlice';
 import { AgGridReact } from 'ag-grid-react';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createBoldColumn } from '../config/agGridConfig';
+import CustomCheckboxFilter from '../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../components/AgGridCustom/CustomHeader';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -23,11 +25,7 @@ const RequestTracker = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [selectedMembers, setSelectedMembers] = useState([]);
 
-    // Search and Filter State
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [categoryFilter, setCategoryFilter] = useState('all');
-    const [typeFilter, setTypeFilter] = useState('all');
+
 
     useEffect(() => {
         dispatch(fetchAssetRequests());
@@ -111,7 +109,7 @@ const RequestTracker = () => {
             ...request,
             status: newStatus
         };
-        
+
         // updateAssetRequest expects { id, formData }
         const result = await dispatch(updateAssetRequest({ id: request._id, formData }));
 
@@ -147,96 +145,210 @@ const RequestTracker = () => {
         return `${API_BASE_URL.replace('/api', '')}${path}`;
     };
 
-    // Filter requests with safety check
-    const filteredRequests = (requests || []).filter(req => {
-        const matchesSearch =
-            String(req.mhRequestId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(req.departmentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(req.location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(req.handlingPartName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(req.userName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    // Helper to download file
+    const downloadFile = (path, filename) => {
+        const url = getFileUrl(path);
+        if (url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            toast.error('File not found or URL is invalid.');
+        }
+    };
 
-        const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
-        const matchesType = typeFilter === 'all' || req.requestType === typeFilter;
+    // Placeholder for handleAccept and handleReject
+    const handleAccept = async (id) => {
+        const request = requests.find(req => req._id === id);
+        if (request) {
+            await handleStatusChange(request, 'Accepted');
+        }
+    };
 
-        return matchesSearch && matchesStatus && matchesType;
-    });
+    const handleReject = async (id) => {
+        const request = requests.find(req => req._id === id);
+        if (request) {
+            await handleStatusChange(request, 'Rejected');
+        }
+    };
+
+    const handleAllocateAsset = (request) => {
+        toast.info(`Allocate asset for request ${request.mhRequestId}`);
+        // Implement allocation logic here
+    };
+
+    // Use all requests without filtering
+    const filteredRequests = requests || [];
 
     const columnDefs = React.useMemo(() => [
         createSerialNumberColumn(),
-        { 
-            headerName: 'MH ID', 
-            field: 'mhRequestId', 
-            width: 140,
+        {
+            headerName: 'MH ID',
+            field: 'mhRequestId',
+            width: 150,
+            pinned: 'left',
             cellClass: 'ag-cell-bold',
-            pinned: 'left'
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { headerName: 'DEPT', field: 'departmentName', width: 140 },
-        { 
-            headerName: 'TYPE', 
-            field: 'requestType',
-            width: 150,
-            cellRenderer: (params) => (
-                <span className="text-[10px] font-black uppercase bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full border border-gray-100">
-                    {params.value}
-                </span>
-            )
+        {
+            headerName: 'DEPT',
+            field: 'departmentName',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { headerName: 'PLANT', field: 'plantLocation', width: 160 },
-        { headerName: 'PRODUCT', field: 'productModel', width: 150 },
-        { headerName: 'PART NAME', field: 'handlingPartName', width: 180 },
-        { headerName: 'HANDLING LOC', field: 'materialHandlingLocation', width: 180 },
-        { 
-            headerName: 'FLOW', 
-            width: 150,
-            valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
-            cellClass: 'font-bold text-tvs-blue'
-        },
-        { 
-            headerName: 'VOL/DAY', 
-            field: 'volumePerDay', 
-            width: 100,
-            cellClass: 'text-center font-black'
-        },
-        createBoldColumn('userName', 'USER NAME', { width: 150 }),
-        { headerName: 'USER LOC', field: 'location', width: 140 },
         {
             headerName: 'STATUS',
             field: 'status',
-            width: 150,
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => {
-                const req = params.data;
+                const statusColors = {
+                    'Active': 'bg-blue-50 text-tvs-blue border-blue-200',
+                    'Accepted': 'bg-green-50 text-green-700 border-green-200',
+                    'Rejected': 'bg-red-50 text-red-700 border-red-200'
+                };
                 return (
-                    <div className="relative inline-block h-full flex items-center" onClick={e => e.stopPropagation()}>
-                        <select
-                            value={req.status}
-                            onChange={(e) => handleStatusChange(req, e.target.value)}
-                            disabled={req.status === 'Accepted' || req.status === 'Rejected'}
-                            title={req.status === 'Accepted' || req.status === 'Rejected' ? 'Status is locked and cannot be changed' : 'Change status'}
-                            className={`px-3 py-1 pr-8 rounded-full text-[10px] font-black uppercase border outline-none transition-all appearance-none min-w-[110px] shadow-sm ${
-                                req.status === 'Accepted' || req.status === 'Rejected'
-                                    ? 'cursor-not-allowed opacity-75'
-                                    : 'cursor-pointer'
-                            } ${req.status === 'Accepted' ? 'bg-green-50 text-green-700 border-green-200' :
-                                req.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' :
-                                    'bg-blue-50 text-tvs-blue border-blue-200 hover:border-blue-400'
-                                }`}
-                        >
-                            <option value="Active">Active</option>
-                            <option value="Accepted">Accepted</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                            {req.status === 'Accepted' || req.status === 'Rejected' ? (
-                                <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                </svg>
-                            ) : (
-                                <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            )}
-                        </div>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${statusColors[params.value] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                        {params.value}
+                    </span>
+                );
+            }
+        },
+        {
+            headerName: 'LOCATION',
+            field: 'location',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'PRODUCT',
+            field: 'productModel',
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'PART',
+            field: 'handlingPartName',
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'HANDLING LOC',
+            field: 'materialHandlingLocation',
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'FLOW',
+            width: 170,
+            valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
+            cellRenderer: (params) => (
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">{params.data.from}</span>
+                    <ArrowRight size={14} className="text-gray-400" />
+                    <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded font-medium">{params.data.to}</span>
+                </div>
+            )
+        },
+        {
+            headerName: 'PROBLEM',
+            field: 'problemStatement',
+            width: 230,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'USER',
+            field: 'userName',
+            width: 150,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'ATTACHMENTS',
+            width: 100,
+            cellRenderer: (params) => {
+                const hasDrawing = params.data.drawingFile?.filename;
+                return hasDrawing ? (
+                    <button
+                        onClick={() => downloadFile(params.data.drawingFile.path, params.data.drawingFile.filename)}
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                        <Paperclip size={14} />
+                        <Download size={14} />
+                    </button>
+                ) : (
+                    <span className="text-gray-400 text-xs">No file</span>
+                );
+            }
+        },
+        {
+            headerName: 'ASSET ID',
+            field: 'allocationAssetId',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
+            cellRenderer: (params) => {
+                return params.value ? (
+                    <span className="px-2.5 py-1 bg-tvs-blue text-white rounded-lg font-bold text-xs inline-block">
+                        {params.value}
+                    </span>
+                ) : (
+                    <span className="text-gray-400 text-xs">Not Allocated</span>
+                );
+            }
+        },
+        {
+            headerName: 'ACTIONS',
+            width: 120,
+            pinned: 'right',
+            sortable: false,
+            filter: false,
+            cellRenderer: (params) => {
+                const isPending = params.data.status === 'Active'; // Assuming 'Active' is the new 'Pending'
+                const isRejected = params.data.status === 'Rejected';
+
+                return (
+                    <div className="flex gap-2">
+                        {isPending && (
+                            <>
+                                <button
+                                    onClick={() => handleAccept(params.data._id)}
+                                    className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                                    title="Accept Request"
+                                >
+                                    <Check size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleReject(params.data._id)}
+                                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
+                                    title="Reject Request"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </>
+                        )}
+                        {!isPending && !isRejected && (
+                            <button
+                                onClick={() => handleAllocateAsset(params.data)}
+                                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border border-blue-200 text-xs font-medium"
+                            >
+                                <Package size={14} />
+                                Allocate
+                            </button>
+                        )}
                     </div>
                 );
             }
@@ -275,65 +387,6 @@ const RequestTracker = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-            <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <h1 className="text-xl font-bold text-tvs-dark-gray m-0">MH Request Tracker</h1>
-                <div className="text-sm font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    Total Tracking: {filteredRequests.length}
-                </div>
-            </div>
-
-            {/* Search and Filters */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search size={18} className="text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                            placeholder="Search by ID, department, user..."
-                        />
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center whitespace-nowrap">
-                            <Filter size={18} className="text-gray-400 mr-2" />
-                            <span className="text-sm font-bold text-gray-700 uppercase tracking-tighter">Status:</span>
-                        </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-semibold text-sm"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Accepted">Accepted</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center whitespace-nowrap">
-                            <span className="text-sm font-bold text-gray-700 uppercase tracking-tighter">Request Type:</span>
-                        </div>
-                        <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-semibold text-sm"
-                        >
-                            <option value="all">All Types</option>
-                            <option value="New Project">New Project</option>
-                            <option value="Upgrade">Upgrade</option>
-                            <option value="Refresh">Refresh</option>
-                            <option value="Capacity">Capacity</option>
-                            <option value="Special Improvements">Special Improvements</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
             <div className="ag-theme-alpine w-full h-[600px]">
                 <AgGridReact

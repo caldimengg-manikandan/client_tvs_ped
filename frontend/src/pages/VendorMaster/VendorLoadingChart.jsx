@@ -1,20 +1,22 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Download, RefreshCw, BarChart2, PieChart, Users, AlertCircle, Edit3, Layout, Layers, Upload } from 'lucide-react';
+import { Download, AlertCircle, Edit3, Upload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendorLoading, updateVendorLoading, bulkImportVendorLoading } from '../../redux/slices/vendorLoadingSlice';
 import { Modal, Form, InputNumber } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createBoldColumn } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 import * as XLSX from 'xlsx';
 
 const VendorLoadingChart = () => {
     const dispatch = useDispatch();
     const gridRef = useRef();
     const [form] = Form.useForm();
-    
+
     const { items: loadingData, loading, error } = useSelector((state) => state.vendorLoading);
-    
+
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
 
@@ -83,7 +85,7 @@ const VendorLoadingChart = () => {
 
                 const loadingToast = toast.loading('Importing loading data...');
                 const result = await dispatch(bulkImportVendorLoading(data));
-                
+
                 if (bulkImportVendorLoading.fulfilled.match(result)) {
                     toast.success(`Successfully imported ${result.payload.successCount} entries`, { id: loadingToast });
                     dispatch(fetchVendorLoading());
@@ -99,46 +101,84 @@ const VendorLoadingChart = () => {
         reader.readAsBinaryString(file);
     };
 
-    const stats = useMemo(() => {
-        if (!loadingData.length) return { total: 0, avgLoad: 0, available: 0 };
-        const total = loadingData.length;
-        const avgLoad = loadingData.reduce((acc, curr) => acc + curr.loadingPercentage, 0) / total;
-        const available = loadingData.filter(v => v.loadingPercentage < 100).length;
-        return { total, avgLoad: avgLoad.toFixed(1), available };
-    }, [loadingData]);
 
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
-        createBoldColumn('vendorCode', 'CODE', { width: 120 }),
-        createBoldColumn('vendorName', 'VENDOR NAME', { width: 180 }),
-        { field: 'location', headerName: 'LOCATION', width: 140 },
-        { 
-            field: 'totalProjects', 
-            headerName: 'TOTAL', 
-            width: 90,
-            cellClass: 'text-center font-bold text-tvs-blue bg-blue-50/30'
+        {
+            ...createBoldColumn('vendorCode', 'CODE', { width: 120 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { field: 'completedProjects', headerName: 'COMPLETED', width: 110, cellClass: 'text-center' },
-        { field: 'designStageProjects', headerName: 'DESIGN', width: 90, cellClass: 'text-center' },
-        { field: 'trialStageProjects', headerName: 'TRIAL', width: 90, cellClass: 'text-center' },
-        { field: 'bulkProjects', headerName: 'BULK', width: 90, cellClass: 'text-center' },
+        {
+            ...createBoldColumn('vendorName', 'VENDOR NAME', { width: 180 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'location',
+            headerName: 'LOCATION',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'totalProjects',
+            headerName: 'TOTAL',
+            width: 90,
+            cellClass: 'text-center font-bold text-tvs-blue bg-blue-50/30',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'completedProjects',
+            headerName: 'COMPLETED',
+            width: 110,
+            cellClass: 'text-center',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'designStageProjects',
+            headerName: 'DESIGN',
+            width: 90,
+            cellClass: 'text-center',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'trialStageProjects',
+            headerName: 'TRIAL',
+            width: 90,
+            cellClass: 'text-center',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'bulkProjects',
+            headerName: 'BULK',
+            width: 90,
+            cellClass: 'text-center',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
         {
             field: 'loadingPercentage',
             headerName: 'LOADING %',
             width: 130,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => {
                 const perc = params.value;
                 let colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
                 if (perc >= 85) colorClass = 'bg-rose-100 text-rose-700 border-rose-200';
                 else if (perc >= 60) colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
-                
+
                 return (
                     <div className="flex items-center gap-2 h-full">
                         <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden flex-1">
-                            <div 
-                                className={`h-full transition-all duration-500 ${
-                                    perc >= 85 ? 'bg-rose-500' : perc >= 60 ? 'bg-amber-500' : 'bg-emerald-500'
-                                }`}
+                            <div
+                                className={`h-full transition-all duration-500 ${perc >= 85 ? 'bg-rose-500' : perc >= 60 ? 'bg-amber-500' : 'bg-emerald-500'
+                                    }`}
                                 style={{ width: `${Math.min(perc, 100)}%` }}
                             />
                         </div>
@@ -149,16 +189,20 @@ const VendorLoadingChart = () => {
                 );
             }
         },
-        { 
-            field: 'gap', 
-            headerName: 'GAP', 
+        {
+            field: 'gap',
+            headerName: 'GAP',
             width: 90,
-            cellClass: (params) => `text-center font-black ${params.value > 0 ? 'text-emerald-600' : 'text-rose-600'}`
+            cellClass: (params) => `text-center font-black ${params.value > 0 ? 'text-emerald-600' : 'text-rose-600'}`,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            field: 'qcdScore', 
-            headerName: 'QCD', 
+        {
+            field: 'qcdScore',
+            headerName: 'QCD',
             width: 90,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="text-center font-black text-gray-500 italic">
                     {params.value || '-'}
@@ -170,7 +214,7 @@ const VendorLoadingChart = () => {
             width: 80,
             pinned: 'right',
             cellRenderer: (params) => (
-                <button 
+                <button
                     onClick={() => handleEditClick(params.data)}
                     className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all"
                 >
@@ -181,105 +225,44 @@ const VendorLoadingChart = () => {
     ], []);
 
     return (
-        <div className="fade-in space-y-6">
-            {/* Header */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex justify-between items-center bg-gradient-to-r from-white to-gray-50/50">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/20 text-white">
-                        <Layers size={24} />
+        <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
+            {/* AG Grid Table */}
+            <div className="px-8 py-6">
+                {/* Toolbar with Export */}
+                <div className="mb-5 flex items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{loadingData?.length || 0}</span> vendors</span>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-900 m-0 tracking-tight">Vendor Loading Chart</h1>
-                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-0.5">Real-time Capacity & Allocation Management</p>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                        >
+                            <Download size={18} />
+                            Template
+                        </button>
+                        <label className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95 cursor-pointer">
+                            <Upload size={18} />
+                            Import Excel
+                            <input type="file" accept=".csv, .xlsx, .xls" className="hidden" onChange={handleImport} />
+                        </label>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button 
-                        onClick={() => dispatch(fetchVendorLoading())}
-                        className="p-3 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-xl transition-all"
-                    >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                    <button 
-                        onClick={handleExport}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-[#1d61ff] text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all"
-                    >
-                        <Download size={18} />
-                        Template
-                    </button>
-                    <label className="flex items-center gap-2 px-5 py-2.5 bg-[#00b067] text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-100 hover:bg-emerald-600 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer">
-                        <Upload size={18} />
-                        Import Excel
-                        <input type="file" accept=".csv, .xlsx, .xls" className="hidden" onChange={handleImport} />
-                    </label>
-                </div>
-            </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 translate-y-0 hover:-translate-y-1 transition-transform">
-                    <div className="w-14 h-14 bg-blue-50 text-tvs-blue rounded-xl flex items-center justify-center">
-                        <Users size={28} />
-                    </div>
-                    <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Registered</span>
-                        <div className="text-2xl font-black text-gray-900">{stats.total} Vendors</div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 translate-y-0 hover:-translate-y-1 transition-transform">
-                    <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-                        <PieChart size={28} />
-                    </div>
-                    <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Avg Grid Load</span>
-                        <div className="text-2xl font-black text-gray-900">{stats.avgLoad}% Usage</div>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 translate-y-0 hover:-translate-y-1 transition-transform">
-                    <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                        <BarChart2 size={28} />
-                    </div>
-                    <div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Available Vendors</span>
-                        <div className="text-2xl font-black text-emerald-600">{stats.available} Ready</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Table Area */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50/50 px-8 py-5 border-b border-gray-100 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <Layout size={18} className="text-gray-400" />
-                        <span className="text-sm font-black text-gray-700 uppercase tracking-tighter">Capacity Matrix</span>
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 bg-emerald-500 rounded-full"></span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Healthy (&lt;60%)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 bg-amber-500 rounded-full"></span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Normal (60-85%)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 bg-rose-500 rounded-full"></span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Overload (&gt;85%)</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="p-8 pb-10">
-                    <div className="ag-theme-alpine w-full h-[600px] border border-gray-100 rounded-2xl overflow-hidden shadow-inner bg-gray-50">
-                        <AgGridReact
-                            ref={gridRef}
-                            theme="legacy"
-                            rowData={loadingData}
-                            columnDefs={columnDefs}
-                            defaultColDef={defaultColDef}
-                            {...defaultGridOptions}
-                            loading={loading}
-                        />
-                    </div>
+                {/* Clean Minimalist AG Grid */}
+                <div className="ag-theme-alpine w-full h-[620px]">
+                    <AgGridReact
+                        ref={gridRef}
+                        theme="legacy"
+                        rowData={loadingData}
+                        columnDefs={columnDefs}
+                        defaultColDef={defaultColDef}
+                        {...defaultGridOptions}
+                        loading={loading}
+                    />
                 </div>
             </div>
 
@@ -312,8 +295,8 @@ const VendorLoadingChart = () => {
                     className="mt-6 font-inter"
                 >
                     <div className="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                        <Form.Item 
-                            name="vendorCapacity" 
+                        <Form.Item
+                            name="vendorCapacity"
                             label={<span className="text-xs font-black text-gray-400 uppercase tracking-widest">Max Capacity (Nos)</span>}
                             rules={[{ required: true, type: 'number', min: 1 }]}
                         >
@@ -322,33 +305,33 @@ const VendorLoadingChart = () => {
                         <div></div> {/* Empty for grid */}
 
                         <div className="col-span-2 grid grid-cols-2 gap-4 mt-2">
-                            <Form.Item 
-                                name="completedProjects" 
+                            <Form.Item
+                                name="completedProjects"
                                 label={<span className="text-[10px] font-black text-gray-500 uppercase">Completed</span>}
                             >
                                 <InputNumber className="w-full rounded-lg" min={0} />
                             </Form.Item>
-                            <Form.Item 
-                                name="designStageProjects" 
+                            <Form.Item
+                                name="designStageProjects"
                                 label={<span className="text-[10px] font-black text-gray-500 uppercase">Design Stage</span>}
                             >
                                 <InputNumber className="w-full rounded-lg" min={0} />
                             </Form.Item>
-                            <Form.Item 
-                                name="trialStageProjects" 
+                            <Form.Item
+                                name="trialStageProjects"
                                 label={<span className="text-[10px] font-black text-gray-500 uppercase">Trial Stage</span>}
                             >
                                 <InputNumber className="w-full rounded-lg" min={0} />
                             </Form.Item>
-                            <Form.Item 
-                                name="bulkProjects" 
+                            <Form.Item
+                                name="bulkProjects"
                                 label={<span className="text-[10px] font-black text-gray-500 uppercase">Bulk Production</span>}
                             >
                                 <InputNumber className="w-full rounded-lg" min={0} />
                             </Form.Item>
                         </div>
                     </div>
-                    
+
                     <div className="mt-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
                         <AlertCircle size={18} className="text-blue-500 mt-0.5" />
                         <p className="text-[11px] font-semibold text-blue-700 leading-relaxed m-0">

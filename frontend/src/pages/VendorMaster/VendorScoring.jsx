@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Plus, Search, RefreshCw, Star, BarChart, Download, Upload, Eye, Edit, Trash2, TrendingUp, Calendar } from 'lucide-react';
+import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendorScores, createVendorScore, updateVendorScore, deleteVendorScore, fetchVendorPerformance } from '../../redux/slices/vendorScoringSlice';
@@ -7,6 +7,8 @@ import { fetchVendors } from '../../redux/slices/vendorSlice';
 import { Modal, Select, InputNumber, Form, DatePicker } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createBoldColumn } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 import * as XLSX from 'xlsx';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -43,11 +45,10 @@ const VendorScoring = () => {
     const gridRef = useRef();
     const fileInputRef = useRef();
     const [form] = Form.useForm();
-    
+
     const { items: scores, loading, error } = useSelector((state) => state.vendorScoring);
     const { items: vendors } = useSelector((state) => state.vendors);
-    
-    const [searchTerm, setSearchTerm] = useState('');
+
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isPerformanceModalVisible, setIsPerformanceModalVisible] = useState(false);
     const [editingScore, setEditingScore] = useState(null);
@@ -105,10 +106,10 @@ const VendorScoring = () => {
     const handleEditClick = (score) => {
         setEditingScore(score);
         setSelectedVendor(null); // Vendor details are read-only in edit mode
-        setTempScores({ 
-            qsr: score.qsrScore, 
-            cost: score.costScore, 
-            delivery: score.deliveryScore 
+        setTempScores({
+            qsr: score.qsrScore,
+            cost: score.costScore,
+            delivery: score.deliveryScore
         });
         form.setFieldsValue({
             vendorId: score.vendorId,
@@ -132,7 +133,7 @@ const VendorScoring = () => {
             console.log('Fetching performance for score:', score);
             console.log('Vendor ID raw:', score.vendorId);
             console.log('Vendor ID type:', typeof score.vendorId);
-            
+
             if (!score.vendorId) {
                 toast.error('Vendor ID is missing. Please recreate this score entry.');
                 return;
@@ -140,7 +141,7 @@ const VendorScoring = () => {
 
             // Extract vendorId string - handle all possible formats
             let vendorIdString = score.vendorId;
-            
+
             // If it's an object with _id property
             if (typeof vendorIdString === 'object' && vendorIdString !== null) {
                 if (vendorIdString._id) {
@@ -151,7 +152,7 @@ const VendorScoring = () => {
                     vendorIdString = vendorIdString.toString();
                 }
             }
-            
+
             // Convert to string if it has toString method
             if (vendorIdString && typeof vendorIdString.toString === 'function' && typeof vendorIdString !== 'string') {
                 vendorIdString = vendorIdString.toString();
@@ -160,13 +161,13 @@ const VendorScoring = () => {
             console.log('Vendor ID String (final):', vendorIdString);
             console.log('Vendor ID String type:', typeof vendorIdString);
 
-            const result = await dispatch(fetchVendorPerformance({ 
-                vendorId: vendorIdString, 
-                year: new Date().getFullYear() 
+            const result = await dispatch(fetchVendorPerformance({
+                vendorId: vendorIdString,
+                year: new Date().getFullYear()
             }));
-            
+
             console.log('Performance result:', result);
-            
+
             if (fetchVendorPerformance.fulfilled.match(result)) {
                 setPerformanceData(result.payload.data);
                 setIsPerformanceModalVisible(true);
@@ -200,7 +201,7 @@ const VendorScoring = () => {
             console.log('Form submission started...');
             const values = await form.validateFields();
             console.log('Form values:', values);
-            
+
             if (editingScore) {
                 // Update - only send editable fields
                 const updateData = {
@@ -211,13 +212,13 @@ const VendorScoring = () => {
                     delayRate: values.delayRate,
                     remarks: values.remarks
                 };
-                
+
                 console.log('Updating score:', editingScore._id, updateData);
-                const result = await dispatch(updateVendorScore({ 
-                    id: editingScore._id, 
-                    scoreData: updateData 
+                const result = await dispatch(updateVendorScore({
+                    id: editingScore._id,
+                    scoreData: updateData
                 }));
-                
+
                 console.log('Update result:', result);
                 if (updateVendorScore.fulfilled.match(result)) {
                     toast.success('Vendor score updated successfully');
@@ -231,7 +232,7 @@ const VendorScoring = () => {
                 console.log('Creating new score with values:', values);
                 const result = await dispatch(createVendorScore(values));
                 console.log('Create result:', result);
-                
+
                 if (createVendorScore.fulfilled.match(result)) {
                     toast.success('Vendor score created successfully');
                     setIsModalVisible(false);
@@ -310,7 +311,7 @@ const VendorScoring = () => {
 
                 console.log('Importing scores:', transformedData);
                 toast.success(`${transformedData.length} scores ready to import`);
-                
+
                 // TODO: Implement bulk import
                 // dispatch(bulkImportVendorScores(transformedData));
             } catch (error) {
@@ -323,21 +324,33 @@ const VendorScoring = () => {
         event.target.value = '';
     };
 
-    const filteredScores = (scores || []).filter(s => 
-        s.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.vendorCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.location?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
 
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
-        createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
-        createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
-        { field: 'location', headerName: 'LOCATION', width: 160 },
-        { 
-            field: 'qsrScore', 
-            headerName: 'QSR (40%)', 
+        {
+            ...createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            ...createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'location',
+            headerName: 'LOCATION',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            field: 'qsrScore',
+            headerName: 'QSR (40%)',
             width: 130,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-yellow-500 fill-yellow-500" />
@@ -345,10 +358,12 @@ const VendorScoring = () => {
                 </div>
             )
         },
-        { 
-            field: 'costScore', 
-            headerName: 'COST (30%)', 
+        {
+            field: 'costScore',
+            headerName: 'COST (30%)',
             width: 130,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-blue-500 fill-blue-500" />
@@ -356,10 +371,12 @@ const VendorScoring = () => {
                 </div>
             )
         },
-        { 
-            field: 'deliveryScore', 
-            headerName: 'ONTIME DELIVERY (30%)', 
+        {
+            field: 'deliveryScore',
+            headerName: 'ONTIME DELIVERY (30%)',
             width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-green-500 fill-green-500" />
@@ -367,11 +384,13 @@ const VendorScoring = () => {
                 </div>
             )
         },
-        { 
-            field: 'qcdScore', 
-            headerName: 'QCD SCORE', 
+        {
+            field: 'qcdScore',
+            headerName: 'QCD SCORE',
             width: 140,
             sort: 'desc',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
                 <div className="bg-tvs-blue/10 text-tvs-blue font-black px-3 py-1 rounded-lg border border-tvs-blue/20 text-center">
                     {params.value}
@@ -400,10 +419,7 @@ const VendorScoring = () => {
         ])
     ], []);
 
-    const topPerformer = useMemo(() => {
-        if (!scores || scores.length === 0) return null;
-        return [...scores].reduce((prev, current) => (prev.qcdScore > current.qcdScore) ? prev : current);
-    }, [scores]);
+
 
     // Chart data for performance modal
     const getMonthlyChartData = () => {
@@ -454,97 +470,15 @@ const VendorScoring = () => {
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
-            {/* Header */}
-            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-white via-gray-50/50 to-white">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-tvs-blue to-blue-600 rounded-xl shadow-md">
-                            <BarChart size={22} className="text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-tvs-dark-gray m-0 tracking-tight">Vendor Scoring</h1>
-                            <p className="text-sm text-gray-500 mt-0.5">Performance-based vendor evaluation</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => dispatch(fetchVendorScores())}
-                        className="ml-2 p-2.5 text-gray-400 hover:text-tvs-blue hover:bg-white rounded-xl transition-all shadow-sm border border-gray-200 hover:border-tvs-blue hover:shadow-md"
-                        title="Refresh List"
-                    >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-                <button
-                    onClick={handleAddClick}
-                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={20} /> Add Score
-                </button>
-            </div>
 
-            {/* Filters & Actions */}
-            <div className="px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Search size={18} className="text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all"
-                            placeholder="Search by code, name, location..."
-                        />
-                    </div>
-                    <div className="flex items-center justify-end gap-3">
-                        <button
-                            onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Download size={16} />
-                            Template
-                        </button>
-                        <button
-                            onClick={handleImportClick}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Upload size={16} />
-                            Import Excel
-                        </button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Info Bar */}
-            <div className="px-8 py-4 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 border-b border-gray-200/80">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-semibold text-gray-600">Weightage:</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">QSR: 40%</span>
-                            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">COST: 30%</span>
-                            <span className="text-xs font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">DELIVERY: 30%</span>
-                        </div>
-                    </div>
-                    {topPerformer && (
-                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-emerald-200 shadow-sm">
-                            <TrendingUp size={16} className="text-emerald-600" />
-                            <span className="text-sm font-bold text-gray-700">Top: {topPerformer.vendorName} ({topPerformer.qcdScore})</span>
-                        </div>
-                    )}
-                </div>
-            </div>
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+            />
 
             {/* AG Grid Table */}
             <div className="px-8 py-6">
@@ -552,8 +486,30 @@ const VendorScoring = () => {
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredScores?.length || 0}</span> scores</span>
+                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{scores?.length || 0}</span> scores</span>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleAddClick}
+                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
+                        >
+                            <Plus size={20} /> Add Score
+                        </button>
+                        <button
+                            onClick={handleDownloadTemplate}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-semibold transform hover:scale-105 active:scale-95"
+                        >
+                            <Download size={20} />
+                            Template
+                        </button>
+                        <button
+                            onClick={handleImportClick}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl font-semibold transform hover:scale-105 active:scale-95"
+                        >
+                            <Upload size={20} />
+                            Import Excel
+                        </button>
                     </div>
                 </div>
 
@@ -561,7 +517,7 @@ const VendorScoring = () => {
                     <AgGridReact
                         ref={gridRef}
                         theme="legacy"
-                        rowData={filteredScores}
+                        rowData={scores}
                         columnDefs={columnDefs}
                         defaultColDef={defaultColDef}
                         {...defaultGridOptions}
@@ -575,7 +531,7 @@ const VendorScoring = () => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm">
                         <span className="text-gray-600">Showing</span>
-                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredScores?.length || 0}</span>
+                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{scores?.length || 0}</span>
                         <span className="text-gray-600">of</span>
                         <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{scores?.length || 0}</span>
                         <span className="text-gray-600">vendor scores</span>
@@ -607,8 +563,8 @@ const VendorScoring = () => {
                 >
                     {/* Vendor Selection (only for new scores) */}
                     {!editingScore && (
-                        <Form.Item 
-                            name="vendorId" 
+                        <Form.Item
+                            name="vendorId"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Select Vendor</span>}
                             rules={[{ required: true, message: 'Please select a vendor' }]}
                         >
@@ -631,58 +587,58 @@ const VendorScoring = () => {
 
                     {/* Auto-filled Vendor Details (Read-only) */}
                     <div className="grid grid-cols-3 gap-4 mb-4">
-                        <Form.Item 
-                            name="vendorCode" 
+                        <Form.Item
+                            name="vendorCode"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Vendor Code</span>}
                         >
-                            <input 
+                            <input
                                 className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg font-semibold text-gray-700"
-                                disabled 
+                                disabled
                             />
                         </Form.Item>
-                        <Form.Item 
-                            name="vendorName" 
+                        <Form.Item
+                            name="vendorName"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Vendor Name</span>}
                         >
-                            <input 
+                            <input
                                 className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg font-semibold text-gray-700"
-                                disabled 
+                                disabled
                             />
                         </Form.Item>
-                        <Form.Item 
-                            name="location" 
+                        <Form.Item
+                            name="location"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Location</span>}
                         >
-                            <input 
+                            <input
                                 className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg font-semibold text-gray-700"
-                                disabled 
+                                disabled
                             />
                         </Form.Item>
                     </div>
 
                     {/* Scoring Period */}
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                        <Form.Item 
-                            name="scoringMonth" 
+                        <Form.Item
+                            name="scoringMonth"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Scoring Month</span>}
                             rules={[{ required: true, message: 'Required' }]}
                         >
                             <Select size="large" disabled={!!editingScore}>
-                                {['January', 'February', 'March', 'April', 'May', 'June', 
-                                  'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
-                                    <Option key={idx + 1} value={idx + 1}>{month}</Option>
-                                ))}
+                                {['January', 'February', 'March', 'April', 'May', 'June',
+                                    'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
+                                        <Option key={idx + 1} value={idx + 1}>{month}</Option>
+                                    ))}
                             </Select>
                         </Form.Item>
-                        <Form.Item 
-                            name="scoringYear" 
+                        <Form.Item
+                            name="scoringYear"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Scoring Year</span>}
                             rules={[{ required: true, message: 'Required' }]}
                         >
-                            <InputNumber 
-                                className="w-full" 
-                                size="large" 
-                                min={2020} 
+                            <InputNumber
+                                className="w-full"
+                                size="large"
+                                min={2020}
                                 max={2100}
                                 disabled={!!editingScore}
                             />
@@ -696,41 +652,41 @@ const VendorScoring = () => {
                             PERFORMANCE METRICS (1-5 SCALE)
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <Form.Item 
-                                name="qsrScore" 
+                            <Form.Item
+                                name="qsrScore"
                                 label={<span className="text-xs font-bold text-gray-500 uppercase">QSR (40%)</span>}
                                 rules={[{ required: true, type: 'number', min: 1, max: 5 }]}
                             >
-                                <InputNumber 
-                                    className="w-full" 
+                                <InputNumber
+                                    className="w-full"
                                     size="large"
-                                    min={1} 
+                                    min={1}
                                     max={5}
                                     onChange={(v) => handleScoreChange('qsr', v)}
                                 />
                             </Form.Item>
-                            <Form.Item 
-                                name="costScore" 
+                            <Form.Item
+                                name="costScore"
                                 label={<span className="text-xs font-bold text-gray-500 uppercase">Cost (30%)</span>}
                                 rules={[{ required: true, type: 'number', min: 1, max: 5 }]}
                             >
-                                <InputNumber 
-                                    className="w-full" 
+                                <InputNumber
+                                    className="w-full"
                                     size="large"
-                                    min={1} 
+                                    min={1}
                                     max={5}
                                     onChange={(v) => handleScoreChange('cost', v)}
                                 />
                             </Form.Item>
-                            <Form.Item 
-                                name="deliveryScore" 
+                            <Form.Item
+                                name="deliveryScore"
                                 label={<span className="text-xs font-bold text-gray-500 uppercase">Delivery (30%)</span>}
                                 rules={[{ required: true, type: 'number', min: 1, max: 5 }]}
                             >
-                                <InputNumber 
-                                    className="w-full" 
+                                <InputNumber
+                                    className="w-full"
                                     size="large"
-                                    min={1} 
+                                    min={1}
                                     max={5}
                                     onChange={(v) => handleScoreChange('delivery', v)}
                                 />
@@ -793,9 +749,9 @@ const VendorScoring = () => {
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">
                                         {performanceData.overallStats.avgOverallScore >= 4.5 ? '⭐ Excellent' :
-                                         performanceData.overallStats.avgOverallScore >= 4.0 ? '🌟 Very Good' :
-                                         performanceData.overallStats.avgOverallScore >= 3.5 ? '✨ Good' :
-                                         performanceData.overallStats.avgOverallScore >= 3.0 ? '📊 Average' : '⚠️ Needs Improvement'}
+                                            performanceData.overallStats.avgOverallScore >= 4.0 ? '🌟 Very Good' :
+                                                performanceData.overallStats.avgOverallScore >= 3.5 ? '✨ Good' :
+                                                    performanceData.overallStats.avgOverallScore >= 3.0 ? '📊 Average' : '⚠️ Needs Improvement'}
                                     </div>
                                 </div>
                             </div>
@@ -832,7 +788,7 @@ const VendorScoring = () => {
                                         <div className="flex flex-col border-l border-gray-800 pl-6">
                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Execution Efficiency</span>
                                             <div className="w-full bg-gray-800 h-2 rounded-full mt-3 overflow-hidden">
-                                                <div 
+                                                <div
                                                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000"
                                                     style={{ width: `${performanceData.liveInsight.completionRate}%` }}
                                                 ></div>
@@ -862,14 +818,14 @@ const VendorScoring = () => {
                                         {performanceData.overallStats.avgQSR || 'N/A'}
                                     </div>
                                     <div className="h-2 flex-1 mx-4 bg-gray-200 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full"
                                             style={{ width: `${(performanceData.overallStats.avgQSR / 5) * 100}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
                                 <div className="text-xs font-bold text-gray-500 uppercase mb-3">Cost Score (30%)</div>
                                 <div className="flex items-end justify-between">
@@ -877,14 +833,14 @@ const VendorScoring = () => {
                                         {performanceData.overallStats.avgCost || 'N/A'}
                                     </div>
                                     <div className="h-2 flex-1 mx-4 bg-gray-200 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full"
                                             style={{ width: `${(performanceData.overallStats.avgCost / 5) * 100}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
                                 <div className="text-xs font-bold text-gray-500 uppercase mb-3">Delivery Score (30%)</div>
                                 <div className="flex items-end justify-between">
@@ -892,7 +848,7 @@ const VendorScoring = () => {
                                         {performanceData.overallStats.avgDelivery || 'N/A'}
                                     </div>
                                     <div className="h-2 flex-1 mx-4 bg-gray-200 rounded-full overflow-hidden">
-                                        <div 
+                                        <div
                                             className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"
                                             style={{ width: `${(performanceData.overallStats.avgDelivery / 5) * 100}%` }}
                                         ></div>
@@ -912,7 +868,7 @@ const VendorScoring = () => {
                                     <span className="text-xs text-gray-500">{performanceData.monthlyPerformance.length} months tracked</span>
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm">
-                                    <Line 
+                                    <Line
                                         data={{
                                             labels: performanceData.monthlyPerformance.map(m => {
                                                 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -963,13 +919,13 @@ const VendorScoring = () => {
                                                     borderDash: [5, 5],
                                                 }
                                             ]
-                                        }} 
+                                        }}
                                         options={{
                                             responsive: true,
                                             maintainAspectRatio: true,
                                             aspectRatio: 2.5,
                                             plugins: {
-                                                legend: { 
+                                                legend: {
                                                     position: 'top',
                                                     labels: {
                                                         usePointStyle: true,
@@ -987,8 +943,8 @@ const VendorScoring = () => {
                                                 }
                                             },
                                             scales: {
-                                                y: { 
-                                                    beginAtZero: true, 
+                                                y: {
+                                                    beginAtZero: true,
                                                     max: 5,
                                                     ticks: {
                                                         font: { size: 11, weight: 'bold' },
@@ -1025,14 +981,14 @@ const VendorScoring = () => {
                                     <span className="text-xs text-gray-500">{performanceData.yearlyPerformance.length} years tracked</span>
                                 </div>
                                 <div className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm">
-                                    <Bar 
+                                    <Bar
                                         data={{
                                             labels: performanceData.yearlyPerformance.map(y => y.year),
                                             datasets: [
                                                 {
                                                     label: 'Average QCD Score',
                                                     data: performanceData.yearlyPerformance.map(y => y.avgScore),
-                                                    backgroundColor: performanceData.yearlyPerformance.map((y, i) => 
+                                                    backgroundColor: performanceData.yearlyPerformance.map((y, i) =>
                                                         `rgba(${99 + i * 20}, ${102 + i * 15}, 241, ${0.7 + i * 0.1})`
                                                     ),
                                                     borderColor: performanceData.yearlyPerformance.map(() => 'rgb(99, 102, 241)'),
@@ -1041,13 +997,13 @@ const VendorScoring = () => {
                                                     barThickness: 60,
                                                 }
                                             ]
-                                        }} 
+                                        }}
                                         options={{
                                             responsive: true,
                                             maintainAspectRatio: true,
                                             aspectRatio: 3,
                                             plugins: {
-                                                legend: { 
+                                                legend: {
                                                     display: false
                                                 },
                                                 tooltip: {
@@ -1070,8 +1026,8 @@ const VendorScoring = () => {
                                                 }
                                             },
                                             scales: {
-                                                y: { 
-                                                    beginAtZero: true, 
+                                                y: {
+                                                    beginAtZero: true,
                                                     max: 5,
                                                     ticks: {
                                                         font: { size: 11, weight: 'bold' },

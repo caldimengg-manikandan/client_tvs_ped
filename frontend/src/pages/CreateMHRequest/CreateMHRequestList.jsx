@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, Search, FileText, X, Filter } from 'lucide-react';
+import { Plus, FileText, X } from 'lucide-react';
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createBoldColumn } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -18,9 +20,8 @@ const CreateMHRequestList = () => {
     const dispatch = useDispatch();
     const { user } = useAuth();
     const { items: requests, loading, success, error } = useSelector((state) => state.assetRequests);
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
     const gridRef = useRef();
 
@@ -72,176 +73,150 @@ const CreateMHRequestList = () => {
                 }
             }
         });
-        
+
         dispatch(createAssetRequest(formData));
-    };
-
-
-    const onFilterTextBoxChanged = (e) => {
-        setSearchText(e.target.value);
-        if (gridRef.current && gridRef.current.api) {
-            gridRef.current.api.setQuickFilter(e.target.value);
-        }
     };
 
     // Column Definitions for AG Grid - All Input Fields
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
-        { 
-            headerName: 'MH ID', 
-            field: 'mhRequestId', 
+        {
+            headerName: 'MH ID',
+            field: 'mhRequestId',
             width: 140,
             cellClass: 'ag-cell-bold',
-            pinned: 'left'
+            pinned: 'left',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        createBoldColumn('departmentName', 'DEPT', { width: 120 }),
-        { 
-            headerName: 'TYPE', 
-            field: 'requestType', 
+        {
+            ...createBoldColumn('departmentName', 'DEPT', { width: 120 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'TYPE',
+            field: 'requestType',
             width: 150,
-            cellClass: 'ag-cell-bold'
+            cellClass: 'ag-cell-bold',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'PLANT', 
-            field: 'plantLocation', 
-            width: 160 
+        {
+            headerName: 'PLANT',
+            field: 'plantLocation',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'PRODUCT', 
-            field: 'productModel', 
-            width: 180 
+        {
+            headerName: 'PRODUCT',
+            field: 'productModel',
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'PART NAME', 
-            field: 'handlingPartName', 
-            width: 160 
+        {
+            headerName: 'PART NAME',
+            field: 'handlingPartName',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'HANDLING LOC', 
-            field: 'materialHandlingLocation', 
-            width: 180 
+        {
+            headerName: 'HANDLING LOC',
+            field: 'materialHandlingLocation',
+            width: 180,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'FLOW', 
+        {
+            headerName: 'FLOW',
             width: 150,
             valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
-            cellClass: 'font-bold text-tvs-blue'
+            cellClass: 'font-bold text-tvs-blue',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'VOL/DAY', 
-            field: 'volumePerDay', 
+        {
+            headerName: 'VOL/DAY',
+            field: 'volumePerDay',
             width: 100,
-            cellClass: 'text-center font-black'
+            cellClass: 'text-center font-black',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'PROBLEM STATEMENT', 
-            field: 'problemStatement', 
+        {
+            headerName: 'PROBLEM STATEMENT',
+            field: 'problemStatement',
             width: 250,
-            tooltipField: 'problemStatement'
+            tooltipField: 'problemStatement',
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        createBoldColumn('userName', 'USER NAME', { width: 150 }),
-        { 
-            headerName: 'USER LOC', 
-            field: 'location', 
-            width: 140 
+        {
+            ...createBoldColumn('userName', 'USER NAME', { width: 150 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'USER LOC',
+            field: 'location',
+            width: 140,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         }
     ], []);
 
 
     return (
         <div className="flex flex-col h-full space-y-6 fade-in pb-12">
-            {/* Professional Header Section */}
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-gradient-to-br from-tvs-blue to-blue-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-tvs-blue/20">
-                        <FileText size={28} />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 font-outfit tracking-tight">MH Request Console</h1>
-                        <p className="text-gray-500 font-medium">Material Handling Assets & Workflow Management</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-80 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-tvs-blue transition-colors" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Quick search requests..."
-                            className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-tvs-blue/30 focus:ring-4 focus:ring-tvs-blue/5 rounded-2xl text-sm font-semibold transition-all outline-none"
-                            value={searchText}
-                            onChange={onFilterTextBoxChanged}
-                        />
-                    </div>
-                    
-                    <button
-                        onClick={handleCreateClick}
-                        className="flex items-center gap-3 bg-tvs-blue text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-tvs-blue/25 hover:bg-blue-700 hover:-translate-y-1 active:translate-y-0 transition-all duration-300"
-                    >
-                        <Plus size={22} strokeWidth={3} />
-                        <span>CREATE NEW REQUEST</span>
-                    </button>
-                </div>
-            </div>
-
             {/* Enhanced AG Grid Table Section */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                {/* Table Header with Stats */}
-                <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-5 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-tvs-blue/10 rounded-xl flex items-center justify-center">
-                                <Filter size={20} className="text-tvs-blue" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-black text-gray-900 m-0">Material Handling Requests</h2>
-                                <p className="text-xs text-gray-500 font-medium mt-0.5">View and manage all MH requests</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="bg-blue-50 border border-blue-200 px-4 py-2 rounded-xl">
-                                <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Total Entries</div>
-                                <div className="text-2xl font-black text-blue-900">{requests?.length || 0}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="p-6" style={{ backgroundColor: '#fafafa' }}>
-                    {/* Toolbar with Export */}
+                    {/* Toolbar with Export and Create Button */}
                     <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
                         <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                             <span>Showing <span className="text-gray-900 font-bold">{requests?.length || 0}</span> active requests</span>
                         </div>
-                        <button
-                            onClick={() => gridRef.current?.api?.exportDataAsCsv({
-                                fileName: `MH_Requests_${new Date().toISOString().split('T')[0]}.csv`,
-                                columnKeys: [
-                                    'mhRequestId',
-                                    'departmentName',
-                                    'requestType',
-                                    'productModel',
-                                    'handlingPartName',
-                                    'materialHandlingLocation',
-                                    'userName',
-                                    'location',
-                                    'plantLocation',
-                                    'from',
-                                    'to',
-                                    'volumePerDay',
-                                    'problemStatement',
-                                    'createdAt'
-                                ],
-                                allColumns: false,
-                                skipColumnGroupHeaders: true,
-                                skipColumnHeaders: false
-                            })}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm"
-                        >
-                            <FileText size={16} />
-                            Export to CSV
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => gridRef.current?.api?.exportDataAsCsv({
+                                    fileName: `MH_Requests_${new Date().toISOString().split('T')[0]}.csv`,
+                                    columnKeys: [
+                                        'mhRequestId',
+                                        'departmentName',
+                                        'requestType',
+                                        'productModel',
+                                        'handlingPartName',
+                                        'materialHandlingLocation',
+                                        'userName',
+                                        'location',
+                                        'plantLocation',
+                                        'from',
+                                        'to',
+                                        'volumePerDay',
+                                        'problemStatement',
+                                        'createdAt'
+                                    ],
+                                    allColumns: false,
+                                    skipColumnGroupHeaders: true,
+                                    skipColumnHeaders: false
+                                })}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm"
+                            >
+                                <FileText size={16} />
+                                Template Download
+                            </button>
+                            <button
+                                onClick={handleCreateClick}
+                                className="flex items-center gap-3 bg-tvs-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:shadow-lg hover:bg-blue-700 transition-all"
+                            >
+                                <Plus size={20} strokeWidth={3} />
+                                <span>CREATE NEW REQUEST</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Clean Minimalist AG Grid */}
@@ -438,7 +413,7 @@ const CreateMHRequestList = () => {
                     margin-bottom: 8px !important;
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

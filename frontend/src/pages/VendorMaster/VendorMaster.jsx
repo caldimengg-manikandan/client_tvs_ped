@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Plus, Edit, Trash2, Mail, Search, Filter, Download, RefreshCw, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Filter, Download, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +8,8 @@ import { Modal } from 'antd';
 import { AgGridReact } from 'ag-grid-react';
 import * as XLSX from 'xlsx';
 import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createBoldColumn } from '../../config/agGridConfig';
+import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
+import CustomHeader from '../../components/AgGridCustom/CustomHeader';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -22,7 +24,6 @@ const VendorMaster = () => {
     // Redux State
     const { items: vendors, loading, error } = useSelector((state) => state.vendors);
 
-    const [searchTerm, setSearchTerm] = useState('');
     const [viewingVendor, setViewingVendor] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [isImportModalVisible, setIsImportModalVisible] = useState(false);
@@ -67,10 +68,7 @@ const VendorMaster = () => {
         navigate('/vendor-master/add');
     };
 
-    const handleRefresh = () => {
-        dispatch(fetchVendors());
-        toast.success('Refreshing data...');
-    };
+
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
@@ -186,51 +184,57 @@ const VendorMaster = () => {
         toast.success('Template downloaded successfully');
     };
 
-    // Filter vendors with safety check
-    const filteredVendors = (vendors || []).filter(vendor => {
-        const matchesSearch =
-            String(vendor.vendorCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(vendor.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(vendor.GSTIN || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(vendor.vendorLocation || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(vendor.vendorMailId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(vendor.remarks || '').toLowerCase().includes(searchTerm.toLowerCase());
+    // Use all vendors directly (filtering handled by AG Grid)
+    const filteredVendors = vendors || [];
 
-        return matchesSearch;
-    });
-
-    const columnDefs = React.useMemo(() => [
+    const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
-        createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
-        createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
-        { 
-            headerName: 'GSTIN', 
-            field: 'GSTIN', 
+        {
+            ...createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            ...createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
+        },
+        {
+            headerName: 'GSTIN',
+            field: 'GSTIN',
             width: 160,
             valueFormatter: (params) => params.value ? params.value.toUpperCase() : '',
-            cellStyle: { fontFamily: 'monospace', fontWeight: '600' }
+            cellStyle: { fontFamily: 'monospace', fontWeight: '600' },
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'LOCATION', 
-            field: 'vendorLocation', 
-            width: 160 
+        {
+            headerName: 'LOCATION',
+            field: 'vendorLocation',
+            width: 160,
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'EMAIL', 
-            field: 'vendorMailId', 
+        {
+            headerName: 'EMAIL',
+            field: 'vendorMailId',
             width: 220,
             cellRenderer: (params) => (
                 <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline font-medium">
                     {params.value}
                 </a>
-            )
+            ),
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
-        { 
-            headerName: 'REMARKS', 
-            field: 'remarks', 
+        {
+            headerName: 'REMARKS',
+            field: 'remarks',
             width: 200,
             valueGetter: (params) => params.value || 'No remarks',
-            cellStyle: { color: '#6b7280', fontStyle: 'italic' }
+            cellStyle: { color: '#6b7280', fontStyle: 'italic' },
+            headerComponent: CustomHeader,
+            filter: CustomCheckboxFilter
         },
         createActionColumn([
             {
@@ -256,51 +260,8 @@ const VendorMaster = () => {
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
-            {/* Header */}
-            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-white via-gray-50/50 to-white">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-tvs-blue to-blue-600 rounded-xl shadow-md">
-                            <Building size={22} className="text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-tvs-dark-gray m-0 tracking-tight">Vendor Master</h1>
-                            <p className="text-sm text-gray-500 mt-0.5">Manage vendor information and contacts</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="ml-2 p-2.5 text-gray-400 hover:text-tvs-blue hover:bg-white rounded-xl transition-all shadow-sm border border-gray-200 hover:border-tvs-blue hover:shadow-md"
-                        title="Refresh List"
-                    >
-                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-                <button
-                    onClick={handleAddVendor}
-                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={20} /> Add Vendor
-                </button>
-            </div>
 
-            {/* Filters */}
-            <div className="px-8 py-6 border-b border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Search size={18} className="text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-tvs-blue focus:border-transparent shadow-sm hover:shadow-md transition-all"
-                            placeholder="Search by code, name, GSTIN, location, email..."
-                        />
-                    </div>
-                </div>
-            </div>
+
 
             {/* AG Grid Table */}
             <div className="px-8 py-6">
@@ -317,14 +278,20 @@ const VendorMaster = () => {
                             onClick={handleDownloadTemplate}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                         >
-                            <Download size={16} />
+                            <Download size={18} />
                             Template
+                        </button>
+                        <button
+                            onClick={handleAddVendor}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-tvs-blue hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                        >
+                            <Plus size={18} /> Add Vendor
                         </button>
                         <button
                             onClick={handleImportClick}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                         >
-                            <Upload size={16} />
+                            <Upload size={18} />
                             Import Excel
                         </button>
                         <input
