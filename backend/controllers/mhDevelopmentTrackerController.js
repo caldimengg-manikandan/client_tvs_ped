@@ -287,15 +287,17 @@ const getVendorsForSelection = async (req, res) => {
             query.vendorLocation = { $regex: new RegExp(`^${location}$`, 'i') };
         }
 
-        // Get vendors matching the location
-        const vendors = await Vendor.find(query);
+        let vendors = await Vendor.find(query);
+
+        if ((!vendors || vendors.length === 0) && location) {
+            vendors = await Vendor.find({});
+        }
 
         // Get all active projects to calculate current load
         const allActiveProjects = await MHDevelopmentTracker.find({
             status: { $nin: ['Completed', 'Cancelled'] }
         });
 
-        // Get latest scores for each vendor
         const vendorsWithScores = await Promise.all(
             vendors.map(async (vendor) => {
                 const latestScore = await VendorScoring.findOne({ vendorId: vendor._id })

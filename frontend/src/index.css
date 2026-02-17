@@ -167,6 +167,11 @@ body,
   --ag-control-panel-background-color: #ffffff;
 }
 
+.mh-tracker-grid {
+  --ag-header-background-color: #253C80;
+  --ag-header-foreground-color: #ffffff;
+}
+
 .ag-theme-alpine .ag-root-wrapper {
   border: 1px solid #e2e8f0;
   border-radius: 12px;

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AgGridReact } from 'ag-grid-react';
 import { Modal, Form, Input, Select, DatePicker, Button, Upload, message } from 'antd';
 import {
-    Plus, Search, Download, Upload as UploadIcon, Eye, Edit, Trash2,
+    Plus, Download, Upload as UploadIcon, Eye, Edit, Trash2,
     FileText, Calendar, MapPin, Package, TrendingUp, AlertCircle,
     CheckCircle, Clock, XCircle, Users
 } from 'lucide-react';
@@ -37,7 +37,6 @@ const MHDevelopmentTracker = () => {
     // State management
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingTracker, setEditingTracker] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const [vendorPopupVisible, setVendorPopupVisible] = useState(false);
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
     const [selectedPlantLocation, setSelectedPlantLocation] = useState(null);
@@ -176,17 +175,7 @@ const MHDevelopmentTracker = () => {
         document.body.removeChild(link);
     };
 
-    // Filter trackers
-    const filteredTrackers = useMemo(() => {
-        if (!trackers) return [];
-        return trackers.filter(tracker =>
-            tracker.departmentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tracker.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tracker.assetRequestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tracker.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tracker.productModel?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [trackers, searchTerm]);
+    const filteredTrackers = useMemo(() => trackers || [], [trackers]);
 
     // Status color helper
     const getStatusColor = (status) => {
@@ -224,21 +213,7 @@ const MHDevelopmentTracker = () => {
     const columnDefs = useMemo(() => [
         createSerialNumberColumn(),
         {
-            field: 'departmentName',
-            headerName: 'DEPT NAME',
-            width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'userName',
-            headerName: 'USER NAME',
-            width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            ...createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 160 }),
+            ...createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 150 }),
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter
         },
@@ -252,14 +227,14 @@ const MHDevelopmentTracker = () => {
         {
             field: 'productModel',
             headerName: 'PRODUCT MODEL',
-            width: 160,
+            width: 150,
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter
         },
         {
             field: 'plantLocation',
             headerName: 'PLANT LOCATION',
-            width: 160,
+            width: 140,
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter
         },
@@ -305,7 +280,7 @@ const MHDevelopmentTracker = () => {
         {
             field: 'implementationTarget',
             headerName: 'IMP. TARGET',
-            width: 140,
+            width: 130,
             valueFormatter: (params) => params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter
@@ -313,7 +288,7 @@ const MHDevelopmentTracker = () => {
         {
             field: 'status',
             headerName: 'STATUS',
-            width: 140,
+            width: 120,
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
@@ -346,7 +321,7 @@ const MHDevelopmentTracker = () => {
         {
             field: 'currentStage',
             headerName: 'CURRENT STAGE',
-            width: 160,
+            width: 150,
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter,
             cellRenderer: (params) => (
@@ -358,14 +333,14 @@ const MHDevelopmentTracker = () => {
         {
             field: 'remarks',
             headerName: 'REMARKS',
-            width: 200,
+            width: 180,
             headerComponent: CustomHeader,
             filter: CustomCheckboxFilter
         },
         {
             field: 'drawing',
             headerName: 'DRAWING',
-            width: 140,
+            width: 120,
             cellRenderer: (params) => (
                 <div className="flex items-center gap-2">
                     {params.data.drawingUrl ? (
@@ -404,35 +379,36 @@ const MHDevelopmentTracker = () => {
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
-            {/* Content Section */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                {/* Stats & Actions */}
-                <div className="p-6" style={{ backgroundColor: '#fafafa' }}>
-                    <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span>Showing <span className="text-gray-900 font-bold">{filteredTrackers.length}</span> active requests</span>
-                        </div>
-                        <button
-                            onClick={handleAddClick}
-                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                        >
-                            <Plus size={20} /> Add Tracker
-                        </button>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-tvs-blue rounded-2xl shadow-lg shadow-tvs-blue/20 flex items-center justify-center">
+                        <TrendingUp size={28} className="text-white" />
                     </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">MH Development Tracker</h1>
+                        <p className="text-gray-500 font-medium">Monitor MH requests from initiation to implementation</p>
+                    </div>
+                </div>
+                <button
+                    onClick={handleAddClick}
+                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
+                >
+                    <Plus size={20} /> Add Tracker
+                </button>
+            </div>
 
-                    {/* Grid */}
-                    <div className="px-8 py-6">
-                        <div className="ag-theme-alpine w-full h-[600px]">
-                            <AgGridReact
-                                ref={gridRef}
-                                rowData={filteredTrackers}
-                                columnDefs={columnDefs}
-                                defaultColDef={defaultColDef}
-                                {...defaultGridOptions}
-                                loading={loading}
-                            />
-                        </div>
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                <div className="px-8 py-6">
+                    <div className="ag-theme-alpine w-full mh-tracker-grid">
+                        <AgGridReact
+                            ref={gridRef}
+                            rowData={filteredTrackers}
+                            columnDefs={columnDefs}
+                            defaultColDef={defaultColDef}
+                            {...defaultGridOptions}
+                            domLayout="autoHeight"
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

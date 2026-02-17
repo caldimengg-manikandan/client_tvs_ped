@@ -58,16 +58,17 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
     // Project Planning
     projectPlan: {
         milestones: [{
-            name: String,
-            targetDate: Date,
-            status: String
+            sNo: Number,
+            activity: String,
+            responsibility: String,
+            planStart: Date,
+            planEnd: Date,
+            actualStart: Date,
+            actualEnd: Date,
+            delayDays: Number,
+            remarks: String
         }],
-        timelines: [{
-            phase: String,
-            startDate: Date,
-            endDate: Date
-        }],
-        details: {
+        remarks: {
             type: String,
             default: ''
         }
