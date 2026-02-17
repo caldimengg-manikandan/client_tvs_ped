@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Plus, Edit, Trash2, Mail, User, Search, Filter, Download, RefreshCw, Eye, Shield, FileText, Upload } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEmployees, deleteEmployee } from '../../redux/slices/employeeSlice';
 import { Modal } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
+import { DataGrid } from 'react-data-grid';
 import * as XLSX from 'xlsx';
-import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createStatusColumn, createBoldColumn } from '../../config/agGridConfig';
-import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../../components/AgGridCustom/CustomHeader';
+import 'react-data-grid/lib/styles.css';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -69,6 +67,9 @@ const EmployeeMaster = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [accessFilter, setAccessFilter] = useState('all');
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
     const [viewingEmployee, setViewingEmployee] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [isImportModalVisible, setIsImportModalVisible] = useState(false);
@@ -266,7 +267,6 @@ const EmployeeMaster = () => {
         toast.success('Template downloaded successfully');
     };
 
-    // Filter employees with safety check
     const filteredEmployees = (employees || []).filter(emp => {
         const matchesSearch =
             String(emp.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -281,92 +281,257 @@ const EmployeeMaster = () => {
         return matchesSearch && matchesStatus && matchesAccess;
     });
 
-    const columnDefs = React.useMemo(() => [
-        createSerialNumberColumn(),
-        {
-            ...createBoldColumn('employeeId', 'EMPLOYEE ID', { width: 140 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            ...createBoldColumn('employeeName', 'EMPLOYEE NAME', { width: 200 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'departmentName',
-            headerName: 'DEPARTMENT',
-            width: 150,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'plantLocation',
-            headerName: 'LOCATION',
-            width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'accessLevel',
-            headerName: 'ACCESS LEVEL',
-            width: 150,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => {
-                const level = params.value;
-                const baseClass = "px-3 py-1 rounded-full text-[10px] font-black uppercase border inline-block";
-                let colorClass = "bg-gray-50 text-gray-700 border-gray-200";
+    const applyColumnFilters = (rows) => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
 
-                switch (level?.toLowerCase()) {
-                    case 'super admin': colorClass = "bg-purple-50 text-purple-700 border-purple-200"; break;
-                    case 'admin': colorClass = "bg-blue-50 text-blue-700 border-blue-200"; break;
-                    case 'manager': colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200"; break;
-                    case 'employee': colorClass = "bg-green-50 text-green-700 border-green-200"; break;
-                    case 'viewer': colorClass = "bg-gray-50 text-gray-600 border-gray-200"; break;
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
+
+    const gridRows = applyColumnFilters(filteredEmployees);
+
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        filteredEmployees.forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = (value) => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
                 }
 
-                return <span className={`${baseClass} ${colorClass}`}>{level}</span>;
-            }
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-gray-600 truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                    <Filter size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                type="button"
+                                onClick={handleSelectAll}
+                                className="text-[10px] font-semibold text-tvs-blue"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                className="text-[10px] font-semibold text-gray-500"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const dataGridColumns = [
+        {
+            key: 'serial',
+            name: '#',
+            width: 70,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            )
         },
         {
-            field: 'mailId',
-            headerName: 'EMAIL',
+            key: 'employeeId',
+            name: 'EMPLOYEE ID',
+            width: 140,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.employeeId}</span>
+            )
+        },
+        {
+            key: 'employeeName',
+            name: 'EMPLOYEE NAME',
+            width: 200,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.employeeName}</span>
+            )
+        },
+        {
+            key: 'departmentName',
+            name: 'DEPARTMENT',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'plantLocation',
+            name: 'LOCATION',
+            width: 140,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'accessLevel',
+            name: 'ACCESS LEVEL',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${getAccessLevelColor(row.accessLevel)}`}>
+                    {row.accessLevel}
+                </span>
+            )
+        },
+        {
+            key: 'mailId',
+            name: 'EMAIL',
             width: 220,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
-                <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline font-medium">
-                    {params.value}
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <a href={`mailto:${row.mailId}`} className="text-tvs-blue hover:underline font-medium">
+                    {row.mailId}
                 </a>
             )
         },
         {
-            ...createStatusColumn('status', 'STATUS'),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'status',
+            name: 'STATUS',
+            width: 130,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${getStatusColor(row.status)}`}>
+                    {row.status}
+                </span>
+            )
         },
-        createActionColumn([
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
-                title: 'View Details',
-                className: 'p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all',
-                onClick: (data) => handleView(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
-                title: 'Edit Employee',
-                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
-                onClick: (data) => handleEdit(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
-                title: 'Delete Employee',
-                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
-                onClick: (data) => handleDelete(data._id)
-            }
-        ])
-    ], []);
+        {
+            key: 'actions',
+            name: 'ACTIONS',
+            width: 180,
+            sortable: false,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => handleView(row)}
+                        className="p-1.5 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all"
+                        title="View Details"
+                    >
+                        <Eye size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleEdit(row)}
+                        className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        title="Edit Employee"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(row._id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Employee"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
@@ -413,17 +578,24 @@ const EmployeeMaster = () => {
                     </div>
                 </div>
 
-                {/* Clean Minimalist AG Grid */}
-                <div className="ag-theme-alpine w-full h-[620px]">
-                    <AgGridReact
-                        ref={gridRef}
-                        theme="legacy"
-                        rowData={filteredEmployees}
-                        columnDefs={columnDefs}
-                        defaultColDef={globalDefaultColDef}
-                        {...defaultGridOptions}
-                        loading={loading}
-                    />
+                <div className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
+                    <div className="h-full">
+                        <DataGrid
+                            columns={dataGridColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id || row.employeeId}
+                            className="rdg-light"
+                            style={{ blockSize: '100%' }}
+                            defaultColumnOptions={{
+                                resizable: true
+                            }}
+                        />
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

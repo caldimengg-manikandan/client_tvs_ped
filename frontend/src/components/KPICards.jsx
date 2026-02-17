@@ -61,7 +61,7 @@ const KPICards = ({ stats, onCardClick }) => {
     const total = kpis.reduce((sum, kpi) => sum + kpi.value, 0);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {kpis.map((kpi, index) => {
                 const Icon = kpi.icon;
                 const progressPercent = total > 0 ? (kpi.value / total) * 100 : 0;
@@ -73,16 +73,16 @@ const KPICards = ({ stats, onCardClick }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1, duration: 0.5 }}
                         whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
-                        className="group relative overflow-hidden glass-card p-6 rounded-[2rem] cursor-pointer border border-white/40 shadow-xl hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-300"
+                        className="group relative overflow-hidden glass-card p-4 rounded-2xl cursor-pointer border border-white/40 shadow-lg hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300"
                         onClick={() => onCardClick && onCardClick(kpi.id)}
                     >
                         {/* Decorative background glow */}
                         <div className={`absolute -right-10 -top-10 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity bg-${kpi.accentColor}-500/50`}></div>
                         
                         <div className="relative flex flex-col h-full z-10">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className={`${kpi.iconBg} p-4 rounded-2xl group-hover:rotate-6 transition-transform duration-500`}>
-                                    <Icon className={kpi.iconColor} size={24} />
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`${kpi.iconBg} p-3 rounded-xl group-hover:rotate-6 transition-transform duration-500`}>
+                                    <Icon className={kpi.iconColor} size={20} />
                                 </div>
                                 <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-tvs-blue transition-colors">
                                     {kpi.label}
@@ -92,19 +92,19 @@ const KPICards = ({ stats, onCardClick }) => {
 
                             <div className="mt-auto">
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className={`text-4xl font-black font-outfit tracking-tighter ${kpi.textColor}`}>
+                                    <h3 className={`text-3xl font-black font-outfit tracking-tighter ${kpi.textColor}`}>
                                         {kpi.value}
                                     </h3>
                                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 opacity-60">Reqs</span>
                                 </div>
                                 
-                                <p className="text-sm font-bold text-gray-500 mt-1 font-inter">
+                                <p className="text-xs font-bold text-gray-500 mt-1 font-inter">
                                     {kpi.title}
                                 </p>
 
                                 {/* Progress Indicator */}
-                                <div className="mt-6">
-                                    <div className="h-1.5 w-full bg-gray-100/50 rounded-full overflow-hidden p-[1px]">
+                                <div className="mt-4">
+                                    <div className="h-1 w-full bg-gray-100/50 rounded-full overflow-hidden p-[1px]">
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${Math.min(progressPercent, 100)}%` }}

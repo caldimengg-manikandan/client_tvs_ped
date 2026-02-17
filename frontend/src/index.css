@@ -147,6 +147,11 @@ body,
   }
 }
 
+/* React Data Grid header: allow filter popups to overflow */
+.rdg-header-row .rdg-cell {
+  overflow: visible;
+}
+
 /* ============================================================================
    AG GRID PREMIUM STYLING (Standardized Application-Wide)
    ============================================================================ */
