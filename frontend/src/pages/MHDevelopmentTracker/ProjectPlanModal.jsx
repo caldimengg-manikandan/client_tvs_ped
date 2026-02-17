@@ -101,19 +101,19 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData })
                                                 <DatePicker className="w-full" placeholder="Target Date" />
                                             </Form.Item>
                                         </div>
-                                        <Button 
-                                            type="text" 
-                                            danger 
-                                            icon={<Trash2 size={16} />} 
+                                        <Button
+                                            type="text"
+                                            danger
+                                            icon={<Trash2 size={16} />}
                                             onClick={() => remove(name)}
                                             className="mt-1"
                                         />
                                     </div>
                                 ))}
-                                <Button 
-                                    type="dashed" 
-                                    onClick={() => add()} 
-                                    block 
+                                <Button
+                                    type="dashed"
+                                    onClick={() => add()}
+                                    block
                                     icon={<Plus size={16} />}
                                     className="h-10 rounded-xl"
                                 >
@@ -133,9 +133,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData })
                         PLANNING DETAILS
                     </h3>
                     <Form.Item name="details">
-                        <TextArea 
-                            rows={4} 
-                            placeholder="Describe the detailed project sequence, dependencies, and requirements..." 
+                        <TextArea
+                            rows={4}
+                            placeholder="Describe the detailed project sequence, dependencies, and requirements..."
                             className="rounded-xl border-gray-200"
                         />
                     </Form.Item>

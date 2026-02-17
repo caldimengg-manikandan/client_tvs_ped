@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createStatusColumn } from '../config/agGridConfig';
+import { pptGenerator } from '../utils/pptGenerator';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -46,6 +47,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [pptLoading, setPptLoading] = useState(false);
 
     // KPI Modal State
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
@@ -181,6 +183,27 @@ const Dashboard = () => {
         }
     };
 
+    const handleGeneratePPT = async () => {
+        if (!stats) {
+            return;
+        }
+
+        try {
+            setPptLoading(true);
+            const dashboardData = { stats, recentActivity, trends };
+            const result = await pptGenerator.generateDashboardPPT(dashboardData);
+            if (!result.success) {
+                console.error('PPT generation failed:', result.error);
+                window.alert('Failed to generate PPT. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error generating PPT:', error);
+            window.alert('Failed to generate PPT. Please try again.');
+        } finally {
+            setPptLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh]">
@@ -258,11 +281,12 @@ const Dashboard = () => {
                             <span className="text-sm font-bold text-gray-700">Real-time Sync Enabled</span>
                         </div>
                         <button 
-                            onClick={fetchDashboardData} 
-                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn"
+                            onClick={handleGeneratePPT} 
+                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn disabled:opacity-60 disabled:cursor-not-allowed"
+                            disabled={pptLoading || !stats}
                         >
-                            <RefreshCw size={20} className={`${loadingRequests ? 'animate-spin' : 'group-hover/btn:rotate-180 transition-transform duration-700'}`} />
-                            <span className="uppercase tracking-[2px] text-xs">Synchronize Metrics</span>
+                            <FileText size={20} className={`${pptLoading ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform duration-700'}`} />
+                            <span className="uppercase tracking-[2px] text-xs">Generate PPT</span>
                         </button>
                     </div>
                 </div>

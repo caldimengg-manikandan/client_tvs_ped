@@ -1,257 +1,125 @@
 const Vendor = require('../models/Vendor');
 
 // @desc    Get all vendors
-// @route   GET /api/vendors
+// @route   GET /api/vendor
 // @access  Private
 const getAllVendors = async (req, res) => {
     try {
-        const vendors = await Vendor.find().sort({ createdAt: -1 });
-        res.json({
-            success: true,
-            data: vendors,
-            count: vendors.length
-        });
+        const vendors = await Vendor.find().sort({ sNo: 1 });
+        res.status(200).json(vendors);
     } catch (error) {
-        console.error('Error fetching vendors:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch vendors'
-        });
+        res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Get next vendor ID
-// @route   GET /api/vendors/next-id
+// @desc    Get next vendor ID (useful for frontend form)
+// @route   GET /api/vendor/next-id
 // @access  Private
 const getNextVendorId = async (req, res) => {
     try {
-        const latestVendor = await Vendor.findOne().sort({ createdAt: -1 });
-        let nextId = 'VEND001';
-
-        if (latestVendor && latestVendor.vendorCode) {
-            const currentId = latestVendor.vendorCode;
-            const numericPart = parseInt(currentId.replace('VEND', ''), 10);
-            if (!isNaN(numericPart)) {
-                nextId = `VEND${String(numericPart + 1).padStart(3, '0')}`;
-            }
-        }
-
-        res.json({
-            success: true,
-            nextVendorId: nextId
-        });
+        const lastVendor = await Vendor.findOne().sort({ sNo: -1 });
+        const nextId = lastVendor ? lastVendor.sNo + 1 : 1;
+        res.status(200).json({ nextId });
     } catch (error) {
-        console.error('Error generating next vendor ID:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to generate next vendor ID'
-        });
+        res.status(500).json({ message: error.message });
     }
 };
 
 // @desc    Get single vendor
-// @route   GET /api/vendors/:id
+// @route   GET /api/vendor/:id
 // @access  Private
 const getVendorById = async (req, res) => {
     try {
         const vendor = await Vendor.findById(req.params.id);
         if (!vendor) {
-            return res.status(404).json({
-                success: false,
-                message: 'Vendor not found'
-            });
+            return res.status(404).json({ message: 'Vendor not found' });
         }
-
-        res.json({
-            success: true,
-            data: vendor
-        });
+        res.status(200).json(vendor);
     } catch (error) {
-        console.error('Error fetching vendor:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch vendor'
-        });
+        res.status(500).json({ message: error.message });
     }
 };
 
 // @desc    Create new vendor
-// @route   POST /api/vendors
+// @route   POST /api/vendor
 // @access  Private
 const createVendor = async (req, res) => {
     try {
-        const vendorData = req.body;
+        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, remarks } = req.body;
 
-        // Check if vendorCode already exists
-        const existingByCode = await Vendor.findOne({ vendorCode: vendorData.vendorCode });
-        if (existingByCode) {
-            return res.status(400).json({
-                success: false,
-                message: 'Vendor Code already exists'
-            });
+        // Check if vendor already exists
+        const vendorExists = await Vendor.findOne({ $or: [{ vendorCode }, { GSTIN }] });
+        if (vendorExists) {
+            return res.status(400).json({ message: 'Vendor code or GSTIN already exists' });
         }
 
-        // Check if GSTIN already exists
-        const existingByGSTIN = await Vendor.findOne({ GSTIN: vendorData.GSTIN });
-        if (existingByGSTIN) {
-            return res.status(400).json({
-                success: false,
-                message: 'GSTIN already registered'
-            });
-        }
-
-        // Check if email already exists
-        const existingByEmail = await Vendor.findOne({ vendorMailId: vendorData.vendorMailId });
-        if (existingByEmail) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email already registered'
-            });
-        }
-
-        const vendor = new Vendor(vendorData);
-        await vendor.save();
-
-        res.status(201).json({
-            success: true,
-            message: 'Vendor created successfully',
-            data: vendor
+        const vendor = await Vendor.create({
+            vendorCode,
+            vendorName,
+            GSTIN,
+            vendorLocation,
+            vendorMailId,
+            remarks
         });
+
+        res.status(201).json(vendor);
     } catch (error) {
-        console.error('Error creating vendor:', error);
-        // Mongoose duplicate key error
-        if (error.code === 11000 && error.keyValue) {
-            const keyed = Object.keys(error.keyValue)[0];
-            const value = error.keyValue[keyed];
-            return res.status(400).json({ success: false, message: `${keyed} already registered: ${value}` });
-        }
-        if (error.name === 'ValidationError') {
-            // Return first validation error message
-            const firstKey = Object.keys(error.errors)[0];
-            const message = error.errors[firstKey].message;
-            return res.status(400).json({ success: false, message });
-        }
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Failed to create vendor'
-        });
+        res.status(400).json({ message: error.message });
     }
 };
 
 // @desc    Update vendor
-// @route   PUT /api/vendors/:id
+// @route   PUT /api/vendor/:id
 // @access  Private
 const updateVendor = async (req, res) => {
     try {
-        const vendorData = req.body;
-        const vendorId = req.params.id;
+        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, remarks } = req.body;
 
-        // Check if vendorCode is being changed and if it already exists
-        if (vendorData.vendorCode) {
-            const existingCode = await Vendor.findOne({
-                vendorCode: vendorData.vendorCode,
-                _id: { $ne: vendorId }
-            });
-
-            if (existingCode) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Vendor Code already exists' // updated message
-                });
-            }
-        }
-
-        // Check if GSTIN is being changed and if it already exists
-        if (vendorData.GSTIN) {
-            const existingVendor = await Vendor.findOne({
-                GSTIN: vendorData.GSTIN,
-                _id: { $ne: vendorId }
-            });
-
-            if (existingVendor) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'GSTIN already registered to another vendor'
-                });
-            }
-        }
-
-        // Check if email is being changed and if it already exists
-        if (vendorData.vendorMailId) {
-            const existingVendor = await Vendor.findOne({
-                vendorMailId: vendorData.vendorMailId,
-                _id: { $ne: vendorId }
-            });
-
-            if (existingVendor) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Email already registered to another vendor'
-                });
-            }
-        }
-
-        const vendor = await Vendor.findByIdAndUpdate(
-            vendorId,
-            { ...vendorData, updatedAt: Date.now() },
-            { new: true, runValidators: true }
-        );
+        const vendor = await Vendor.findById(req.params.id);
 
         if (!vendor) {
-            return res.status(404).json({
-                success: false,
-                message: 'Vendor not found'
-            });
+            return res.status(404).json({ message: 'Vendor not found' });
         }
 
-        res.json({
-            success: true,
-            message: 'Vendor updated successfully',
-            data: vendor
-        });
+        // Check for duplicate GSTIN or Code if changed
+        if (vendorCode && vendorCode !== vendor.vendorCode) {
+            const codeExists = await Vendor.findOne({ vendorCode });
+            if (codeExists) return res.status(400).json({ message: 'Vendor Code already exists' });
+        }
+        if (GSTIN && GSTIN !== vendor.GSTIN) {
+            const gstinExists = await Vendor.findOne({ GSTIN });
+            if (gstinExists) return res.status(400).json({ message: 'GSTIN already exists' });
+        }
+
+        vendor.vendorCode = vendorCode || vendor.vendorCode;
+        vendor.vendorName = vendorName || vendor.vendorName;
+        vendor.GSTIN = GSTIN || vendor.GSTIN;
+        vendor.vendorLocation = vendorLocation || vendor.vendorLocation;
+        vendor.vendorMailId = vendorMailId || vendor.vendorMailId;
+        vendor.remarks = remarks || vendor.remarks;
+
+        const updatedVendor = await vendor.save();
+        res.status(200).json(updatedVendor);
     } catch (error) {
-        console.error('Error updating vendor:', error);
-        if (error.code === 11000 && error.keyValue) {
-            const keyed = Object.keys(error.keyValue)[0];
-            const value = error.keyValue[keyed];
-            return res.status(400).json({ success: false, message: `${keyed} already registered: ${value}` });
-        }
-        if (error.name === 'ValidationError') {
-            const firstKey = Object.keys(error.errors)[0];
-            const message = error.errors[firstKey].message;
-            return res.status(400).json({ success: false, message });
-        }
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Failed to update vendor'
-        });
+        res.status(400).json({ message: error.message });
     }
 };
 
 // @desc    Delete vendor
-// @route   DELETE /api/vendors/:id
+// @route   DELETE /api/vendor/:id
 // @access  Private
 const deleteVendor = async (req, res) => {
     try {
-        const vendor = await Vendor.findByIdAndDelete(req.params.id);
+        const vendor = await Vendor.findById(req.params.id);
 
         if (!vendor) {
-            return res.status(404).json({
-                success: false,
-                message: 'Vendor not found'
-            });
+            return res.status(404).json({ message: 'Vendor not found' });
         }
 
-        res.json({
-            success: true,
-            message: 'Vendor deleted successfully'
-        });
+        await vendor.deleteOne();
+        res.status(200).json({ id: req.params.id });
     } catch (error) {
-        console.error('Error deleting vendor:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to delete vendor'
-        });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -261,5 +129,5 @@ module.exports = {
     getVendorById,
     createVendor,
     updateVendor,
-    deleteVendor
+    deleteVendor,
 };
