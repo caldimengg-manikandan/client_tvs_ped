@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AgGridReact } from 'ag-grid-react';
 import { Modal, Form, Input, Select, DatePicker, Button, Upload, message } from 'antd';
 import {
     Plus, Download, Upload as UploadIcon, Eye, Edit, Trash2,
     FileText, Calendar, MapPin, Package, TrendingUp, AlertCircle,
-    CheckCircle, Clock, XCircle, Users
+    CheckCircle, Clock, XCircle, Users, Filter
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import { toast } from 'react-hot-toast';
@@ -20,9 +19,8 @@ import {
     clearSuccess
 } from '../../redux/slices/mhDevelopmentTrackerSlice';
 import { fetchAssetRequests } from '../../redux/slices/assetRequestSlice';
-import { createSerialNumberColumn, createBoldColumn, createActionColumn, defaultColDef, defaultGridOptions } from '../../config/agGridConfig';
-import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../../components/AgGridCustom/CustomHeader';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import VendorSelectionPopup from './VendorSelectionPopup';
 import ProjectPlanModal from './ProjectPlanModal';
 
@@ -34,9 +32,7 @@ const MHDevelopmentTracker = () => {
     const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
     const { items: mhRequests, loading: requestsLoading } = useSelector(state => state.assetRequests);
     const [form] = Form.useForm();
-    const gridRef = useRef();
 
-    // State management
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingTracker, setEditingTracker] = useState(null);
     const [vendorPopupVisible, setVendorPopupVisible] = useState(false);
@@ -44,6 +40,11 @@ const MHDevelopmentTracker = () => {
     const [selectedPlantLocation, setSelectedPlantLocation] = useState(null);
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [fileList, setFileList] = useState([]);
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
+    const [gridWidth, setGridWidth] = useState(0);
+    const gridContainerRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchTrackers());
@@ -211,7 +212,6 @@ const MHDevelopmentTracker = () => {
 
     const filteredTrackers = useMemo(() => trackers || [], [trackers]);
 
-    // Status color helper
     const getStatusColor = (status) => {
         switch (status) {
             case 'On Track':
@@ -225,7 +225,6 @@ const MHDevelopmentTracker = () => {
         }
     };
 
-    // Stage color helper
     const getStageColor = (stage) => {
         switch (stage) {
             case 'Design':
@@ -243,52 +242,206 @@ const MHDevelopmentTracker = () => {
         }
     };
 
-    // Column Definitions
-    const columnDefs = useMemo(() => [
-        createSerialNumberColumn(),
+    const applyColumnFilters = (rows) => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
+
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
+
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        filteredTrackers.forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = (value) => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
+                }
+
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-white truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                    <Filter size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                type="button"
+                                onClick={handleSelectAll}
+                                className="text-[10px] font-semibold text-tvs-blue"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                className="text-[10px] font-semibold text-gray-500"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const gridRows = applyColumnFilters(filteredTrackers);
+
+    const dataGridColumns = [
         {
-            ...createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 150 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'serial',
+            name: '#',
+            width: 70,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            )
         },
         {
-            field: 'requestType',
-            headerName: 'REQ TYPE',
-            width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'assetRequestId',
+            name: 'ASSET REQ ID',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.assetRequestId}</span>
+            )
         },
         {
-            field: 'productModel',
-            headerName: 'PRODUCT MODEL',
+            key: 'requestType',
+            name: 'REQ TYPE',
             width: 150,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            field: 'plantLocation',
-            headerName: 'PLANT LOCATION',
-            width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'vendorSelection',
-            headerName: 'VENDOR SELECTION',
+            key: 'productModel',
+            name: 'PRODUCT MODEL',
             width: 200,
-            cellRenderer: (params) => (
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'plantLocation',
+            name: 'PLANT LOCATION',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'vendorSelection',
+            name: 'VENDOR SELECTION',
+            width: 220,
+            renderCell: ({ row }) => (
                 <div className="flex flex-col gap-1 py-1">
-                    {params.data.vendorCode ? (
+                    {row.vendorCode ? (
                         <div className="flex flex-col">
-                            <span className="text-xs font-bold text-tvs-blue">{params.data.vendorCode}</span>
-                            <span className="text-[10px] text-gray-500 truncate">{params.data.vendorName}</span>
+                            <span className="text-xs font-bold text-tvs-blue">{row.vendorCode}</span>
+                            <span className="text-[10px] text-gray-500 truncate">{row.vendorName}</span>
                         </div>
                     ) : (
                         <Button
                             size="small"
                             type="primary"
                             className="bg-tvs-blue text-[10px] h-6"
-                            onClick={() => handleVendorSelect(params.data._id, params.data.plantLocation)}
+                            onClick={() => handleVendorSelect(row._id, row.plantLocation)}
                         >
                             Select Vendor
                         </Button>
@@ -297,96 +450,95 @@ const MHDevelopmentTracker = () => {
             )
         },
         {
-            field: 'projectPlan',
-            headerName: 'PROJECT PLAN',
-            width: 140,
-            cellRenderer: (params) => (
+            key: 'projectPlan',
+            name: 'PROJECT PLAN',
+            width: 160,
+            renderCell: ({ row }) => (
                 <Button
                     size="small"
                     icon={<Edit size={12} />}
                     className="flex items-center gap-1 text-[10px]"
-                    onClick={() => handleProjectPlan(params.data._id)}
+                    onClick={() => handleProjectPlan(row._id)}
                 >
                     Create/Edit
                 </Button>
             )
         },
         {
-            field: 'implementationTarget',
-            headerName: 'IMP. TARGET',
-            width: 130,
-            valueFormatter: (params) => params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'status',
-            headerName: 'STATUS',
-            width: 120,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(params.value)}`}>
-                    {params.value}
+            key: 'implementationTarget',
+            name: 'IMP. TARGET',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>
+                    {row.implementationTarget ? dayjs(row.implementationTarget).format('DD-MMM-YYYY') : '-'}
                 </span>
             )
         },
         {
-            field: 'implementationVisibility',
-            headerName: 'IMP. VISIBILITY',
-            width: 150,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
+            key: 'status',
+            name: 'STATUS',
+            width: 120,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(row.status)}`}>
+                    {row.status}
+                </span>
+            )
+        },
+        {
+            key: 'implementationVisibility',
+            name: 'IMP. VISIBILITY',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="w-full flex flex-col gap-1">
                     <div className="flex justify-between text-[10px] font-bold">
                         <span>Progress</span>
-                        <span>{params.value || 0}%</span>
+                        <span>{row.implementationVisibility || 0}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div
                             className="bg-tvs-blue h-1.5 rounded-full transition-all"
-                            style={{ width: `${params.value || 0}%` }}
+                            style={{ width: `${row.implementationVisibility || 0}%` }}
                         />
                     </div>
                 </div>
             )
         },
         {
-            field: 'currentStage',
-            headerName: 'CURRENT STAGE',
-            width: 150,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStageColor(params.value)}`}>
-                    {params.value}
+            key: 'currentStage',
+            name: 'CURRENT STAGE',
+            width: 180,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStageColor(row.currentStage)}`}>
+                    {row.currentStage}
                 </span>
             )
         },
         {
-            field: 'remarks',
-            headerName: 'REMARKS',
-            width: 180,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'remarks',
+            name: 'REMARKS',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            field: 'drawing',
-            headerName: 'DRAWING',
+            key: 'drawing',
+            name: 'DRAWING',
             width: 120,
-            cellRenderer: (params) => (
+            renderCell: ({ row }) => (
                 <div className="flex items-center gap-2">
-                    {params.data.drawingUrl ? (
+                    {row.drawingUrl ? (
                         <Button
                             size="small"
                             icon={<Download size={14} />}
                             className="text-tvs-blue"
-                            onClick={() => handleDownloadDrawing(params.data.drawingUrl, params.data.drawingFileName)}
+                            onClick={() => handleDownloadDrawing(row.drawingUrl, row.drawingFileName)}
                         />
                     ) : (
                         <Upload
-                            beforeUpload={(file) => handleFileUpload(params.data._id, file)}
+                            beforeUpload={(file) => handleFileUpload(row._id, file)}
                             showUploadList={false}
                         >
                             <Button size="small" icon={<UploadIcon size={14} />}>Upload</Button>
@@ -395,33 +547,76 @@ const MHDevelopmentTracker = () => {
                 </div>
             )
         },
-        createActionColumn([
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
-                title: 'Edit Tracker',
-                className: 'p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all',
-                onClick: (data) => handleEditClick(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
-                title: 'Delete Tracker',
-                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
-                onClick: (data) => handleDeleteClick(data._id)
-            }
-        ])
-    ], []);
+        {
+            key: 'actions',
+            name: 'ACTIONS',
+            width: 160,
+            sortable: false,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => handleEditClick(row)}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit Tracker"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDeleteClick(row._id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Tracker"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
+    const autoFitColumns = useMemo(() => {
+        if (!gridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = gridWidth / totalDefinedWidth;
+
+        return dataGridColumns.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, gridWidth]);
+
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setGridWidth(gridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-tvs-blue rounded-2xl shadow-lg shadow-tvs-blue/20 flex items-center justify-center">
-                        <TrendingUp size={28} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">MH Development Tracker</h1>
-                        <p className="text-gray-500 font-medium">Monitor MH requests from initiation to implementation</p>
-                    </div>
+        
                 </div>
                 <button
                     onClick={handleAddClick}
@@ -432,17 +627,27 @@ const MHDevelopmentTracker = () => {
             </div>
 
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <div className="px-8 py-6">
-                    <div className="ag-theme-alpine w-full mh-tracker-grid">
-                        <AgGridReact
-                            ref={gridRef}
-                            rowData={filteredTrackers}
-                            columnDefs={columnDefs}
-                            defaultColDef={defaultColDef}
-                            {...defaultGridOptions}
-                            domLayout="autoHeight"
-                            loading={loading}
-                        />
+                <div className="px-6 py-4">
+                    <div ref={gridContainerRef} className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
+                        <div className="h-full">
+                            <DataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.assetRequestId}
+                                className="rdg-light mh-development-grid"
+                                style={{ blockSize: '100%' }}
+                                rowHeight={60}
+                                headerRowHeight={52}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
