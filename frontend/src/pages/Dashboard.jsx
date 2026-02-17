@@ -5,18 +5,14 @@ import { Modal } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchAssetRequests } from '../redux/slices/assetRequestSlice';
 import KPICards from '../components/KPICards';
-import WaterfallStages from '../components/WaterfallStages';
-import tvsLogo from '../assets/tvslogo.jpg';
 import { 
     TrendingUp, Activity, Clock, BarChart3, PieChart, Users, 
-    FileText, Calendar, Filter, RefreshCw, Search, Bell, 
+    FileText, Filter, RefreshCw, Search, Bell, 
     ChevronRight, ArrowUpRight, Zap, Target
 } from 'lucide-react';
-import { AgGridReact } from 'ag-grid-react';
+import { DataGrid } from 'react-data-grid';
 import { useAuth } from '../context/AuthContext';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createStatusColumn } from '../config/agGridConfig';
+import 'react-data-grid/lib/styles.css';
 import { pptGenerator } from '../utils/pptGenerator';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -86,29 +82,55 @@ const Dashboard = () => {
         });
     };
 
-    const columnDefs = React.useMemo(() => [
-        createSerialNumberColumn(),
-        { 
-            headerName: 'MH ID', 
-            field: 'mhRequestId', 
-            width: 150,
-            cellClass: 'ag-cell-bold'
-        },
-        { headerName: 'DEPARTMENT', field: 'departmentName', width: 180 },
-        { headerName: 'USER', field: 'userName', width: 160, cellClass: 'ag-cell-bold' },
-        { headerName: 'PART NAME', field: 'handlingPartName', width: 200 },
-        createStatusColumn('status', 'STATUS'),
+    const dataGridColumns = React.useMemo(() => [
         {
-            headerName: 'PROGRESS',
-            field: 'progressStatus',
+            key: 'serial',
+            name: 'S.NO',
+            width: 80,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-bold text-gray-700">{rowIdx + 1}</span>
+            )
+        },
+        {
+            key: 'mhRequestId',
+            name: 'MH ID',
+            width: 150
+        },
+        {
+            key: 'departmentName',
+            name: 'DEPARTMENT',
+            width: 180
+        },
+        {
+            key: 'userName',
+            name: 'USER',
+            width: 160
+        },
+        {
+            key: 'handlingPartName',
+            name: 'PART NAME',
+            width: 200
+        },
+        {
+            key: 'status',
+            name: 'STATUS',
             width: 150,
-            cellRenderer: (params) => {
-                return (
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200 inline-block leading-none">
-                        {params.value || 'PENDING'}
-                    </span>
-                );
-            }
+            renderCell: ({ row }) => (
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-[1px] border ${getStatusColor(row.status)}`}>
+                    {row.status}
+                </span>
+            )
+        },
+        {
+            key: 'progressStatus',
+            name: 'PROGRESS',
+            width: 150,
+            renderCell: ({ row }) => (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200 inline-block leading-none">
+                    {row.progressStatus || 'PENDING'}
+                </span>
+            )
         }
     ], []);
 
@@ -183,6 +205,89 @@ const Dashboard = () => {
         }
     };
 
+    const workflowStages = [
+        {
+            id: 'mh-requests',
+            label: 'MH Requests',
+            description: 'Request raised and captured'
+        },
+        {
+            id: 'approval-stage',
+            label: 'Approval Stage',
+            description: 'Screening and approvals'
+        },
+        {
+            id: 'vendor-selection',
+            label: 'Vendor Selection',
+            description: 'Partner identification'
+        },
+        {
+            id: 'design-release',
+            label: 'Design Release',
+            description: 'Engineering design finalized'
+        },
+        {
+            id: 'pr-po-release',
+            label: 'PR / PO Release',
+            description: 'Commercial release to vendor'
+        },
+        {
+            id: 'sample-receipt',
+            label: 'Sample Receipt / Trials',
+            description: 'Trials and validation'
+        },
+        {
+            id: 'bulk-lot-clearance',
+            label: 'Bulk Lot Clearance',
+            description: 'Bulk production cleared'
+        },
+        {
+            id: 'handover-signoff',
+            label: 'Handover and Sign-off',
+            description: 'Process handover completed'
+        },
+        {
+            id: 'asset-implementation',
+            label: 'Asset Implementation',
+            description: 'Asset rolled into production'
+        }
+    ];
+
+    const getActiveWorkflowIndex = () => {
+        if (!stats?.productionWorkflow) return 0;
+
+        const entries = Object.entries(stats.productionWorkflow || {});
+        if (!entries.length) return 0;
+
+        let lastNonZeroIndex = -1;
+
+        entries.forEach(([, count], index) => {
+            if (typeof count === 'number' && count > 0) {
+                lastNonZeroIndex = index;
+            }
+        });
+
+        if (lastNonZeroIndex === -1) return 0;
+
+        const backendMaxIndex = entries.length - 1;
+        if (backendMaxIndex <= 0) return 0;
+
+        const mappedIndex = Math.round((lastNonZeroIndex / backendMaxIndex) * (workflowStages.length - 1));
+        return Math.min(Math.max(mappedIndex, 0), workflowStages.length - 1);
+    };
+
+    const activeWorkflowIndex = getActiveWorkflowIndex();
+
+    const getStageStatus = (index) => {
+        if (!stats?.productionWorkflow) {
+            return index === 0 ? 'active' : 'pending';
+        }
+
+        if (index < activeWorkflowIndex) return 'completed';
+        if (index === activeWorkflowIndex) return 'active';
+        return 'pending';
+    };
+
     const handleGeneratePPT = async () => {
         if (!stats) {
             return;
@@ -246,78 +351,109 @@ const Dashboard = () => {
             animate="visible"
             className="space-y-8 pb-12"
         >
-            {/* Hero Section */}
-            <section className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-tvs-blue/5 via-indigo-500/5 to-transparent rounded-[3rem] -z-10 transition-all duration-700 group-hover:scale-[1.01]"></div>
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-5">
-                    <div className="flex items-center gap-6">
-                        <div className="relative">
-                            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100">
-                                <img src={tvsLogo} alt="TVS" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-emerald-500 border-4 border-white flex items-center justify-center shadow-lg">
-                                <Activity className="text-white" size={14} />
-                            </div>
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-4xl font-black text-gray-900 font-outfit tracking-tighter">
-                                    Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-tvs-blue to-indigo-600">{user?.name?.split(' ')[0] || 'Executive'}</span>
-                                </h1>
-                            </div>
-                            <p className="text-gray-500 mt-2 flex items-center gap-3 font-semibold">
-                                <Calendar size={18} className="text-tvs-blue" />
-                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="hidden sm:flex flex-col items-end mr-2">
-                        </div>
-                        <button 
-                            onClick={handleGeneratePPT} 
-                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn disabled:opacity-60 disabled:cursor-not-allowed"
-                            disabled={pptLoading || !stats}
-                        >
-                            <FileText size={20} className={`${pptLoading ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform duration-700'}`} />
-                            <span className="uppercase tracking-[2px] text-xs">Generate PPT</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
+            <div className="flex justify-end">
+                <button 
+                    onClick={handleGeneratePPT} 
+                    className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={pptLoading || !stats}
+                >
+                    <FileText size={20} className={`${pptLoading ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform duration-700'}`} />
+                    <span className="uppercase tracking-[2px] text-xs">Generate PPT</span>
+                </button>
+            </div>
 
             {/* Main KPI Cards */}
             <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-tvs-blue/10 flex items-center justify-center text-tvs-blue">
-                            <BarChart3 size={18} />
-                        </div>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-bold text-gray-800 flex items-center gap-2.5">
                         Key Performance Indicators
                     </h2>
                 </div>
                 <KPICards stats={stats?.kpiCards} onCardClick={handleKpiClick} />
             </section>
 
-            {/* Production Workflow Section */}
-            <motion.section variants={itemVariants} className="glass-card rounded-[2rem] p-8 border border-white/40 shadow-2xl relative overflow-hidden group">
+            <motion.section variants={itemVariants} className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-tvs-blue/5 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-tvs-blue/10 transition-colors duration-700"></div>
                 <h2 className="text-lg font-bold mb-8 text-gray-800 flex items-center gap-2.5 relative">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                        <PieChart size={18} />
-                    </div>
                     Production Workflow Status
                 </h2>
                 <div className="relative">
-                    <WaterfallStages stats={stats?.productionWorkflow} />
+                    <div className="relative mx-auto max-w-2xl w-full aspect-square">
+                        <div className="absolute inset-[18%] rounded-full border border-dashed border-gray-200"></div>
+                        <div className="absolute inset-[24%] rounded-full bg-gradient-to-br from-tvs-blue/10 via-white to-amber-50 shadow-inner"></div>
+                        {workflowStages.map((stage, index) => {
+                            const status = getStageStatus(index);
+                            const totalStages = workflowStages.length;
+                            const angleStep = (2 * Math.PI) / totalStages;
+                            const angle = angleStep * index - Math.PI / 2;
+                            const outerRadius = 32;
+                            const markerRadius = outerRadius + 6;
+                            const x = 50 + markerRadius * Math.cos(angle);
+                            const y = 50 + markerRadius * Math.sin(angle);
+                            const labelRadiusOffset = 20;
+                            const labelOffsetX = labelRadiusOffset * Math.cos(angle);
+                            const labelOffsetY = labelRadiusOffset * Math.sin(angle);
+
+                            return (
+                                <motion.div
+                                    key={stage.id}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.05 * index }}
+                                    className="absolute"
+                                    style={{
+                                        top: `${y}%`,
+                                        left: `${x}%`,
+                                        transform: 'translate(-50%, -50%)'
+                                    }}
+                                >
+                                    <div className="relative flex items-center justify-center">
+                                        <div
+                                            className={
+                                                `w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 ` +
+                                                (status === 'completed'
+                                                    ? 'bg-emerald-500 shadow-md shadow-emerald-200'
+                                                    : status === 'active'
+                                                        ? 'bg-tvs-blue shadow-md shadow-tvs-blue/40 ring-4 ring-tvs-blue/15'
+                                                        : 'bg-gray-300')
+                                            }
+                                        />
+                                        <div
+                                            className="absolute top-1/2 left-1/2"
+                                            style={{
+                                                transform: `translate(-50%, -50%) translate(${labelOffsetX}px, ${labelOffsetY}px)`
+                                            }}
+                                        >
+                                            <div className="px-2.5 py-1.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm text-center min-w-[96px] md:min-w-[120px]">
+                                                <div className={`text-[9px] md:text-[10px] font-black uppercase tracking-[2px] ${status === 'pending' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    {stage.label}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+
+                        <div className="absolute inset-[30%] rounded-full bg-white/90 border border-gray-100 shadow-xl flex flex-col items-center justify-center gap-1.5 md:gap-2 px-4 text-center">
+                            <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[3px]">
+                                MH Workflow
+                            </div>
+                            <div className="text-lg md:text-xl font-black text-gray-900">
+                                Circular Lifecycle
+                            </div>
+                            <div className="text-[9px] md:text-[10px] font-medium text-gray-400 uppercase tracking-[2px]">
+                                {workflowStages.length} stages
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </motion.section>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Activity - Takes 2 columns */}
-                <motion.div variants={itemVariants} className="lg:col-span-2 glass-card rounded-[2.5rem] p-8 border border-white/40 shadow-2xl relative overflow-hidden">
+                <motion.div variants={itemVariants} className="lg:col-span-2 glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                     <div className="flex items-center justify-between mb-8 relative">
                         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2.5">
@@ -396,8 +532,8 @@ const Dashboard = () => {
                 </motion.div>
 
                 {/* Category & Type Breakdown - Takes 1 column */}
-                <motion.div variants={itemVariants} className="flex flex-col gap-8">
-                    <div className="glass-card rounded-[2.5rem] p-8 border border-white/40 shadow-2xl flex-1 relative overflow-hidden">
+                <motion.div variants={itemVariants} className="flex flex-col gap-6">
+                    <div className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl flex-1 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tvs-blue via-indigo-500 to-transparent"></div>
                         <h2 className="text-lg font-bold mb-8 text-gray-800 flex items-center gap-2.5">
                             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
@@ -456,7 +592,7 @@ const Dashboard = () => {
                     {/* Quick Stats Highlight */}
                     <motion.div 
                         whileHover={{ scale: 1.02, y: -5 }}
-                        className="bg-gradient-to-br from-tvs-blue via-[#1a2b5e] to-black rounded-[2.5rem] p-8 text-white shadow-2xl shadow-tvs-blue/30 relative overflow-hidden group"
+                        className="bg-gradient-to-br from-tvs-blue via-[#1a2b5e] to-black rounded-2xl p-6 text-white shadow-xl shadow-tvs-blue/30 relative overflow-hidden group"
                     >
                         <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
                         <div className="relative">
@@ -465,7 +601,7 @@ const Dashboard = () => {
                                 <Activity size={20} className="text-emerald-400" />
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-6xl font-black font-outfit tracking-tighter">
+                                <span className="text-5xl font-black font-outfit tracking-tighter">
                                     {stats?.additionalStats?.totalActiveRequests || 0}
                                 </span>
                                 <span className="text-xs font-black opacity-70 uppercase tracking-widest bg-white/10 px-2 py-1 rounded-lg">Active</span>
@@ -484,7 +620,7 @@ const Dashboard = () => {
 
             {/* Monthly Trends Chart */}
             {trends.length > 0 && (
-                <motion.section variants={itemVariants} className="glass-card rounded-[2.5rem] p-10 border border-white/40 shadow-2xl relative overflow-hidden">
+                <motion.section variants={itemVariants} className="glass-card rounded-2xl p-8 border border-white/40 shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-tvs-red/5 rounded-full blur-3xl -mr-48 -mt-48"></div>
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8 relative">
                         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -630,15 +766,18 @@ const Dashboard = () => {
                 footer={null}
                 className="custom-modal"
             >
-                <div className="ag-theme-alpine w-full h-[500px] mt-4 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-                    <AgGridReact
-                        theme="legacy"
-                        rowData={getFilteredRequests()}
-                        columnDefs={columnDefs}
-                        defaultColDef={defaultColDef}
-                        {...defaultGridOptions}
-                        loading={loadingRequests}
+                <div className="relative w-full h-[500px] mt-4 rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                    <DataGrid
+                        columns={dataGridColumns}
+                        rows={getFilteredRequests()}
+                        rowKeyGetter={(row) => row._id || row.mhRequestId}
+                        className="rdg-light"
                     />
+                    {loadingRequests && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                        </div>
+                    )}
                 </div>
             </Modal>
         </motion.div>

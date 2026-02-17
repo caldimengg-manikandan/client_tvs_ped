@@ -91,7 +91,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
     const { api, column, context, colDef, valueGetter, filterChangedCallback } = props;
 
     const [filterText, setFilterText] = useState('');
-    const [selectedOptions, setSelectedOptions] = useState(null);
+    const [selectedKeys, setSelectedKeys] = useState(new Set());
 
     const options = useMemo(
         () => buildOptions(api, column, context, colDef, valueGetter),
@@ -99,10 +99,32 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
     );
 
     useEffect(() => {
+        const allKeys = options.map(opt => opt.key);
+        setSelectedKeys(prev => {
+            if (!prev || prev.size === 0) {
+                return new Set(allKeys);
+            }
+
+            const next = new Set();
+            allKeys.forEach(key => {
+                if (prev.has(key)) {
+                    next.add(key);
+                }
+            });
+
+            if (next.size === 0 && allKeys.length > 0) {
+                return new Set(allKeys);
+            }
+
+            return next;
+        });
+    }, [options]);
+
+    useEffect(() => {
         if (filterChangedCallback) {
             filterChangedCallback();
         }
-    }, [selectedOptions, options, filterChangedCallback]);
+    }, [selectedKeys, options, filterChangedCallback]);
 
     const filteredOptions = useMemo(() => {
         if (!filterText) return options;
@@ -112,64 +134,47 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
 
     const isSelectAllChecked = useMemo(() => {
         if (filteredOptions.length === 0) return false;
-        if (!selectedOptions) return true;
-        return filteredOptions.every(opt => selectedOptions.has(opt.key));
-    }, [filteredOptions, selectedOptions]);
+        return filteredOptions.every(opt => selectedKeys.has(opt.key));
+    }, [filteredOptions, selectedKeys]);
 
     useImperativeHandle(ref, () => {
-        const isFilterActive = () =>
-            options.length > 0 &&
-            selectedOptions !== null &&
-            selectedOptions.size !== options.length;
+        const isFilterActive = () => {
+            if (!options || options.length === 0) return false;
+            if (!selectedKeys || selectedKeys.size === 0) return false;
+            return selectedKeys.size < options.length;
+        };
 
         return {
             isFilterActive,
 
             doesFilterPass(params) {
+                if (!isFilterActive()) return true;
+
                 const val = getValueFromRowNode(params.node, { api, column, context, colDef, valueGetter });
-
-                // No explicit selection => no filter
-                if (selectedOptions === null) return true;
-
-                // Empty selection => hide all rows
-                if (selectedOptions.size === 0) return false;
-
-                return selectedOptions.has(val);
+                return selectedKeys.has(val);
             },
 
             getModel() {
-                if (!isFilterActive() || selectedOptions === null) return null;
+                if (!isFilterActive()) return null;
                 return {
                     filterType: 'custom-checkbox',
-                    selected: Array.from(selectedOptions)
+                    selected: Array.from(selectedKeys)
                 };
             },
 
             setModel(model) {
-                if (!model) {
-                    setSelectedOptions(null);
+                if (!model || !model.selected || model.selected.length === 0) {
+                    const allKeys = options.map(opt => opt.key);
+                    setSelectedKeys(new Set(allKeys));
                     setFilterText('');
                 } else {
-                    const allKeys = options.map(opt => opt.key);
-                    let nextSelected;
-
-                    if (model.selected && model.selected.length) {
-                        nextSelected = new Set(model.selected);
-                        if (nextSelected.size === allKeys.length) {
-                            nextSelected = null;
-                        }
-                    } else {
-                        nextSelected = null;
-                    }
-
-                    setSelectedOptions(nextSelected);
+                    setSelectedKeys(new Set(model.selected));
                 }
             },
 
             getModelAsString() {
                 if (!isFilterActive()) return '';
-                const count = selectedOptions ? selectedOptions.size : options.length;
-                return `(${count} selected)`;
+                return `(${selectedKeys.size} selected)`;
             },
 
             afterGuiAttached() {}
@@ -179,27 +184,35 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
     const handleSelectAllChange = (e) => {
         const checked = e.target.checked;
 
-        if (checked) {
-            setSelectedOptions(null);
-        } else {
-            setSelectedOptions(new Set());
-        }
+        setSelectedKeys(prev => {
+            const next = new Set(prev || []);
+
+            if (checked) {
+                filteredOptions.forEach(opt => {
+                    next.add(opt.key);
+                });
+            } else {
+                filteredOptions.forEach(opt => {
+                    next.delete(opt.key);
+                });
+            }
+
+            return next;
+        });
     };
 
     const handleOptionChange = (optionKey) => {
-        let newSelected = selectedOptions ? new Set(selectedOptions) : new Set(options.map(opt => opt.key));
+        setSelectedKeys(prev => {
+            const next = new Set(prev || []);
 
-        if (newSelected.has(optionKey)) {
-            newSelected.delete(optionKey);
-        } else {
-            newSelected.add(optionKey);
-        }
+            if (next.has(optionKey)) {
+                next.delete(optionKey);
+            } else {
+                next.add(optionKey);
+            }
 
-        if (newSelected.size === options.length) {
-            newSelected = null;
-        }
-
-        setSelectedOptions(newSelected);
+            return next;
+        });
     };
 
     const handleApply = () => {
@@ -209,7 +222,8 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
     };
 
     const handleClear = () => {
-        setSelectedOptions(null);
+        const allKeys = options.map(opt => opt.key);
+        setSelectedKeys(new Set(allKeys));
         setFilterText('');
         if (props.api && typeof props.api.hidePopupMenu === 'function') {
             props.api.hidePopupMenu();
@@ -253,7 +267,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                             <input
                                 type="checkbox"
                                 className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue/50 group-hover:border-tvs-blue"
-                                checked={selectedOptions ? selectedOptions.has(option.key) : true}
+                                checked={selectedKeys.has(option.key)}
                                 onChange={() => handleOptionChange(option.key)}
                             />
                             <span className="text-sm text-gray-600 group-hover:text-gray-900 truncate" title={option.label}>
@@ -270,7 +284,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
 
             <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between gap-2 text-xs">
                 <div className="text-gray-400">
-                    <span>{selectedOptions ? selectedOptions.size : options.length} selected</span>
+                    <span>{selectedKeys.size} selected</span>
                     {filterText && <span className="ml-2">{filteredOptions.length} matches</span>}
                 </div>
                 <div className="flex gap-2">

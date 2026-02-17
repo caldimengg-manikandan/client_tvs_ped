@@ -1,14 +1,12 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, FileText, X } from 'lucide-react';
+import { Plus, FileText, X, Filter } from 'lucide-react';
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
-import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createBoldColumn } from '../../config/agGridConfig';
-import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../../components/AgGridCustom/CustomHeader';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -23,7 +21,12 @@ const CreateMHRequestList = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
-    const gridRef = useRef();
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
+    const [mhListGridWidth, setMhListGridWidth] = useState(0);
+
+    const mhListGridContainerRef = useRef(null);
 
 
     useEffect(() => {
@@ -77,96 +80,364 @@ const CreateMHRequestList = () => {
         dispatch(createAssetRequest(formData));
     };
 
-    // Column Definitions for AG Grid - All Input Fields
-    const columnDefs = useMemo(() => [
-        createSerialNumberColumn(),
+    const applyColumnFilters = (rows) => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
+
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
+
+    const baseRows = requests || [];
+    const gridRows = applyColumnFilters(baseRows);
+
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        baseRows.forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = (value) => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
+                }
+
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs gap-1">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-white truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                    <Filter size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <Button
+                                type="text"
+                                size="small"
+                                onClick={handleSelectAll}
+                                className="!text-[10px] !font-semibold !text-tvs-blue !px-0"
+                            >
+                                Select All
+                            </Button>
+                            <Button
+                                type="text"
+                                size="small"
+                                onClick={handleClear}
+                                className="!text-[10px] !font-semibold !text-gray-500 !px-0"
+                            >
+                                Clear
+                            </Button>
+                        </div>
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const dataGridColumns = [
         {
-            headerName: 'MH ID',
-            field: 'mhRequestId',
+            key: 'serial',
+            name: '#',
+            width: 70,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            )
+        },
+        {
+            key: 'mhRequestId',
+            name: 'MH ID',
             width: 140,
-            cellClass: 'ag-cell-bold',
-            pinned: 'left',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.mhRequestId}</span>
+            )
         },
         {
-            ...createBoldColumn('departmentName', 'DEPT', { width: 120 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'departmentName',
+            name: 'DEPT',
+            width: 120,
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            headerName: 'TYPE',
-            field: 'requestType',
+            key: 'requestType',
+            name: 'TYPE',
             width: 150,
-            cellClass: 'ag-cell-bold',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.requestType}</span>
+            )
         },
         {
-            headerName: 'PLANT',
-            field: 'plantLocation',
+            key: 'plantLocation',
+            name: 'PLANT',
             width: 160,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            headerName: 'PRODUCT',
-            field: 'productModel',
+            key: 'productModel',
+            name: 'PRODUCT',
             width: 180,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            headerName: 'PART NAME',
-            field: 'handlingPartName',
+            key: 'handlingPartName',
+            name: 'PART NAME',
             width: 160,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            headerName: 'HANDLING LOC',
-            field: 'materialHandlingLocation',
+            key: 'materialHandlingLocation',
+            name: 'HANDLING LOC',
             width: 180,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         },
         {
-            headerName: 'FLOW',
+            key: 'flow',
+            name: 'FLOW',
             width: 150,
-            valueGetter: (params) => `${params.data.from} → ${params.data.to}`,
-            cellClass: 'font-bold text-tvs-blue',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-tvs-blue">
+                    {(row.from || '') + ' \u2192 ' + (row.to || '')}
+                </span>
+            )
         },
         {
-            headerName: 'VOL/DAY',
-            field: 'volumePerDay',
+            key: 'volumePerDay',
+            name: 'VOL/DAY',
             width: 100,
-            cellClass: 'text-center font-black',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-black text-center">{row.volumePerDay}</span>
+            )
         },
         {
-            headerName: 'PROBLEM STATEMENT',
-            field: 'problemStatement',
+            key: 'problemStatement',
+            name: 'PROBLEM STATEMENT',
             width: 250,
-            tooltipField: 'problemStatement',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span title={row.problemStatement} className="truncate block">
+                    {row.problemStatement}
+                </span>
+            )
         },
         {
-            ...createBoldColumn('userName', 'USER NAME', { width: 150 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'userName',
+            name: 'USER NAME',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.userName}</span>
+            )
         },
         {
-            headerName: 'USER LOC',
-            field: 'location',
+            key: 'location',
+            name: 'USER LOC',
             width: 140,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell
         }
-    ], []);
+    ];
+
+    const autoFitColumns = React.useMemo(() => {
+        if (!mhListGridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = Math.max(mhListGridWidth / totalDefinedWidth, 1);
+
+        return dataGridColumns.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, mhListGridWidth]);
+
+    useEffect(() => {
+        if (!mhListGridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setMhListGridWidth(mhListGridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(mhListGridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    const handleExportCsv = () => {
+        const rows = baseRows;
+        if (!rows.length) {
+            message.info('No data to export');
+            return;
+        }
+
+        const headers = [
+            'MH ID',
+            'Department',
+            'Type',
+            'Plant',
+            'Product',
+            'Part Name',
+            'Handling Location',
+            'From',
+            'To',
+            'Volume/Day',
+            'Problem Statement',
+            'User Name',
+            'User Location',
+            'Created At'
+        ];
+
+        const csvRows = [
+            headers.join(',')
+        ];
+
+        rows.forEach(row => {
+            const values = [
+                row.mhRequestId || '',
+                row.departmentName || '',
+                row.requestType || '',
+                row.plantLocation || '',
+                row.productModel || '',
+                row.handlingPartName || '',
+                row.materialHandlingLocation || '',
+                row.from || '',
+                row.to || '',
+                row.volumePerDay || '',
+                (row.problemStatement || '').replace(/\r?\n/g, ' '),
+                row.userName || '',
+                row.location || '',
+                row.createdAt || ''
+            ].map(value => {
+                const str = String(value);
+                if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            });
+            csvRows.push(values.join(','));
+        });
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `MH_Requests_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
 
     return (
@@ -182,28 +453,7 @@ const CreateMHRequestList = () => {
                         </div>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={() => gridRef.current?.api?.exportDataAsCsv({
-                                    fileName: `MH_Requests_${new Date().toISOString().split('T')[0]}.csv`,
-                                    columnKeys: [
-                                        'mhRequestId',
-                                        'departmentName',
-                                        'requestType',
-                                        'productModel',
-                                        'handlingPartName',
-                                        'materialHandlingLocation',
-                                        'userName',
-                                        'location',
-                                        'plantLocation',
-                                        'from',
-                                        'to',
-                                        'volumePerDay',
-                                        'problemStatement',
-                                        'createdAt'
-                                    ],
-                                    allColumns: false,
-                                    skipColumnGroupHeaders: true,
-                                    skipColumnHeaders: false
-                                })}
+                                onClick={handleExportCsv}
                                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm"
                             >
                                 <FileText size={16} />
@@ -219,17 +469,29 @@ const CreateMHRequestList = () => {
                         </div>
                     </div>
 
-                    {/* Clean Minimalist AG Grid */}
-                    <div className="ag-theme-alpine w-full h-[600px]">
-                        <AgGridReact
-                            ref={gridRef}
-                            theme="legacy"
-                            rowData={requests}
-                            columnDefs={columnDefs}
-                            defaultColDef={globalDefaultColDef}
-                            {...defaultGridOptions}
-                            loading={loading}
-                        />
+                    <div
+                        ref={mhListGridContainerRef}
+                        className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
+                    >
+                        <div className="h-full">
+                            <DataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.mhRequestId}
+                                className="rdg-light mh-request-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={52}
+                                headerRowHeight={48}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -411,6 +673,35 @@ const CreateMHRequestList = () => {
                 }
                 .ant-form-item-label label {
                     margin-bottom: 8px !important;
+                }
+
+                .mh-request-grid.rdg-light {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+                .mh-request-grid .rdg-row .rdg-cell {
+                    border-inline: none;
+                    padding-block: 12px;
+                    padding-inline: 16px;
+                    font-size: 13px;
+                }
+                .mh-request-grid .rdg-row:not(.rdg-row-selected) .rdg-cell {
+                    border-bottom: 1px solid #f1f5f9;
+                }
+                .mh-request-grid .rdg-row:hover .rdg-cell {
+                    background-color: #f8fafc;
+                }
+                .mh-request-grid .rdg-header-row .rdg-cell {
+                    padding-block: 14px;
+                    padding-inline: 16px;
+                    font-weight: 700;
+                    border-inline: none;
+                    border-bottom: 2px solid #e2e8f0;
+                    position: relative;
+                    font-size: 12px;
+                    background-color: #253C80;
+                    color: #ffffff;
                 }
             `}</style>
         </div >

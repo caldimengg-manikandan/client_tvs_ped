@@ -147,13 +147,34 @@ body,
   }
 }
 
+/* React Data Grid header: allow filter popups to overflow */
+.rdg-header-row .rdg-cell {
+  overflow: visible;
+}
+
+.employee-master-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.employee-master-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+  background-color: #253C80;
+  color: #ffffff;
+}
+
 /* ============================================================================
    AG GRID PREMIUM STYLING (Standardized Application-Wide)
    ============================================================================ */
 
 .ag-theme-alpine {
-  --ag-header-background-color: #fafbfc;
-  --ag-header-foreground-color: #475569;
+  --ag-header-background-color: #253C80;
+  --ag-header-foreground-color: #ffffff;
   --ag-header-cell-font-weight: 700;
   --ag-header-cell-font-size: 11px;
   --ag-font-family: 'Inter', sans-serif;
@@ -184,7 +205,7 @@ body,
   border-bottom: 2px solid #e2e8f0 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
-  background: linear-gradient(to bottom, #fafbfc 0%, #f8f9fa 100%) !important;
+  background: #253C80 !important;
 }
 
 .ag-theme-alpine .ag-header-row {
