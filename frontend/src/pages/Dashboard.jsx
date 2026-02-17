@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createStatusColumn } from '../config/agGridConfig';
+import { pptGenerator } from '../utils/pptGenerator';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -46,6 +47,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [pptLoading, setPptLoading] = useState(false);
 
     // KPI Modal State
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
@@ -181,6 +183,27 @@ const Dashboard = () => {
         }
     };
 
+    const handleGeneratePPT = async () => {
+        if (!stats) {
+            return;
+        }
+
+        try {
+            setPptLoading(true);
+            const dashboardData = { stats, recentActivity, trends };
+            const result = await pptGenerator.generateDashboardPPT(dashboardData);
+            if (!result.success) {
+                console.error('PPT generation failed:', result.error);
+                window.alert('Failed to generate PPT. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error generating PPT:', error);
+            window.alert('Failed to generate PPT. Please try again.');
+        } finally {
+            setPptLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh]">
@@ -226,7 +249,7 @@ const Dashboard = () => {
             {/* Hero Section */}
             <section className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-tvs-blue/5 via-indigo-500/5 to-transparent rounded-[3rem] -z-10 transition-all duration-700 group-hover:scale-[1.01]"></div>
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 p-10">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-5">
                     <div className="flex items-center gap-6">
                         <div className="relative">
                             <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100">
@@ -241,28 +264,24 @@ const Dashboard = () => {
                                 <h1 className="text-4xl font-black text-gray-900 font-outfit tracking-tighter">
                                     Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-tvs-blue to-indigo-600">{user?.name?.split(' ')[0] || 'Executive'}</span>
                                 </h1>
-                                <span className="px-3 py-1 bg-tvs-blue/10 text-tvs-blue text-[10px] font-black rounded-full uppercase tracking-widest border border-tvs-blue/10">Active Session</span>
                             </div>
                             <p className="text-gray-500 mt-2 flex items-center gap-3 font-semibold">
                                 <Calendar size={18} className="text-tvs-blue" />
                                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                <span className="text-gray-400">System is operative and running smoothly</span>
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="hidden sm:flex flex-col items-end mr-2">
-                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Asset Lifecycle</span>
-                            <span className="text-sm font-bold text-gray-700">Real-time Sync Enabled</span>
                         </div>
                         <button 
-                            onClick={fetchDashboardData} 
-                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn"
+                            onClick={handleGeneratePPT} 
+                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn disabled:opacity-60 disabled:cursor-not-allowed"
+                            disabled={pptLoading || !stats}
                         >
-                            <RefreshCw size={20} className={`${loadingRequests ? 'animate-spin' : 'group-hover/btn:rotate-180 transition-transform duration-700'}`} />
-                            <span className="uppercase tracking-[2px] text-xs">Synchronize Metrics</span>
+                            <FileText size={20} className={`${pptLoading ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform duration-700'}`} />
+                            <span className="uppercase tracking-[2px] text-xs">Generate PPT</span>
                         </button>
                     </div>
                 </div>
