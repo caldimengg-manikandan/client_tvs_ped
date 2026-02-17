@@ -78,6 +78,9 @@ const EmployeeMaster = () => {
     const [departments, setDepartments] = useState([]);
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [newDeptName, setNewDeptName] = useState('');
+    const [gridWidth, setGridWidth] = useState(0);
+
+    const gridContainerRef = useRef(null);
 
 
     useEffect(() => {
@@ -294,8 +297,6 @@ const EmployeeMaster = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(filteredEmployees);
-
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -359,7 +360,7 @@ const EmployeeMaster = () => {
         return (
             <div className="relative h-full flex items-center justify-between px-2 text-xs">
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-gray-600 truncate">{column.name}</span>
+                    <span className="font-semibold text-white truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -427,10 +428,12 @@ const EmployeeMaster = () => {
         );
     };
 
+    const gridRows = applyColumnFilters(filteredEmployees);
+
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
+            name: 'S.No',
             width: 70,
             frozen: true,
             renderCell: ({ rowIdx }) => (
@@ -533,6 +536,46 @@ const EmployeeMaster = () => {
         }
     ];
 
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setGridWidth(gridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    const autoFitColumns = React.useMemo(() => {
+        if (!gridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = gridWidth / totalDefinedWidth;
+
+        return dataGridColumns.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), 80);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, gridWidth]);
+
+
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
 
@@ -578,14 +621,16 @@ const EmployeeMaster = () => {
                     </div>
                 </div>
 
-                <div className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
+                <div ref={gridContainerRef} className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
                     <div className="h-full">
                         <DataGrid
-                            columns={dataGridColumns}
+                            columns={autoFitColumns}
                             rows={gridRows}
                             rowKeyGetter={(row) => row._id || row.employeeId}
-                            className="rdg-light"
+                            className="rdg-light employee-master-grid"
                             style={{ blockSize: '100%' }}
+                            rowHeight={52}
+                            headerRowHeight={48}
                             defaultColumnOptions={{
                                 resizable: true
                             }}

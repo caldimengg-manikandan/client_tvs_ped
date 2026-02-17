@@ -40,16 +40,16 @@ const CustomHeader = (props) => {
                 className="flex items-center flex-1 cursor-pointer overflow-hidden gap-1"
                 onClick={(event) => props.progressSort(event.shiftKey)}
             >
-                <span className="truncate font-bold text-gray-700 text-xs sm:text-sm uppercase tracking-wide">
+                <span className="truncate font-bold text-white text-xs sm:text-sm uppercase tracking-wide">
                     {props.displayName}
                 </span>
 
                 {/* Sort Icons */}
                 {ascSort === 'active' && (
-                    <span className="ag-icon ag-icon-asc text-tvs-blue text-xs ml-1"></span>
+                    <span className="ag-icon ag-icon-asc text-white text-xs ml-1"></span>
                 )}
                 {descSort === 'active' && (
-                    <span className="ag-icon ag-icon-desc text-tvs-blue text-xs ml-1"></span>
+                    <span className="ag-icon ag-icon-desc text-white text-xs ml-1"></span>
                 )}
                 {/* If no sort, we can show a subtle placeholder or nothing. Standard AG Grid shows nothing. */}
             </div>
