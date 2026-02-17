@@ -249,7 +249,7 @@ const Dashboard = () => {
             {/* Hero Section */}
             <section className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-tvs-blue/5 via-indigo-500/5 to-transparent rounded-[3rem] -z-10 transition-all duration-700 group-hover:scale-[1.01]"></div>
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 p-10">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-5">
                     <div className="flex items-center gap-6">
                         <div className="relative">
                             <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl shadow-tvs-blue/10 transform group-hover:rotate-3 transition-transform duration-500 overflow-hidden border border-gray-100">
@@ -264,21 +264,16 @@ const Dashboard = () => {
                                 <h1 className="text-4xl font-black text-gray-900 font-outfit tracking-tighter">
                                     Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-tvs-blue to-indigo-600">{user?.name?.split(' ')[0] || 'Executive'}</span>
                                 </h1>
-                                <span className="px-3 py-1 bg-tvs-blue/10 text-tvs-blue text-[10px] font-black rounded-full uppercase tracking-widest border border-tvs-blue/10">Active Session</span>
                             </div>
                             <p className="text-gray-500 mt-2 flex items-center gap-3 font-semibold">
                                 <Calendar size={18} className="text-tvs-blue" />
                                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                <span className="text-gray-400">System is operative and running smoothly</span>
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="hidden sm:flex flex-col items-end mr-2">
-                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Asset Lifecycle</span>
-                            <span className="text-sm font-bold text-gray-700">Real-time Sync Enabled</span>
                         </div>
                         <button 
                             onClick={handleGeneratePPT} 
