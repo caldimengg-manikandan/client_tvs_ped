@@ -1,25 +1,26 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AgGridReact } from 'ag-grid-react';
 import { Button, Modal } from 'antd';
-import { ClipboardList, Eye, Edit } from 'lucide-react';
+import { ClipboardList, Eye, Edit, Filter } from 'lucide-react';
 import dayjs from 'dayjs';
 import { fetchTrackers, updateTracker, clearError, clearSuccess } from '../redux/slices/mhDevelopmentTrackerSlice';
-import { createSerialNumberColumn, createBoldColumn, defaultColDef, defaultGridOptions } from '../config/agGridConfig';
-import CustomCheckboxFilter from '../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../components/AgGridCustom/CustomHeader';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import ProjectPlanModal from './MHDevelopmentTracker/ProjectPlanModal';
 import { toast } from 'react-hot-toast';
 
 const ProjectPlanModel = () => {
     const dispatch = useDispatch();
     const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
-    const gridRef = useRef();
-
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
     const [viewPlanVisible, setViewPlanVisible] = useState(false);
     const [viewTrackerId, setViewTrackerId] = useState(null);
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
+    const [gridWidth, setGridWidth] = useState(0);
+    const gridContainerRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchTrackers());
@@ -91,144 +92,315 @@ const ProjectPlanModel = () => {
         }
     };
 
-    const columnDefs = useMemo(
-        () => [
-            {
-                headerName: 'VIEW',
-                width: 100,
-                pinned: 'left',
-                headerComponent: CustomHeader,
-                cellRenderer: params => {
-                    const trackerId = params.data.trackerId;
-                    return (
-                        <div className="flex items-center gap-2 justify-center">
+    const applyColumnFilters = rows => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
+
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
+
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        milestoneRows.forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = value => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
+                }
+
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-white truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={e => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded ${
+                        hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'
+                    }`}
+                >
+                    <Filter size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
                             <button
                                 type="button"
-                                className="p-1.5 rounded-full border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm"
-                                onClick={() => handleViewPlan(trackerId)}
+                                onClick={handleSelectAll}
+                                className="text-[10px] font-semibold text-tvs-blue"
                             >
-                                <Eye size={14} />
+                                Select All
                             </button>
                             <button
                                 type="button"
-                                className="p-1.5 rounded-full border border-indigo-100 text-indigo-600 hover:bg-indigo-50 bg-white shadow-sm"
-                                onClick={() => handleProjectPlan(trackerId)}
+                                onClick={handleClear}
+                                className="text-[10px] font-semibold text-gray-500"
                             >
-                                <Edit size={14} />
+                                Clear
                             </button>
                         </div>
-                    );
-                }
-            },
-            {
-                ...createBoldColumn('assetRequestId', 'ASSET REQ ID', { width: 140 }),
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'requestType',
-                headerName: 'REQ TYPE',
-                width: 140,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'productModel',
-                headerName: 'PRODUCT MODEL',
-                width: 160,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'plantLocation',
-                headerName: 'PLANT LOCATION',
-                width: 140,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'implementationTarget',
-                headerName: 'IMP. TARGET',
-                width: 130,
-                valueFormatter: params =>
-                    params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'sNo',
-                headerName: 'S.No',
-                width: 80,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'activity',
-                headerName: 'Activity',
-                width: 180,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'responsibility',
-                headerName: 'Responsibility',
-                width: 160,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'planStart',
-                headerName: 'Plan Start',
-                width: 130,
-                valueFormatter: params =>
-                    params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'planEnd',
-                headerName: 'Plan End',
-                width: 130,
-                valueFormatter: params =>
-                    params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'actualStart',
-                headerName: 'Actual Start',
-                width: 130,
-                valueFormatter: params =>
-                    params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'actualEnd',
-                headerName: 'Actual End',
-                width: 130,
-                valueFormatter: params =>
-                    params.value ? dayjs(params.value).format('DD-MMM-YYYY') : '-',
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'delayDays',
-                headerName: 'Delay (Days)',
-                width: 120,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
-            },
-            {
-                field: 'remarks',
-                headerName: 'Remarks',
-                width: 220,
-                headerComponent: CustomHeader,
-                filter: CustomCheckboxFilter
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={e =>
+                                    setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))
+                                }
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const gridRows = applyColumnFilters(milestoneRows);
+
+    const dataGridColumns = [
+        {
+            key: 'view',
+            name: 'VIEW',
+            width: 120,
+            frozen: true,
+            renderCell: ({ row }) => {
+                const trackerId = row.trackerId;
+                return (
+                    <div className="flex items-center gap-2 justify-center">
+                        <button
+                            type="button"
+                            className="p-1.5 rounded-full border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm"
+                            onClick={() => handleViewPlan(trackerId)}
+                        >
+                            <Eye size={14} />
+                        </button>
+                        <button
+                            type="button"
+                            className="p-1.5 rounded-full border border-indigo-100 text-indigo-600 hover:bg-indigo-50 bg-white shadow-sm"
+                            onClick={() => handleProjectPlan(trackerId)}
+                        >
+                            <Edit size={14} />
+                        </button>
+                    </div>
+                );
             }
-        ],
-        []
-    );
+        },
+        {
+            key: 'assetRequestId',
+            name: 'ASSET REQ ID',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.assetRequestId}</span>
+            )
+        },
+        {
+            key: 'requestType',
+            name: 'REQ TYPE',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'productModel',
+            name: 'PRODUCT MODEL',
+            width: 200,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'plantLocation',
+            name: 'PLANT LOCATION',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'implementationTarget',
+            name: 'IMP. TARGET',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>
+                    {row.implementationTarget
+                        ? dayjs(row.implementationTarget).format('DD-MMM-YYYY')
+                        : '-'}
+                </span>
+            )
+        },
+        {
+            key: 'sNo',
+            name: 'S.No',
+            width: 80,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'activity',
+            name: 'Activity',
+            width: 200,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'responsibility',
+            name: 'Responsibility',
+            width: 180,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'planStart',
+            name: 'Plan Start',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>{row.planStart ? dayjs(row.planStart).format('DD-MMM-YYYY') : '-'}</span>
+            )
+        },
+        {
+            key: 'planEnd',
+            name: 'Plan End',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>{row.planEnd ? dayjs(row.planEnd).format('DD-MMM-YYYY') : '-'}</span>
+            )
+        },
+        {
+            key: 'actualStart',
+            name: 'Actual Start',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>
+                    {row.actualStart ? dayjs(row.actualStart).format('DD-MMM-YYYY') : '-'}
+                </span>
+            )
+        },
+        {
+            key: 'actualEnd',
+            name: 'Actual End',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span>{row.actualEnd ? dayjs(row.actualEnd).format('DD-MMM-YYYY') : '-'}</span>
+            )
+        },
+        {
+            key: 'delayDays',
+            name: 'Delay (Days)',
+            width: 140,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'remarks',
+            name: 'Remarks',
+            width: 240,
+            renderHeaderCell: FilterHeaderCell
+        }
+    ];
+
+    const autoFitColumns = useMemo(() => {
+        if (!gridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = gridWidth / totalDefinedWidth;
+
+        return dataGridColumns.map(column => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, gridWidth]);
 
     const selectedViewTracker = useMemo(
         () => trackers.find(t => t._id === viewTrackerId),
@@ -245,34 +417,58 @@ const ProjectPlanModel = () => {
         [selectedViewTracker]
     );
 
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setGridWidth(gridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
     return (
         <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/30 flex items-center justify-center">
-                        <ClipboardList size={28} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Project Plan Model</h1>
-                        <p className="text-gray-500 font-medium">
-                            View and manage project plan milestones created in MH Dev Tracker
-                        </p>
-                    </div>
+                    
                 </div>
             </div>
 
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                 <div className="px-8 py-6">
-                    <div className="ag-theme-alpine w-full mh-tracker-grid">
-                        <AgGridReact
-                            ref={gridRef}
-                            rowData={milestoneRows}
-                            columnDefs={columnDefs}
-                            defaultColDef={defaultColDef}
-                            {...defaultGridOptions}
-                            domLayout="autoHeight"
-                            loading={loading}
-                        />
+                    <div
+                        ref={gridContainerRef}
+                        className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
+                    >
+                        <div className="h-full">
+                            <DataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={row =>
+                                    `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
+                                }
+                                className="rdg-light mh-development-grid"
+                                style={{ blockSize: '100%' }}
+                                rowHeight={60}
+                                headerRowHeight={52}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

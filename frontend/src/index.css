@@ -168,6 +168,22 @@ body,
   color: #ffffff;
 }
 
+.mh-development-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.mh-development-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+  background-color: #253C80;
+  color: #ffffff;
+}
+
 /* ============================================================================
    AG GRID PREMIUM STYLING (Standardized Application-Wide)
    ============================================================================ */
