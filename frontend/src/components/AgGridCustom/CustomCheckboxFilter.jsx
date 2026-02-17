@@ -1,125 +1,219 @@
 import React, { forwardRef, useState, useEffect, useImperativeHandle, useMemo } from 'react';
 import { Search } from 'lucide-react';
 
-const CustomCheckboxFilter = forwardRef((props, ref) => {
-    const [filterText, setFilterText] = useState('');
-    const [selectAll, setSelectAll] = useState(true);
-    const [selectedOptions, setSelectedOptions] = useState(new Set());
-    const [options, setOptions] = useState([]);
+const getValueFromRowNode = (node, { api, column, context, colDef, valueGetter }) => {
+    if (!node) return null;
 
-    // Extract unique values from row data whenever new rows are loaded
-    useEffect(() => {
-        if (!props.api) return;
+    let val = null;
 
-        const extractUniqueValues = () => {
-            const unique = new Set();
-            props.api.forEachNode((node) => {
-                // Use the valueGetter if available to get the formatted value or raw value
-                const val = props.valueGetter ? props.valueGetter(node) : node.data[props.colDef.field];
-                if (val !== null && val !== undefined && val !== '') {
-                    unique.add(val);
-                }
-            });
-            return Array.from(unique).sort();
+    if (valueGetter) {
+        val = valueGetter({
+            data: node.data,
+            node,
+            api,
+            column,
+            colDef,
+            context
+        });
+    } else if (colDef && colDef.field && node.data) {
+        val = node.data[colDef.field];
+    } else if (column && node.data) {
+        const field = column.getColDef().field;
+        if (field) {
+            val = node.data[field];
+        }
+    }
+
+    if (typeof val === 'object' && val !== null) {
+        if (val.name) val = val.name;
+        else if (val.label) val = val.label;
+        else if (val.toString && val.toString() !== '[object Object]') val = val.toString();
+        else val = JSON.stringify(val);
+    }
+
+    return (val === null || val === undefined || val === '') ? '(Blanks)' : val;
+};
+
+const getDisplayValueFromRowNode = (node, key, { api, column, context, colDef }) => {
+    if (!node) return '';
+
+    let display = key;
+
+    if (colDef && typeof colDef.valueFormatter === 'function' && key !== '(Blanks)') {
+        const params = {
+            value: key,
+            data: node.data,
+            node,
+            api,
+            column,
+            colDef,
+            context
         };
+        const formatted = colDef.valueFormatter(params);
+        if (formatted !== null && formatted !== undefined) {
+            display = formatted;
+        }
+    }
 
-        const allOptions = extractUniqueValues();
-        setOptions(allOptions);
-        setSelectedOptions(new Set(allOptions)); // Default to all selected
-        setSelectAll(true);
-    }, [props.api, props.colDef.field, props.rowData]); // Re-run if data changes
+    return String(display);
+};
 
-    // Filter options based on search text - Defined BEFORE handlers to avoid ReferenceError
+const buildOptions = (api, column, context, colDef, valueGetter) => {
+    if (!api) return [];
+
+    const params = { api, column, context, colDef, valueGetter };
+    const unique = new Map();
+
+    api.forEachLeafNode((node) => {
+        const val = getValueFromRowNode(node, params);
+        if (!unique.has(val)) {
+            const label = getDisplayValueFromRowNode(node, val, params);
+            unique.set(val, label);
+        }
+    });
+
+    return Array.from(unique.entries())
+        .map(([key, label]) => ({ key, label }))
+        .sort((a, b) => {
+            if (a.key === '(Blanks)') return 1;
+            if (b.key === '(Blanks)') return -1;
+
+            const numA = Number(a.key);
+            const numB = Number(b.key);
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+            }
+            return String(a.label).localeCompare(String(b.label), undefined, { numeric: true, sensitivity: 'base' });
+        });
+};
+
+const CustomCheckboxFilter = forwardRef((props, ref) => {
+    const { api, column, context, colDef, valueGetter, filterChangedCallback } = props;
+
+    const [filterText, setFilterText] = useState('');
+    const [selectedOptions, setSelectedOptions] = useState(null);
+
+    const options = useMemo(
+        () => buildOptions(api, column, context, colDef, valueGetter),
+        [api, column, context, colDef, valueGetter]
+    );
+
+    useEffect(() => {
+        if (filterChangedCallback) {
+            filterChangedCallback();
+        }
+    }, [selectedOptions, options, filterChangedCallback]);
+
     const filteredOptions = useMemo(() => {
         if (!filterText) return options;
-        return options.filter(opt => String(opt).toLowerCase().includes(filterText.toLowerCase()));
+        const lower = filterText.toLowerCase();
+        return options.filter(opt => String(opt.label).toLowerCase().includes(lower));
     }, [options, filterText]);
 
-    // Check if "Select All" should be checked based on filtered options
     const isSelectAllChecked = useMemo(() => {
         if (filteredOptions.length === 0) return false;
-        // If we represent "Select All Search Results", check if all visible are selected
-        return filteredOptions.every(opt => selectedOptions.has(opt));
+        if (!selectedOptions) return true;
+        return filteredOptions.every(opt => selectedOptions.has(opt.key));
     }, [filteredOptions, selectedOptions]);
 
-    // Methods exposed to AG Grid
-    useImperativeHandle(ref, () => ({
-        isFilterActive() {
-            // Filter is active if NOT all options are selected
-            // Or if selectAll is false (even if all selected manually, might be edge case)
-            // Robust check: Compare selected size with total options size
-            return selectedOptions.size !== options.length;
-        },
+    useImperativeHandle(ref, () => {
+        const isFilterActive = () =>
+            options.length > 0 &&
+            selectedOptions !== null &&
+            selectedOptions.size !== options.length;
 
-        doesFilterPass(params) {
-            // If all selected, pass everything (except maybe empty/null if strictly typed)
-            if (selectedOptions.size === options.length) return true;
+        return {
+            isFilterActive,
 
-            const val = props.valueGetter ? props.valueGetter(params.node) : params.data[props.colDef.field];
-            // If value is missing/empty, decide policy. Usually hide unless specifically selected (if we had an (Empty) option).
-            // For now, check if the value is in selected set.
-            return selectedOptions.has(val);
-        },
+            doesFilterPass(params) {
+                const val = getValueFromRowNode(params.node, { api, column, context, colDef, valueGetter });
 
-        getModel() {
-            if (selectedOptions.size === options.length) return null; // No filter
-            return {
-                filterType: 'custom-checkbox',
-                selected: Array.from(selectedOptions),
-                selectAll
-            };
-        },
+                // No explicit selection => no filter
+                if (selectedOptions === null) return true;
 
-        setModel(model) {
-            if (!model) {
-                setSelectAll(true);
-                setSelectedOptions(new Set(options));
-            } else {
-                setSelectAll(model.selectAll);
-                setSelectedOptions(new Set(model.selected));
-            }
-        },
+                // Empty selection => hide all rows
+                if (selectedOptions.size === 0) return false;
 
-        // This is important for some AG Grid versions to know if filter allows updates
-        afterGuiAttached(params) {
-            // Focus search input or something if needed
-        }
-    }));
+                return selectedOptions.has(val);
+            },
 
-    // Handle "Select All" change
+            getModel() {
+                if (!isFilterActive() || selectedOptions === null) return null;
+                return {
+                    filterType: 'custom-checkbox',
+                    selected: Array.from(selectedOptions)
+                };
+            },
+
+            setModel(model) {
+                if (!model) {
+                    setSelectedOptions(null);
+                    setFilterText('');
+                } else {
+                    const allKeys = options.map(opt => opt.key);
+                    let nextSelected;
+
+                    if (model.selected && model.selected.length) {
+                        nextSelected = new Set(model.selected);
+                        if (nextSelected.size === allKeys.length) {
+                            nextSelected = null;
+                        }
+                    } else {
+                        nextSelected = null;
+                    }
+
+                    setSelectedOptions(nextSelected);
+                }
+            },
+
+            getModelAsString() {
+                if (!isFilterActive()) return '';
+                const count = selectedOptions ? selectedOptions.size : options.length;
+                return `(${count} selected)`;
+            },
+
+            afterGuiAttached() {}
+        };
+    });
+
     const handleSelectAllChange = (e) => {
         const checked = e.target.checked;
-        setSelectAll(checked);
 
         if (checked) {
-            // Select all visible options
-            const newSelected = new Set(selectedOptions);
-            filteredOptions.forEach(opt => newSelected.add(opt));
-            setSelectedOptions(newSelected);
+            setSelectedOptions(null);
         } else {
-            // Deselect all visible options
-            const newSelected = new Set(selectedOptions);
-            filteredOptions.forEach(opt => newSelected.delete(opt));
-            setSelectedOptions(newSelected);
+            setSelectedOptions(new Set());
         }
-        props.filterChangedCallback();
     };
 
-    // Handle individual checkbox change
-    const handleOptionChange = (option) => {
-        const newSelected = new Set(selectedOptions);
-        if (newSelected.has(option)) {
-            newSelected.delete(option);
-            setSelectAll(false);
+    const handleOptionChange = (optionKey) => {
+        let newSelected = selectedOptions ? new Set(selectedOptions) : new Set(options.map(opt => opt.key));
+
+        if (newSelected.has(optionKey)) {
+            newSelected.delete(optionKey);
         } else {
-            newSelected.add(option);
-            // Check if now all are selected (ignoring search for global Select All status)
-            if (newSelected.size === options.length) {
-                setSelectAll(true);
-            }
+            newSelected.add(optionKey);
         }
+
+        if (newSelected.size === options.length) {
+            newSelected = null;
+        }
+
         setSelectedOptions(newSelected);
-        props.filterChangedCallback();
+    };
+
+    const handleApply = () => {
+        if (props.api && typeof props.api.hidePopupMenu === 'function') {
+            props.api.hidePopupMenu();
+        }
+    };
+
+    const handleClear = () => {
+        setSelectedOptions(null);
+        setFilterText('');
+        if (props.api && typeof props.api.hidePopupMenu === 'function') {
+            props.api.hidePopupMenu();
+        }
     };
 
     return (
@@ -159,11 +253,11 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                             <input
                                 type="checkbox"
                                 className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue/50 group-hover:border-tvs-blue"
-                                checked={selectedOptions.has(option)}
-                                onChange={() => handleOptionChange(option)}
+                                checked={selectedOptions ? selectedOptions.has(option.key) : true}
+                                onChange={() => handleOptionChange(option.key)}
                             />
-                            <span className="text-sm text-gray-600 group-hover:text-gray-900 truncate" title={option}>
-                                {option}
+                            <span className="text-sm text-gray-600 group-hover:text-gray-900 truncate" title={option.label}>
+                                {option.label}
                             </span>
                         </label>
                     ))
@@ -174,10 +268,27 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                 )}
             </div>
 
-            {/* Footer / Info */}
-            <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
-                <span>{selectedOptions.size} selected</span>
-                {filterText && <span>{filteredOptions.length} matches</span>}
+            <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between gap-2 text-xs">
+                <div className="text-gray-400">
+                    <span>{selectedOptions ? selectedOptions.size : options.length} selected</span>
+                    {filterText && <span className="ml-2">{filteredOptions.length} matches</span>}
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={handleClear}
+                        className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50 text-[11px] font-semibold"
+                    >
+                        Clear
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleApply}
+                        className="px-3 py-1 rounded bg-tvs-blue text-white text-[11px] font-semibold hover:bg-opacity-90"
+                    >
+                        Apply
+                    </button>
+                </div>
             </div>
         </div>
     );

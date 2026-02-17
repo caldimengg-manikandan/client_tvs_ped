@@ -72,8 +72,8 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
             pinned: 'left',
             cellRenderer: (params) => (
                 <div className="flex items-center justify-center h-full">
-                    <input 
-                        type="checkbox" 
+                    <input
+                        type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue pointer-events-none"
                         checked={selectedVendor?._id === params.data._id}
                         readOnly
@@ -100,9 +100,9 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                 </div>
             )
         },
-        { 
-            field: 'qcdScore', 
-            headerName: 'QCD', 
+        {
+            field: 'qcdScore',
+            headerName: 'QCD',
             width: 100,
             cellRenderer: (params) => (
                 <Tag color={params.value >= 4 ? 'success' : params.value >= 3 ? 'warning' : 'error'} className="font-bold border-none px-3">
@@ -113,9 +113,9 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
         { field: 'qsrScore', headerName: 'QSR', width: 90, cellClass: 'font-bold' },
         { field: 'costScore', headerName: 'COST', width: 90, cellClass: 'font-bold' },
         { field: 'deliveryScore', headerName: 'DELIVERY', width: 110, cellClass: 'font-bold' },
-        { 
-            field: 'currentLoad', 
-            headerName: 'CURRENT LOAD', 
+        {
+            field: 'currentLoad',
+            headerName: 'CURRENT LOAD',
             width: 140,
             cellRenderer: (params) => (
                 <div className={`flex items-center gap-2 font-bold ${params.value > 5 ? 'text-rose-600' : 'text-emerald-600'}`}>
@@ -169,15 +169,15 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                         </div>
                     </div>
                     <Space size="middle">
-                        <Button 
-                            onClick={handleSystemSuggestion} 
+                        <Button
+                            onClick={handleSystemSuggestion}
                             icon={<Zap size={16} />}
                             className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 font-bold rounded-xl h-10 flex items-center gap-2"
                         >
                             System Suggestion
                         </Button>
-                        <Button 
-                            type="primary" 
+                        <Button
+                            type="primary"
                             onClick={handleAllocate}
                             disabled={!selectedVendor}
                             loading={loading}
