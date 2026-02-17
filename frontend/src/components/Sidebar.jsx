@@ -14,6 +14,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         { name: 'MH Requests', icon: FileText, path: '/mh-requests', permission: 'assetRequest' },
         { name: 'Request Tracker', icon: ClipboardList, path: '/request-tracker', permission: 'requestTracker' },
         { name: 'MH Dev Tracker', icon: TrendingUp, path: '/mh-development-tracker', permission: 'mhDevelopmentTracker' },
+        { name: 'Project Plan Model', icon: ClipboardList, path: '/project-plan-model', permission: 'mhDevelopmentTracker', isSubItem: true },
         // {
         //     name: 'Vendor Master',
         //     icon: Shield,

@@ -19,6 +19,7 @@ import {
     clearError,
     clearSuccess
 } from '../../redux/slices/mhDevelopmentTrackerSlice';
+import { fetchAssetRequests } from '../../redux/slices/assetRequestSlice';
 import { createSerialNumberColumn, createBoldColumn, createActionColumn, defaultColDef, defaultGridOptions } from '../../config/agGridConfig';
 import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
 import CustomHeader from '../../components/AgGridCustom/CustomHeader';
@@ -31,6 +32,7 @@ const { TextArea } = Input;
 const MHDevelopmentTracker = () => {
     const dispatch = useDispatch();
     const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
+    const { items: mhRequests, loading: requestsLoading } = useSelector(state => state.assetRequests);
     const [form] = Form.useForm();
     const gridRef = useRef();
 
@@ -43,9 +45,9 @@ const MHDevelopmentTracker = () => {
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [fileList, setFileList] = useState([]);
 
-    // Fetch trackers on mount
     useEffect(() => {
         dispatch(fetchTrackers());
+        dispatch(fetchAssetRequests());
     }, [dispatch]);
 
     // Handle success/error messages
@@ -66,7 +68,6 @@ const MHDevelopmentTracker = () => {
         }
     }, [error, success, dispatch, form]);
 
-    // Handlers
     const handleAddClick = () => {
         setEditingTracker(null);
         form.resetFields();
@@ -87,7 +88,40 @@ const MHDevelopmentTracker = () => {
             currentStage: data.currentStage,
             remarks: data.remarks
         });
+        if (mhRequests && mhRequests.length > 0 && data.assetRequestId) {
+            const linkedRequest = mhRequests.find(req => req.mhRequestId === data.assetRequestId);
+            if (linkedRequest) {
+                form.setFieldsValue({
+                    location: linkedRequest.location
+                });
+            }
+        }
         setIsModalVisible(true);
+    };
+
+    const handleAssetRequestChange = (mhRequestId) => {
+        if (!mhRequestId) {
+            form.setFieldsValue({
+                assetRequestId: null
+            });
+            return;
+        }
+        const selectedRequest = (mhRequests || []).find(req => req.mhRequestId === mhRequestId);
+        if (selectedRequest) {
+            form.setFieldsValue({
+                assetRequestId: selectedRequest.mhRequestId,
+                departmentName: selectedRequest.departmentName,
+                userName: selectedRequest.userName,
+                requestType: selectedRequest.requestType,
+                productModel: selectedRequest.productModel,
+                plantLocation: selectedRequest.plantLocation,
+                location: selectedRequest.location
+            });
+        } else {
+            form.setFieldsValue({
+                assetRequestId: mhRequestId
+            });
+        }
     };
 
     const handleDeleteClick = (id) => {
@@ -439,14 +473,37 @@ const MHDevelopmentTracker = () => {
                         <Form.Item name="userName" label={<span className="text-xs font-bold uppercase text-gray-500">User Name</span>} rules={[{ required: true }]}>
                             <Input size="large" placeholder="E.g. John Doe" />
                         </Form.Item>
-                        <Form.Item name="assetRequestId" label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>} rules={[{ required: true }]}>
-                            <Input size="large" placeholder="E.g. REQ-001" />
+                        <Form.Item
+                            name="assetRequestId"
+                            label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>}
+                            rules={[{ required: true }]}
+                        >
+                            <Select
+                                size="large"
+                                placeholder="Select Asset Request"
+                                showSearch
+                                optionFilterProp="children"
+                                onChange={handleAssetRequestChange}
+                                loading={requestsLoading}
+                                allowClear
+                            >
+                                {(mhRequests || []).map(request => (
+                                    <Option key={request._id} value={request.mhRequestId}>
+                                        {request.mhRequestId} - {request.departmentName} - {request.productModel}
+                                    </Option>
+                                ))}
+                            </Select>
                         </Form.Item>
                         <Form.Item name="requestType" label={<span className="text-xs font-bold uppercase text-gray-500">Request Type</span>} rules={[{ required: true }]}>
                             <Select size="large" placeholder="Select type">
                                 <Option value="New MH">New MH</Option>
                                 <Option value="Modification">Modification</Option>
                                 <Option value="Replacement">Replacement</Option>
+                                <Option value="New Project">New Project</Option>
+                                <Option value="Upgrade">Upgrade</Option>
+                                <Option value="Refresh">Refresh</Option>
+                                <Option value="Capacity">Capacity</Option>
+                                <Option value="Special Improvements">Special Improvements</Option>
                             </Select>
                         </Form.Item>
                         <Form.Item name="productModel" label={<span className="text-xs font-bold uppercase text-gray-500">Product Model</span>} rules={[{ required: true }]}>
@@ -454,6 +511,9 @@ const MHDevelopmentTracker = () => {
                         </Form.Item>
                         <Form.Item name="plantLocation" label={<span className="text-xs font-bold uppercase text-gray-500">Plant Location</span>} rules={[{ required: true }]}>
                             <Input size="large" placeholder="E.g. Chennai" />
+                        </Form.Item>
+                        <Form.Item name="location" label={<span className="text-xs font-bold uppercase text-gray-500">Location</span>}>
+                            <Input size="large" placeholder="Auto-filled from Request Tracker" disabled />
                         </Form.Item>
                         <Form.Item name="implementationTarget" label={<span className="text-xs font-bold uppercase text-gray-500">Implementation Target</span>}>
                             <DatePicker size="large" className="w-full" format="DD-MMM-YYYY" />
@@ -501,6 +561,7 @@ const MHDevelopmentTracker = () => {
                 onSave={handleProjectPlanSave}
                 trackerId={selectedTrackerId}
                 initialData={trackers.find(t => t._id === selectedTrackerId)?.projectPlan}
+                assetRequestId={trackers.find(t => t._id === selectedTrackerId)?.assetRequestId}
             />
         </div>
     );
