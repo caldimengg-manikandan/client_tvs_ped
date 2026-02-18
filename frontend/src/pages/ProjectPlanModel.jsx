@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Modal } from 'antd';
-import { ClipboardList, Eye, Edit, Filter } from 'lucide-react';
+import { ClipboardList, Eye, Filter } from 'lucide-react';
 import dayjs from 'dayjs';
 import { fetchTrackers, updateTracker, clearError, clearSuccess } from '../redux/slices/mhDevelopmentTrackerSlice';
 import { DataGrid } from 'react-data-grid';
@@ -47,24 +47,50 @@ const ProjectPlanModel = () => {
                 Array.isArray(t.projectPlan.milestones) &&
                 t.projectPlan.milestones.length > 0
             ) {
-                t.projectPlan.milestones.forEach(m => {
-                    rows.push({
-                        trackerId: t._id,
-                        assetRequestId: t.assetRequestId,
-                        requestType: t.requestType,
-                        productModel: t.productModel,
-                        plantLocation: t.plantLocation,
-                        implementationTarget: t.implementationTarget,
-                        sNo: m.sNo,
-                        activity: m.activity,
-                        responsibility: m.responsibility,
-                        planStart: m.planStart,
-                        planEnd: m.planEnd,
-                        actualStart: m.actualStart,
-                        actualEnd: m.actualEnd,
-                        delayDays: m.delayDays,
-                        remarks: m.remarks
-                    });
+                const milestones = t.projectPlan.milestones;
+
+                let planStart = null;
+                let planEnd = null;
+                let actualStart = null;
+                let actualEnd = null;
+                let delayDays = 0;
+
+                milestones.forEach(m => {
+                    if (m.planStart) {
+                        if (!planStart || dayjs(m.planStart).isBefore(dayjs(planStart))) {
+                            planStart = m.planStart;
+                        }
+                    }
+                    if (m.planEnd) {
+                        if (!planEnd || dayjs(m.planEnd).isAfter(dayjs(planEnd))) {
+                            planEnd = m.planEnd;
+                        }
+                    }
+                    if (m.actualStart) {
+                        if (!actualStart || dayjs(m.actualStart).isBefore(dayjs(actualStart))) {
+                            actualStart = m.actualStart;
+                        }
+                    }
+                    if (m.actualEnd) {
+                        if (!actualEnd || dayjs(m.actualEnd).isAfter(dayjs(actualEnd))) {
+                            actualEnd = m.actualEnd;
+                        }
+                    }
+                    if (typeof m.delayDays === 'number') {
+                        if (m.delayDays > delayDays) {
+                            delayDays = m.delayDays;
+                        }
+                    }
+                });
+
+                rows.push({
+                    trackerId: t._id,
+                    assetRequestId: t.assetRequestId,
+                    planStart,
+                    planEnd,
+                    actualStart,
+                    actualEnd,
+                    delayDays
                 });
             }
         });
@@ -244,35 +270,8 @@ const ProjectPlanModel = () => {
 
     const dataGridColumns = [
         {
-            key: 'view',
-            name: 'VIEW',
-            width: 120,
-            frozen: true,
-            renderCell: ({ row }) => {
-                const trackerId = row.trackerId;
-                return (
-                    <div className="flex items-center gap-2 justify-center">
-                        <button
-                            type="button"
-                            className="p-1.5 rounded-full border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm"
-                            onClick={() => handleViewPlan(trackerId)}
-                        >
-                            <Eye size={14} />
-                        </button>
-                        <button
-                            type="button"
-                            className="p-1.5 rounded-full border border-indigo-100 text-indigo-600 hover:bg-indigo-50 bg-white shadow-sm"
-                            onClick={() => handleProjectPlan(trackerId)}
-                        >
-                            <Edit size={14} />
-                        </button>
-                    </div>
-                );
-            }
-        },
-        {
             key: 'assetRequestId',
-            name: 'ASSET REQ ID',
+            name: 'ASSET ID',
             width: 170,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
@@ -280,57 +279,8 @@ const ProjectPlanModel = () => {
             )
         },
         {
-            key: 'requestType',
-            name: 'REQ TYPE',
-            width: 150,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'productModel',
-            name: 'PRODUCT MODEL',
-            width: 200,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'plantLocation',
-            name: 'PLANT LOCATION',
-            width: 170,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'implementationTarget',
-            name: 'IMP. TARGET',
-            width: 160,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => (
-                <span>
-                    {row.implementationTarget
-                        ? dayjs(row.implementationTarget).format('DD-MMM-YYYY')
-                        : '-'}
-                </span>
-            )
-        },
-        {
-            key: 'sNo',
-            name: 'S.No',
-            width: 80,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'activity',
-            name: 'Activity',
-            width: 200,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'responsibility',
-            name: 'Responsibility',
-            width: 180,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
             key: 'planStart',
-            name: 'Plan Start',
+            name: 'PLAN START',
             width: 150,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
@@ -339,7 +289,7 @@ const ProjectPlanModel = () => {
         },
         {
             key: 'planEnd',
-            name: 'Plan End',
+            name: 'PLAN END',
             width: 150,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
@@ -348,8 +298,8 @@ const ProjectPlanModel = () => {
         },
         {
             key: 'actualStart',
-            name: 'Actual Start',
-            width: 150,
+            name: 'ACTUAL START DATE',
+            width: 180,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
                 <span>
@@ -359,8 +309,8 @@ const ProjectPlanModel = () => {
         },
         {
             key: 'actualEnd',
-            name: 'Actual End',
-            width: 150,
+            name: 'ACTUAL END DATE',
+            width: 180,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
                 <span>{row.actualEnd ? dayjs(row.actualEnd).format('DD-MMM-YYYY') : '-'}</span>
@@ -368,15 +318,34 @@ const ProjectPlanModel = () => {
         },
         {
             key: 'delayDays',
-            name: 'Delay (Days)',
-            width: 140,
+            name: 'DELAY IN DAYS',
+            width: 160,
             renderHeaderCell: FilterHeaderCell
         },
         {
-            key: 'remarks',
-            name: 'Remarks',
-            width: 240,
-            renderHeaderCell: FilterHeaderCell
+            key: 'action',
+            name: 'ACTIONS',
+            width: 180,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        type="button"
+                        className="p-1.5 rounded-full border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm"
+                        onClick={() => handleViewPlan(row.trackerId)}
+                        title="View Project Plan"
+                    >
+                        <Eye size={14} />
+                    </button>
+                    <button
+                        type="button"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-full border border-indigo-100 text-indigo-600 hover:bg-indigo-50 bg-white shadow-sm"
+                        onClick={() => handleProjectPlan(row.trackerId)}
+                        title="Initialise Actual Start"
+                    >
+                        Initialise Actual Start
+                    </button>
+                </div>
+            )
         }
     ];
 
@@ -435,41 +404,31 @@ const ProjectPlanModel = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                    
-                </div>
-            </div>
-
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <div className="px-8 py-6">
-                    <div
-                        ref={gridContainerRef}
-                        className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
-                    >
-                        <div className="h-full">
-                            <DataGrid
-                                columns={autoFitColumns}
-                                rows={gridRows}
-                                rowKeyGetter={row =>
-                                    `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
-                                }
-                                className="rdg-light mh-development-grid"
-                                style={{ blockSize: '100%' }}
-                                rowHeight={60}
-                                headerRowHeight={52}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
-                            />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
+        <div className="min-h-screen bg-gray-50/50 p-2 lg:p-4">
+            <div
+                ref={gridContainerRef}
+                className="w-full h-[620px] border border-gray-200 rounded-3xl overflow-hidden bg-white relative"
+            >
+                <div className="h-full">
+                    <DataGrid
+                        columns={autoFitColumns}
+                        rows={gridRows}
+                        rowKeyGetter={row =>
+                            `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
+                        }
+                        className="rdg-light mh-development-grid"
+                        style={{ blockSize: '100%' }}
+                        rowHeight={60}
+                        headerRowHeight={52}
+                        defaultColumnOptions={{
+                            resizable: true
+                        }}
+                    />
+                    {loading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

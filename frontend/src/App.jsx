@@ -6,7 +6,6 @@ import MHRequestForm from './components/Forms/MHRequestForm';
 import RequestTracker from './pages/RequestTracker';
 import MHDevelopmentTracker from './pages/MHDevelopmentTracker/MHDevelopmentTracker';
 import ProjectPlanModel from './pages/ProjectPlanModel';
-import AssetProgressTracker from './pages/AssetProgressTracker';
 
 import EmployeeMaster from './pages/EmployeeMaster/EmployeeMaster';
 import EmployeeForm from './pages/EmployeeMaster/EmployeeForm';
@@ -75,12 +74,6 @@ function App() {
             <Route path="project-plan-model" element={
               <ProtectedRoute permission="mhDevelopmentTracker">
                 <ProjectPlanModel />
-              </ProtectedRoute>
-            } />
-
-            <Route path="asset-progress" element={
-              <ProtectedRoute permission="assetSummary">
-                <AssetProgressTracker />
               </ProtectedRoute>
             } />
 

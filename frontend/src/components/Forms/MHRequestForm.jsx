@@ -99,37 +99,38 @@ const MHRequestForm = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 fade-in pb-12">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <button 
-                    onClick={() => navigate('/mh-requests')}
-                    className="flex items-center gap-2 text-gray-500 hover:text-tvs-blue transition-colors font-medium"
-                >
-                    <ChevronLeft size={20} />
-                    Back to List
-                </button>
-                <div className="text-right">
-                    <h1 className="text-2xl font-bold text-gray-900 font-outfit">
-                        {isEditMode ? 'Edit MH Request' : 'Create MH Request'}
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        {isEditMode ? `Updating Request ID: ${currentItem?.mhRequestId}` : 'Fill in the information to request material handling assets'}
-                    </p>
+        <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
+            <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/mh-requests')}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <ChevronLeft size={20} className="text-gray-600" />
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-bold text-tvs-dark-gray m-0">
+                            {isEditMode ? 'Edit MH Request' : 'Create MH Request'}
+                        </h1>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {isEditMode ? `Updating Request ID: ${currentItem?.mhRequestId}` : 'Fill in the information to request material handling assets'}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={onFinish}
-                className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50"
-                initialValues={{
-                    requestType: 'New Project',
-                    plantLocation: 'Hosur Plant 1 (TN)',
-                    productModel: 'Scooter'
-                }}
-            >
+            <div className="p-6">
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={onFinish}
+                    className="space-y-10"
+                    initialValues={{
+                        requestType: 'New Project',
+                        plantLocation: 'Hosur Plant 1 (TN)',
+                        productModel: 'Scooter'
+                    }}
+                >
                 {/* Section 1: Requester Info */}
                 <div className="mb-10">
                     <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[2px] mb-6 flex items-center gap-2">
@@ -272,18 +273,17 @@ const MHRequestForm = () => {
                     </Form.Item>
                 </div>
 
-                {/* Footer Actions */}
                 <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-gray-100">
-                    <Button 
-                        size="large" 
+                    <Button
+                        size="large"
                         onClick={() => navigate('/mh-requests')}
                         className="rounded-xl px-8 h-12 font-bold text-gray-500 hover:bg-gray-50 border-gray-200"
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        type="primary" 
-                        htmlType="submit" 
+                    <Button
+                        type="primary"
+                        htmlType="submit"
                         size="large"
                         loading={loading}
                         className="rounded-xl px-10 h-12 font-bold bg-tvs-blue hover:bg-tvs-blue/90 border-none shadow-lg shadow-tvs-blue/20 flex items-center gap-2"
@@ -292,21 +292,22 @@ const MHRequestForm = () => {
                         {isEditMode ? 'Update Request' : 'Submit Request'}
                     </Button>
                 </div>
-            </Form>
+                </Form>
 
-            <style>{`
-                .ant-form-item-label label {
-                    font-size: 13px !important;
-                    font-weight: 700 !important;
-                    color: #475569 !important;
-                    padding-bottom: 8px !important;
-                }
-                .ant-input:focus, .ant-input-focused, .ant-select:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector:focus {
-                    border-color: #1a2b5e !important;
-                    box-shadow: 0 0 0 2px rgba(26, 43, 94, 0.1) !important;
-                }
-                .ant-select-selector { border-radius: 12px !important; }
-            `}</style>
+                <style>{`
+                    .ant-form-item-label label {
+                        font-size: 13px !important;
+                        font-weight: 700 !important;
+                        color: #475569 !important;
+                        padding-bottom: 8px !important;
+                    }
+                    .ant-input:focus, .ant-input-focused, .ant-select:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector:focus {
+                        border-color: #1a2b5e !important;
+                        box-shadow: 0 0 0 2px rgba(26, 43, 94, 0.1) !important;
+                    }
+                    .ant-select-selector { border-radius: 12px !important; }
+                `}</style>
+            </div>
         </div>
     );
 };

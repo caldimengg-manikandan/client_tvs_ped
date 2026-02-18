@@ -25,7 +25,6 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         { name: 'Vendor Master', icon: Shield, path: '/vendor-master', permission: 'vendorMaster' },
         { name: 'Vendor Scoring', icon: Shield, path: '/vendor-master/scoring', permission: 'vendorMaster' },
         { name: 'Loading Chart', icon: ClipboardList, path: '/vendor-master/loading', permission: 'vendorMaster' },
-        { name: 'Asset Progress', icon: Activity, path: '/asset-progress', permission: 'assetSummary' },
         { name: 'Asset Management Update', icon: ClipboardList, path: '/asset-management-update', permission: 'assetSummary' },
         { name: 'Asset Summary', icon: ClipboardList, path: '/asset-summary', permission: 'assetSummary' },
         { name: 'Settings', icon: Settings, path: '/settings', permission: 'settings' }

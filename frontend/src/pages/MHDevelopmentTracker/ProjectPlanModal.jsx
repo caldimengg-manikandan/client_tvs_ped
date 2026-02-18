@@ -34,7 +34,6 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                     planEnd: existing.planEnd ? dayjs(existing.planEnd) : null,
                     actualStart: existing.actualStart ? dayjs(existing.actualStart) : null,
                     actualEnd: existing.actualEnd ? dayjs(existing.actualEnd) : null,
-                    delayDays: existing.delayDays || null,
                     remarks: existing.remarks || ''
                 };
             });
@@ -48,39 +47,38 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
         }
     }, [visible, initialData, form]);
 
-    const recalculateDelayForRow = (rowIndex) => {
-        const milestones = form.getFieldValue('milestones') || [];
-        const row = milestones[rowIndex];
-        if (!row) return;
-
-        const actualStart = row.actualStart;
-        const actualEnd = row.actualEnd;
-
-        if (actualStart && actualEnd && dayjs.isDayjs(actualStart) && dayjs.isDayjs(actualEnd)) {
-            const diff = actualEnd.diff(actualStart, 'day');
-            const delay = diff > 0 ? diff : 0;
-            milestones[rowIndex] = { ...row, delayDays: delay };
-        } else {
-            milestones[rowIndex] = { ...row, delayDays: null };
-        }
-
-        form.setFieldsValue({ milestones });
-    };
-
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const formattedMilestones = (values.milestones || []).map((m) => ({
-                sNo: m.sNo,
-                activity: m.activity,
-                responsibility: m.responsibility,
-                planStart: m.planStart ? m.planStart.toISOString() : null,
-                planEnd: m.planEnd ? m.planEnd.toISOString() : null,
-                actualStart: m.actualStart ? m.actualStart.toISOString() : null,
-                actualEnd: m.actualEnd ? m.actualEnd.toISOString() : null,
-                delayDays: m.delayDays ?? null,
-                remarks: m.remarks
-            }));
+            const formattedMilestones = (values.milestones || []).map(m => {
+                const planStart = m.planStart || null;
+                const planEnd = m.planEnd || null;
+                const actualStart = m.actualStart || null;
+                const actualEnd = m.actualEnd || null;
+
+                let delayDays = 0;
+                if (planEnd && actualEnd) {
+                    const diff = dayjs(actualEnd).startOf('day').diff(
+                        dayjs(planEnd).startOf('day'),
+                        'day'
+                    );
+                    if (!Number.isNaN(diff) && diff > 0) {
+                        delayDays = diff;
+                    }
+                }
+
+                return {
+                    sNo: m.sNo,
+                    activity: m.activity,
+                    responsibility: m.responsibility,
+                    planStart: planStart ? planStart.toISOString() : null,
+                    planEnd: planEnd ? planEnd.toISOString() : null,
+                    actualStart: actualStart ? actualStart.toISOString() : null,
+                    actualEnd: actualEnd ? actualEnd.toISOString() : null,
+                    delayDays,
+                    remarks: m.remarks || ''
+                };
+            });
 
             onSave({
                 milestones: formattedMilestones,
@@ -110,7 +108,7 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             onCancel={onCancel}
             onOk={handleSubmit}
             width="100%"
-            okText="Save Plan"
+            okText="Save Tracking Data"
             centered
             okButtonProps={{ className: 'bg-indigo-600 hover:bg-indigo-700' }}
         >
@@ -153,13 +151,13 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                                         </th>
                                         <th
                                             rowSpan={2}
-                                            className="border border-gray-200 px-2 py-2 text-center w-28"
+                                            className="border border-gray-200 px-2 py-2 text-center w-24"
                                         >
                                             Delay (Days)
                                         </th>
                                         <th
                                             rowSpan={2}
-                                            className="border border-gray-200 px-2 py-2 text-left w-64"
+                                            className="border border-gray-200 px-2 py-2 text-left w-40"
                                         >
                                             Remarks
                                         </th>
@@ -229,15 +227,11 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                                                 </Form.Item>
                                             </td>
                                             <td className="border border-gray-200 px-2 py-2 align-top">
-                                                <Form.Item
-                                                    name={[name, 'actualStart']}
-                                                    className="mb-0"
-                                                >
+                                                <Form.Item name={[name, 'actualStart']} className="mb-0">
                                                     <DatePicker
                                                         className="w-full text-xs"
                                                         format="DD-MMM-YYYY"
                                                         size="small"
-                                                        onChange={() => recalculateDelayForRow(name)}
                                                     />
                                                 </Form.Item>
                                             </td>
@@ -247,18 +241,56 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                                                         className="w-full text-xs"
                                                         format="DD-MMM-YYYY"
                                                         size="small"
-                                                        onChange={() => recalculateDelayForRow(name)}
                                                     />
                                                 </Form.Item>
                                             </td>
-                                            <td className="border border-gray-200 px-2 py-2 text-center align-top">
-                                                <Form.Item name={[name, 'delayDays']} className="mb-0">
-                                                    <Input disabled className="text-center text-xs" />
+                                            <td className="border border-gray-200 px-2 py-2 align-top text-center">
+                                                <Form.Item
+                                                    noStyle
+                                                    shouldUpdate={(prev, curr) =>
+                                                        prev.milestones?.[name]?.planEnd !==
+                                                            curr.milestones?.[name]?.planEnd ||
+                                                        prev.milestones?.[name]?.actualEnd !==
+                                                            curr.milestones?.[name]?.actualEnd
+                                                    }
+                                                >
+                                                    {({ getFieldValue }) => {
+                                                        const planEnd = getFieldValue([
+                                                            'milestones',
+                                                            name,
+                                                            'planEnd'
+                                                        ]);
+                                                        const actualEnd = getFieldValue([
+                                                            'milestones',
+                                                            name,
+                                                            'actualEnd'
+                                                        ]);
+                                                        let delayLabel = '-';
+                                                        if (planEnd && actualEnd) {
+                                                            const diff = actualEnd.diff(
+                                                                planEnd,
+                                                                'day'
+                                                            );
+                                                            if (!Number.isNaN(diff) && diff > 0) {
+                                                                delayLabel = `${diff}`;
+                                                            } else {
+                                                                delayLabel = '0';
+                                                            }
+                                                        }
+                                                        return (
+                                                            <span className="text-xs font-semibold">
+                                                                {delayLabel}
+                                                            </span>
+                                                        );
+                                                    }}
                                                 </Form.Item>
                                             </td>
                                             <td className="border border-gray-200 px-2 py-2 align-top">
-                                                <Form.Item name={[name, 'remarks']} className="mb-0">
-                                                    <TextArea rows={1} className="text-xs" />
+                                                <Form.Item
+                                                    name={[name, 'remarks']}
+                                                    className="mb-0"
+                                                >
+                                                    <Input className="text-xs" />
                                                 </Form.Item>
                                             </td>
                                             <td className="border border-gray-200 px-2 py-2 text-center align-top">

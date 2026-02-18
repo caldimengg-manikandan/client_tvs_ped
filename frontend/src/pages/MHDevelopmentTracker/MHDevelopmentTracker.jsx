@@ -27,6 +27,81 @@ import ProjectPlanModal from './ProjectPlanModal';
 const { Option } = Select;
 const { TextArea } = Input;
 
+const mapMilestoneIndexToStage = (index, totalLength) => {
+    if (index == null || index < 0) return 'Not Started';
+    if (index >= totalLength - 1) return 'Completed';
+    if (index <= 2) return 'Design';
+    if (index === 3) return 'PR/PO';
+    if (index === 4 || index === 5) return 'Sample Production';
+    if (index === 6 || index === 7) return 'Production Ready';
+    return 'Completed';
+};
+
+const deriveCurrentStageFromMilestones = (milestones) => {
+    if (!Array.isArray(milestones) || milestones.length === 0) return 'Not Started';
+
+    let lastCompletedIndex = -1;
+    milestones.forEach((m, index) => {
+        if (m.actualEnd) {
+            lastCompletedIndex = index;
+        }
+    });
+
+    if (lastCompletedIndex === -1) {
+        const firstStartedIndex = milestones.findIndex(m => m.actualStart);
+        if (firstStartedIndex === -1) return 'Not Started';
+        return mapMilestoneIndexToStage(firstStartedIndex, milestones.length);
+    }
+
+    return mapMilestoneIndexToStage(lastCompletedIndex, milestones.length);
+};
+
+const deriveStatusFromMilestones = (milestones) => {
+    if (!Array.isArray(milestones) || milestones.length === 0) return 'Not Started';
+
+    const anyProgress = milestones.some(m => m.actualStart || m.actualEnd);
+    if (!anyProgress) return 'Not Started';
+
+    const today = dayjs().startOf('day');
+    let maxDelay = 0;
+
+    milestones.forEach(m => {
+        const planEnd = m.planEnd ? dayjs(m.planEnd).startOf('day') : null;
+        const actualEnd = m.actualEnd ? dayjs(m.actualEnd).startOf('day') : null;
+
+        if (planEnd && actualEnd) {
+            const diff = actualEnd.diff(planEnd, 'day');
+            if (!Number.isNaN(diff) && diff > maxDelay) {
+                maxDelay = diff;
+            }
+        } else if (planEnd && !actualEnd) {
+            const diff = today.diff(planEnd, 'day');
+            if (!Number.isNaN(diff) && diff > maxDelay) {
+                maxDelay = diff;
+            }
+        }
+    });
+
+    if (maxDelay <= 0) return 'On Track';
+    if (maxDelay <= 7) return 'Likely Delay';
+    return 'Delayed';
+};
+
+const computeDerivedTrackerFields = (tracker) => {
+    const milestones = tracker?.projectPlan?.milestones;
+    if (!Array.isArray(milestones) || milestones.length === 0) {
+        return {
+            status: tracker.status || 'Not Started',
+            currentStage: tracker.currentStage || 'Not Started'
+        };
+    }
+
+    return {
+        status: deriveStatusFromMilestones(milestones),
+        currentStage: deriveCurrentStageFromMilestones(milestones)
+    };
+};
+
 const MHDevelopmentTracker = () => {
     const dispatch = useDispatch();
     const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
@@ -72,6 +147,10 @@ const MHDevelopmentTracker = () => {
     const handleAddClick = () => {
         setEditingTracker(null);
         form.resetFields();
+        form.setFieldsValue({
+            status: 'Not Started',
+            currentStage: 'Not Started'
+        });
         setIsModalVisible(true);
     };
 
@@ -210,7 +289,14 @@ const MHDevelopmentTracker = () => {
         document.body.removeChild(link);
     };
 
-    const filteredTrackers = useMemo(() => trackers || [], [trackers]);
+    const filteredTrackers = useMemo(
+        () =>
+            (trackers || []).map(tracker => {
+                const derived = computeDerivedTrackerFields(tracker);
+                return { ...tracker, ...derived };
+            }),
+        [trackers]
+    );
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -391,8 +477,8 @@ const MHDevelopmentTracker = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
-            width: 70,
+            name: 'S.no',
+            width: 50,
             frozen: true,
             renderCell: ({ rowIdx }) => (
                 <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
@@ -406,24 +492,6 @@ const MHDevelopmentTracker = () => {
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-900">{row.assetRequestId}</span>
             )
-        },
-        {
-            key: 'requestType',
-            name: 'REQ TYPE',
-            width: 150,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'productModel',
-            name: 'PRODUCT MODEL',
-            width: 200,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
-            key: 'plantLocation',
-            name: 'PLANT LOCATION',
-            width: 170,
-            renderHeaderCell: FilterHeaderCell
         },
         {
             key: 'vendorSelection',
@@ -465,17 +533,6 @@ const MHDevelopmentTracker = () => {
             )
         },
         {
-            key: 'implementationTarget',
-            name: 'IMP. TARGET',
-            width: 160,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => (
-                <span>
-                    {row.implementationTarget ? dayjs(row.implementationTarget).format('DD-MMM-YYYY') : '-'}
-                </span>
-            )
-        },
-        {
             key: 'status',
             name: 'STATUS',
             width: 120,
@@ -484,26 +541,6 @@ const MHDevelopmentTracker = () => {
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(row.status)}`}>
                     {row.status}
                 </span>
-            )
-        },
-        {
-            key: 'implementationVisibility',
-            name: 'IMP. VISIBILITY',
-            width: 220,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => (
-                <div className="w-full flex flex-col gap-1">
-                    <div className="flex justify-between text-[10px] font-bold">
-                        <span>Progress</span>
-                        <span>{row.implementationVisibility || 0}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div
-                            className="bg-tvs-blue h-1.5 rounded-full transition-all"
-                            style={{ width: `${row.implementationVisibility || 0}%` }}
-                        />
-                    </div>
-                </div>
             )
         },
         {
@@ -516,12 +553,6 @@ const MHDevelopmentTracker = () => {
                     {row.currentStage}
                 </span>
             )
-        },
-        {
-            key: 'remarks',
-            name: 'REMARKS',
-            width: 220,
-            renderHeaderCell: FilterHeaderCell
         },
         {
             key: 'drawing',
@@ -585,7 +616,7 @@ const MHDevelopmentTracker = () => {
         const scale = gridWidth / totalDefinedWidth;
 
         return dataGridColumns.map((column) => {
-            if (!column.width) return column;
+            if (!column.width || column.key === 'serial') return column;
             const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
 
             return {
@@ -613,8 +644,8 @@ const MHDevelopmentTracker = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-4 lg:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
         
                 </div>
@@ -723,23 +754,11 @@ const MHDevelopmentTracker = () => {
                         <Form.Item name="implementationTarget" label={<span className="text-xs font-bold uppercase text-gray-500">Implementation Target</span>}>
                             <DatePicker size="large" className="w-full" format="DD-MMM-YYYY" />
                         </Form.Item>
-                        <Form.Item name="status" label={<span className="text-xs font-bold uppercase text-gray-500">Status</span>} initialValue="Not Started">
-                            <Select size="large">
-                                <Option value="On Track">On Track</Option>
-                                <Option value="Likely Delay">Likely Delay</Option>
-                                <Option value="Delayed">Delayed</Option>
-                                <Option value="Not Started">Not Started</Option>
-                            </Select>
+                        <Form.Item name="status" label={<span className="text-xs font-bold uppercase text-gray-500">Status (Auto)</span>}>
+                            <Input size="large" disabled />
                         </Form.Item>
-                        <Form.Item name="currentStage" label={<span className="text-xs font-bold uppercase text-gray-500">Current Stage</span>} initialValue="Not Started">
-                            <Select size="large">
-                                <Option value="Design">Design</Option>
-                                <Option value="PR/PO">PR/PO</Option>
-                                <Option value="Sample Production">Sample Production</Option>
-                                <Option value="Production Ready">Production Ready</Option>
-                                <Option value="Completed">Completed</Option>
-                                <Option value="Not Started">Not Started</Option>
-                            </Select>
+                        <Form.Item name="currentStage" label={<span className="text-xs font-bold uppercase text-gray-500">Current Stage (Auto)</span>}>
+                            <Input size="large" disabled />
                         </Form.Item>
                         <Form.Item name="remarks" label={<span className="text-xs font-bold uppercase text-gray-500">Remarks</span>} className="col-span-2">
                             <TextArea rows={3} placeholder="Add any special instructions or milestones..." />

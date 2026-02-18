@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, FileText, X, Filter } from 'lucide-react';
+import { Plus, FileText, X, Filter, Eye, Pencil, Trash2 } from 'lucide-react';
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
@@ -25,6 +25,8 @@ const CreateMHRequestList = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [mhListGridWidth, setMhListGridWidth] = useState(0);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
 
     const mhListGridContainerRef = useRef(null);
 
@@ -62,6 +64,35 @@ const CreateMHRequestList = () => {
             mailId: user.email || ''
         });
         setIsModalOpen(true);
+    };
+
+    const handleViewRequest = (row) => {
+        setSelectedRequest(row);
+        setIsViewModalOpen(true);
+    };
+
+    const handleEditRequest = (row) => {
+        if (!row || !row._id) return;
+        navigate(`/mh-requests/edit/${row._id}`);
+    };
+
+    const handleDeleteRequest = (row) => {
+        if (!row || !row._id) return;
+        AntModal.confirm({
+            title: 'Delete MH Request',
+            content: `Are you sure you want to delete MH Request ${row.mhRequestId || ''}?`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await dispatch(deleteAssetRequest(row._id)).unwrap();
+                    message.success('MH Request deleted successfully');
+                } catch (err) {
+                    message.error(err || 'Failed to delete MH Request');
+                }
+            }
+        });
     };
 
     const handleFormSubmit = async (values) => {
@@ -249,12 +280,6 @@ const CreateMHRequestList = () => {
             )
         },
         {
-            key: 'departmentName',
-            name: 'DEPT',
-            width: 120,
-            renderHeaderCell: FilterHeaderCell
-        },
-        {
             key: 'requestType',
             name: 'TYPE',
             width: 150,
@@ -319,19 +344,34 @@ const CreateMHRequestList = () => {
             )
         },
         {
-            key: 'userName',
-            name: 'USER NAME',
+            key: 'actions',
+            name: 'ACTIONS',
             width: 150,
-            renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-900">{row.userName}</span>
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => handleViewRequest(row)}
+                        className="p-1.5 rounded-full hover:bg-blue-50 text-blue-600 border border-blue-100"
+                    >
+                        <Eye size={14} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleEditRequest(row)}
+                        className="p-1.5 rounded-full hover:bg-amber-50 text-amber-600 border border-amber-100"
+                    >
+                        <Pencil size={14} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleDeleteRequest(row)}
+                        className="p-1.5 rounded-full hover:bg-red-50 text-red-600 border border-red-100"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
             )
-        },
-        {
-            key: 'location',
-            name: 'USER LOC',
-            width: 140,
-            renderHeaderCell: FilterHeaderCell
         }
     ];
 
@@ -651,6 +691,111 @@ const CreateMHRequestList = () => {
                     </Form>
                 </div>
             </AntModal>
+
+            {selectedRequest && (
+                <AntModal
+                    title={
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="text-xs font-semibold text-gray-400">MH Request Details</div>
+                                <div className="text-lg font-bold text-gray-900">
+                                    {selectedRequest.mhRequestId || 'MH Request'}
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    open={isViewModalOpen}
+                    onCancel={() => setIsViewModalOpen(false)}
+                    footer={[
+                        <Button key="close" onClick={() => setIsViewModalOpen(false)}>
+                            Close
+                        </Button>,
+                        <Button
+                            key="edit"
+                            type="primary"
+                            onClick={() => {
+                                setIsViewModalOpen(false);
+                                handleEditRequest(selectedRequest);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    ]}
+                    width={720}
+                    centered
+                >
+                    <div className="space-y-6 text-sm">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Department</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.departmentName || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">User Name</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.userName || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Request Type</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.requestType || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Plant Location</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.plantLocation || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Product Model</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.productModel || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Handling Part Name</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.handlingPartName || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Material Handling Location</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.materialHandlingLocation || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Flow</div>
+                                <div className="text-sm font-semibold text-tvs-blue">
+                                    {(selectedRequest.from || '') + ' → ' + (selectedRequest.to || '')}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">Volume/Day</div>
+                                <div className="text-sm font-black text-gray-900">
+                                    {selectedRequest.volumePerDay || '-'}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] font-semibold text-gray-400">User Location</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                    {selectedRequest.location || '-'}
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-[11px] font-semibold text-gray-400 mb-1.5">Problem Statement / Requirement</div>
+                            <div className="text-sm leading-relaxed text-gray-800 whitespace-pre-line border border-gray-100 rounded-xl p-3 bg-gray-50">
+                                {selectedRequest.problemStatement || '-'}
+                            </div>
+                        </div>
+                    </div>
+                </AntModal>
+            )}
 
 
             <style>{`
