@@ -1,33 +1,33 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Plus, Edit, Trash2, Mail, Filter, Download, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Filter as FilterIcon, Download, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendors, deleteVendor } from '../../redux/slices/vendorSlice';
 import { Modal } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
-import { defaultColDef as globalDefaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createBoldColumn } from '../../config/agGridConfig';
-import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../../components/AgGridCustom/CustomHeader';
-
-// AG Grid Modules are registered GLOBALLY in agGridConfig.js
+import { createActionColumn } from '../../config/agGridConfig';
 
 const { confirm } = Modal;
 
 const VendorMaster = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const gridRef = useRef();
     const fileInputRef = useRef();
 
-    // Redux State
     const { items: vendors, loading, error } = useSelector((state) => state.vendors);
 
     const [viewingVendor, setViewingVendor] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [isImportModalVisible, setIsImportModalVisible] = useState(false);
     const [importData, setImportData] = useState([]);
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
+    const [gridWidth, setGridWidth] = useState(0);
+    const gridContainerRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchVendors());
@@ -184,86 +184,302 @@ const VendorMaster = () => {
         toast.success('Template downloaded successfully');
     };
 
-    // Use all vendors directly (filtering handled by AG Grid)
     const filteredVendors = vendors || [];
 
-    const columnDefs = useMemo(() => [
-        createSerialNumberColumn(),
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setGridWidth(gridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    const applyColumnFilters = (rows) => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
+
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
+
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        filteredVendors.forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = (value) => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
+                }
+
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-white truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                    <FilterIcon size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                type="button"
+                                onClick={handleSelectAll}
+                                className="text-[10px] font-semibold text-tvs-blue"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                className="text-[10px] font-semibold text-gray-500"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const gridRows = applyColumnFilters(filteredVendors);
+
+    const dataGridColumns = [
         {
-            ...createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'serial',
+            name: '#',
+            width: 80,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            )
         },
         {
-            ...createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            headerName: 'GSTIN',
-            field: 'GSTIN',
+            key: 'vendorCode',
+            name: 'VENDOR CODE',
             width: 160,
-            valueFormatter: (params) => params.value ? params.value.toUpperCase() : '',
-            cellStyle: { fontFamily: 'monospace', fontWeight: '600' },
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.vendorCode}</span>
+            )
         },
         {
-            headerName: 'LOCATION',
-            field: 'vendorLocation',
-            width: 160,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            headerName: 'EMAIL',
-            field: 'vendorMailId',
+            key: 'vendorName',
+            name: 'VENDOR NAME',
             width: 220,
-            cellRenderer: (params) => (
-                <a href={`mailto:${params.value}`} className="text-tvs-blue hover:underline font-medium">
-                    {params.value}
-                </a>
-            ),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.vendorName}</span>
+            )
         },
         {
-            headerName: 'REMARKS',
-            field: 'remarks',
+            key: 'GSTIN',
+            name: 'GSTIN',
             width: 200,
-            valueGetter: (params) => params.value || 'No remarks',
-            cellStyle: { color: '#6b7280', fontStyle: 'italic' },
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-mono font-semibold">
+                    {row.GSTIN ? row.GSTIN.toUpperCase() : ''}
+                </span>
+            )
         },
-        createActionColumn([
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
-                title: 'View Details',
-                className: 'p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all',
-                onClick: (data) => handleView(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
-                title: 'Edit Vendor',
-                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
-                onClick: (data) => handleEdit(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
-                title: 'Delete Vendor',
-                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
-                onClick: (data) => handleDelete(data._id)
-            }
-        ])
-    ], []);
+        {
+            key: 'vendorLocation',
+            name: 'LOCATION',
+            width: 180,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'vendorMailId',
+            name: 'EMAIL',
+            width: 240,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <a
+                    href={`mailto:${row.vendorMailId}`}
+                    className="text-tvs-blue hover:underline font-medium"
+                >
+                    {row.vendorMailId}
+                </a>
+            )
+        },
+        {
+            key: 'remarks',
+            name: 'REMARKS',
+            width: 260,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="text-gray-500 italic">
+                    {row.remarks || 'No remarks'}
+                </span>
+            )
+        },
+        {
+            key: 'actions',
+            name: 'ACTIONS',
+            width: 200,
+            sortable: false,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => handleView(row)}
+                        className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all"
+                        title="View Details"
+                    >
+                        <Eye size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleEdit(row)}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        title="Edit Vendor"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(row._id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Vendor"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
+    const autoFitColumns = useMemo(() => {
+        if (!gridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = gridWidth / totalDefinedWidth;
+
+        return dataGridColumns.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, gridWidth]);
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
 
 
 
-            {/* AG Grid Table */}
+            {/* Vendor Master Table */}
             <div className="px-8 py-6">
                 {/* Toolbar with Export */}
                 <div className="mb-5 flex items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm">
@@ -304,17 +520,29 @@ const VendorMaster = () => {
                     </div>
                 </div>
 
-                {/* Clean Minimalist AG Grid */}
-                <div className="ag-theme-alpine w-full h-[620px]">
-                    <AgGridReact
-                        ref={gridRef}
-                        theme="legacy"
-                        rowData={filteredVendors}
-                        columnDefs={columnDefs}
-                        defaultColDef={globalDefaultColDef}
-                        {...defaultGridOptions}
-                        loading={loading}
-                    />
+                <div
+                    ref={gridContainerRef}
+                    className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
+                >
+                    <div className="h-full">
+                        <DataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id}
+                            className="rdg-light mh-development-grid"
+                            style={{ blockSize: '100%' }}
+                            rowHeight={60}
+                            headerRowHeight={52}
+                            defaultColumnOptions={{
+                                resizable: true
+                            }}
+                        />
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
