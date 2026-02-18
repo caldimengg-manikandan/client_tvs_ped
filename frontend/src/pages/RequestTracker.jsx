@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Download, UserPlus, X, Check, ArrowRight, Paperclip, Package, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAssetRequests, updateAssetRequest, sendEmailNotification } from '../redux/slices/assetRequestSlice';
+import { fetchAssetRequests, updateAssetRequest, sendEmailNotification, upsertRequest } from '../redux/slices/assetRequestSlice';
 import { fetchEmployees } from '../redux/slices/employeeSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import api from '../api/axiosConfig';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -107,13 +108,35 @@ const RequestTracker = () => {
             return;
         }
 
-        const formData = {
-            ...request,
-            status: newStatus
-        };
+        const payload = new FormData();
+        const fields = [
+            'requestType',
+            'productModel',
+            'problemStatement',
+            'handlingPartName',
+            'materialHandlingLocation',
+            'plantLocation',
+            'from',
+            'to',
+            'volumePerDay',
+            'assignedVendor',
+            'designReceiptFromVendor',
+            'designApproval',
+            'production',
+            'implementation',
+            'remark'
+        ];
 
-        // updateAssetRequest expects { id, formData }
-        const result = await dispatch(updateAssetRequest({ id: request._id, formData }));
+        fields.forEach((key) => {
+            const value = request[key];
+            if (value !== undefined && value !== null) {
+                payload.append(key, String(value));
+            }
+        });
+
+        payload.append('status', newStatus);
+
+        const result = await dispatch(updateAssetRequest({ id: request._id, formData: payload }));
 
         if (updateAssetRequest.fulfilled.match(result)) {
             // Send email notification ONLY when request is REJECTED
@@ -128,16 +151,13 @@ const RequestTracker = () => {
                 } else {
                     toast.warning(`Request ${newStatus}, but failed to send email notification.`);
                 }
-            } else if (newStatus === 'Accepted') {
-                // Just show success message, no email for accepted requests
-                toast.success(`Request ${newStatus} successfully.`);
-            } else {
-                toast.success(`Status updated to ${newStatus}.`);
             }
+            return result.payload;
         } else {
             // Display backend validation error
             const errorMessage = result.payload || 'Failed to update status';
             toast.error(errorMessage);
+            return false;
         }
     };
 
@@ -162,12 +182,46 @@ const RequestTracker = () => {
         }
     };
 
-    // Placeholder for handleAccept and handleReject
-    const handleAccept = async (id) => {
+    const handleAccept = (id) => {
         const request = requests.find(req => req._id === id);
-        if (request) {
-            await handleStatusChange(request, 'Accepted');
-        }
+        if (!request) return;
+
+        toast((t) => (
+            <div className="px-3 py-2 text-xs">
+                <div className="mb-2 font-semibold text-gray-800">
+                    Approve this request {request.mhRequestId}? Asset ID will be generated automatically on approval.
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-2 py-1 text-[11px] rounded border border-gray-200 text-gray-600 hover:bg-gray-100"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+    const updated = await handleStatusChange(request, 'Accepted');
+
+    if (updated) {
+        dispatch(upsertRequest(updated)); 
+        console.log(updated);
+  // ← important line
+    }
+
+    if (updated?.allocationAssetId) {
+        toast.success(`Asset ${updated.allocationAssetId} created successfully.`);
+    }
+
+    toast.dismiss(t.id);
+}}
+
+                        className="px-3 py-1 text-[11px] rounded bg-green-600 text-white hover:bg-green-700"
+                    >
+                        Approve
+                    </button>
+                </div>
+            </div>
+        ));
     };
 
     const handleReject = async (id) => {
@@ -177,10 +231,7 @@ const RequestTracker = () => {
         }
     };
 
-    const handleAllocateAsset = (request) => {
-        toast.info(`Allocate asset for request ${request.mhRequestId}`);
-        // Implement allocation logic here
-    };
+    
 
     const baseRows = requests || [];
 
@@ -332,7 +383,7 @@ const RequestTracker = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
+            name: 'S.No',
             width: 70,
             frozen: true,
             renderCell: ({ rowIdx }) => (
@@ -467,38 +518,29 @@ const RequestTracker = () => {
             renderCell: ({ row }) => {
                 const isPending = row.status === 'Active';
                 const isRejected = row.status === 'Rejected';
+              return (
+    <div className="flex gap-2">
+        {isPending && (
+            <>
+                <button
+                    onClick={() => handleAccept(row._id)}
+                    className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                    title="Accept Request"
+                >
+                    <Check size={16} />
+                </button>
+                <button
+                    onClick={() => handleReject(row._id)}
+                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
+                    title="Reject Request"
+                >
+                    <X size={16} />
+                </button>
+            </>
+        )}
+    </div>
+);
 
-                return (
-                    <div className="flex gap-2">
-                        {isPending && (
-                            <>
-                                <button
-                                    onClick={() => handleAccept(row._id)}
-                                    className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                                    title="Accept Request"
-                                >
-                                    <Check size={16} />
-                                </button>
-                                <button
-                                    onClick={() => handleReject(row._id)}
-                                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
-                                    title="Reject Request"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </>
-                        )}
-                        {!isPending && !isRejected && (
-                            <button
-                                onClick={() => handleAllocateAsset(row)}
-                                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border border-blue-200 text-xs font-medium"
-                            >
-                                <Package size={14} />
-                                Allocate
-                            </button>
-                        )}
-                    </div>
-                );
             }
         },
         {

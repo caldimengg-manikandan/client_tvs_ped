@@ -93,6 +93,16 @@ const assetRequestSlice = createSlice({
             state.loading = false;
             state.error = null;
             state.success = false;
+        },
+        upsertRequest: (state, action) => {
+            const updated = action.payload;
+            if (!updated || !updated._id) return;
+            const index = state.items.findIndex(item => item._id === updated._id);
+            if (index !== -1) {
+                state.items[index] = updated;
+            } else {
+                state.items.unshift(updated);
+            }
         }
     },
     extraReducers: (builder) => {
@@ -184,5 +194,5 @@ const assetRequestSlice = createSlice({
     },
 });
 
-export const { clearCurrentItem, resetStatus } = assetRequestSlice.actions;
+export const { clearCurrentItem, resetStatus, upsertRequest } = assetRequestSlice.actions;
 export default assetRequestSlice.reducer;

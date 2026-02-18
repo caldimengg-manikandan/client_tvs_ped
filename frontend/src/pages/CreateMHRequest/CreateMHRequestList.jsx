@@ -263,7 +263,7 @@ const CreateMHRequestList = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
+            name: 'Sno',
             width: 70,
             frozen: true,
             renderCell: ({ rowIdx }) => (

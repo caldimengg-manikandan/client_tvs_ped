@@ -18,37 +18,37 @@ const loginUser = asyncHandler(async (req, res) => {
         // Track Login Activity
         const now = new Date();
 
-        // Update User's lastLoginAt and previousLoginAt
         if (user.lastLoginAt) {
             user.previousLoginAt = user.lastLoginAt;
         }
         user.lastLoginAt = now;
         await user.save();
 
-        // Close any previous open sessions to ensure history is accurate
-        const previousSessions = await UserActivity.find({
+        const closePreviousSessionsPromise = UserActivity.find({
             userId: user._id,
             logoutAt: null
+        }).then(async (previousSessions) => {
+            await Promise.all(
+                previousSessions.map(async (session) => {
+                    session.logoutAt = now;
+                    const duration = (now - session.loginAt) / 1000;
+                    session.sessionDuration = Math.round(duration);
+                    await session.save();
+                })
+            );
+        }).catch((err) => {
+            console.error('Error closing previous user sessions', err);
         });
 
-        for (const session of previousSessions) {
-            session.logoutAt = now;
-            const duration = (now - session.loginAt) / 1000;
-            session.sessionDuration = Math.round(duration);
-            await session.save();
-        }
-
-        // Create User Activity Log
         const userActivity = await UserActivity.create({
             userId: user._id,
             loginAt: now,
             userAgent: req.headers['user-agent']
         });
 
-        // Successful login
         res.json({
-            _id: user.userId, // Using custom userId as requested
-            dbId: user._id,   // Also sending DB ID just in case
+            _id: user.userId,
+            dbId: user._id,
             email: user.email,
             role: user.role,
             permissions: user.permissions,
@@ -61,6 +61,8 @@ const loginUser = asyncHandler(async (req, res) => {
             lastLoginAt: user.lastLoginAt,
             previousLoginAt: user.previousLoginAt
         });
+
+        closePreviousSessionsPromise.catch(() => {});
     } else {
         res.status(401);
         throw new Error('Invalid credentials');

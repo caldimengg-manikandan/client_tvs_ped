@@ -43,6 +43,11 @@ router.post('/', protect, checkPermission('assetRequest'), upload.single('drawin
 // @access  Public
 router.get('/', mhRequestController.getAllMHRequests);
 
+// @route   POST /api/asset-request/:id/generate-asset
+// @desc    Generate Asset ID for an accepted MH request if missing
+// @access  Private
+router.post('/:id/generate-asset', mhRequestController.generateAssetForRequest);
+
 // @route   GET /api/asset-request/:id
 // @desc    Get single MH request by ID
 // @access  Public

@@ -1,4 +1,5 @@
 const MHRequest = require('../models/MHRequest');
+const AssetManagement = require('../models/AssetManagement');
 
 // @desc    Create a new MH request
 // @route   POST /api/asset-request
@@ -141,6 +142,57 @@ const getMHRequestById = async (req, res) => {
     }
 };
 
+// @desc    Generate Asset ID for an accepted MH request if missing
+// @route   POST /api/asset-request/:id/generate-asset
+// @access  Private
+const generateAssetForRequest = async (req, res) => {
+    try {
+        let request = await MHRequest.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
+
+        if (request.status !== 'Accepted') {
+            return res.status(400).json({
+                message: 'Request must be Accepted before generating Asset ID.'
+            });
+        }
+
+        if (request.allocationAssetId) {
+            return res.json(request);
+        }
+
+        const asset = await AssetManagement.create({
+            vendorCode: 'AUTO',
+            vendorName: 'Auto Generated',
+            departmentName: request.departmentName,
+            plantLocation: request.plantLocation,
+            assetLocation: request.materialHandlingLocation || request.location,
+            assetName: request.handlingPartName || request.productModel,
+            createdBy: request.user
+
+        });
+
+        request.allocationAssetId = asset.assetId;
+        request.progressStatus = 'Implementation';
+        request.production = true;
+        request.implementation = true;
+
+        request.history.push({
+            action: 'Updated',
+            date: new Date(),
+            details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
+        });
+
+        request = await request.save();
+
+        res.json(request);
+    } catch (err) {
+        console.error('Generate Asset For Request Error:', err);
+        res.status(500).json({ message: 'Internal Server Error', error: err.message });
+    }
+};
+
 // @desc    Update MH request
 // @route   PUT /api/asset-request/:id
 // @access  Public
@@ -199,26 +251,18 @@ const updateMHRequest = async (req, res) => {
         }
         // ===== END STATUS VALIDATION =====
 
-        // Progress Status Logic: Sequential flow
-        let progressStatus = existingRequest.progressStatus;
-
         // FormData sends everything as strings
         const isImplementation = String(implementation) === 'true';
         const isProduction = String(production) === 'true';
         const isDesignApproval = String(designApproval) === 'true';
         const isDesignReceipt = String(designReceiptFromVendor) === 'true';
 
+        let progressStatus = existingRequest.progressStatus;
         if (isImplementation) progressStatus = 'Implementation';
         else if (isProduction) progressStatus = 'Production';
         else if (isDesignApproval) progressStatus = 'Design Approved';
         else if (isDesignReceipt) progressStatus = 'Design';
         else progressStatus = 'Initial';
-
-        // Allocation ID logic
-        let allocationAssetId = existingRequest.allocationAssetId;
-        if (isProduction && !allocationAssetId) {
-            allocationAssetId = `AST${existingRequest.mhRequestId}`;
-        }
 
         // Build Update Data
         const updateData = {
@@ -238,7 +282,7 @@ const updateMHRequest = async (req, res) => {
             production: isProduction,
             implementation: isImplementation,
             progressStatus,
-            allocationAssetId
+            allocationAssetId: existingRequest.allocationAssetId
         };
 
         // Vendor cleanup
@@ -248,7 +292,7 @@ const updateMHRequest = async (req, res) => {
             updateData.assignedVendor = typeof assignedVendor === 'object' ? assignedVendor._id : assignedVendor;
         }
 
-        const updatedRequest = await MHRequest.findByIdAndUpdate(
+        let updatedRequest = await MHRequest.findByIdAndUpdate(
             req.params.id,
             {
                 $set: updateData,
@@ -265,12 +309,41 @@ const updateMHRequest = async (req, res) => {
             { new: true, runValidators: true }
         ).populate('assignedVendor');
 
+if (updatedRequest.status === 'Accepted' && !updatedRequest.allocationAssetId) {
+    console.log('Generating asset for:', updatedRequest._id);
+
+    const asset = await AssetManagement.create({
+        vendorCode: 'AUTO',
+        vendorName: 'Auto Generated',
+        departmentName: updatedRequest.departmentName,
+        plantLocation: updatedRequest.plantLocation,
+        assetLocation: updatedRequest.materialHandlingLocation || updatedRequest.location,
+        assetName: updatedRequest.handlingPartName || updatedRequest.productModel,
+        createdBy: updatedRequest.user
+    });
+
+    updatedRequest.allocationAssetId = asset.assetId;
+    updatedRequest.progressStatus = 'Implementation';
+    updatedRequest.production = true;
+    updatedRequest.implementation = true;
+
+    updatedRequest.history.push({
+        action: 'Updated',
+        date: new Date(),
+        details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
+    });
+
+    await updatedRequest.save();
+}
+
+
         res.json(updatedRequest);
     } catch (err) {
         console.error('Update MH Request Error:', err);
         res.status(500).json({ message: 'Internal Server Error', error: err.message });
     }
 };
+
 
 // @desc    Soft delete MH request
 // @route   DELETE /api/asset-request/:id
@@ -306,5 +379,6 @@ module.exports = {
     getAllMHRequests,
     getMHRequestById,
     updateMHRequest,
-    deleteMHRequest
+    deleteMHRequest,
+    generateAssetForRequest
 };
