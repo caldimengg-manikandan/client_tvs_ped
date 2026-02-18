@@ -1,14 +1,12 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp, Filter as FilterIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendorScores, createVendorScore, updateVendorScore, deleteVendorScore, fetchVendorPerformance } from '../../redux/slices/vendorScoringSlice';
 import { fetchVendors } from '../../redux/slices/vendorSlice';
 import { Modal, Select, InputNumber, Form, DatePicker } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
-import { defaultColDef, defaultGridOptions, createSerialNumberColumn, createActionColumn, createBoldColumn } from '../../config/agGridConfig';
-import CustomCheckboxFilter from '../../components/AgGridCustom/CustomCheckboxFilter';
-import CustomHeader from '../../components/AgGridCustom/CustomHeader';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -42,7 +40,6 @@ const { Option } = Select;
 
 const VendorScoring = () => {
     const dispatch = useDispatch();
-    const gridRef = useRef();
     const fileInputRef = useRef();
     const [form] = Form.useForm();
 
@@ -55,6 +52,11 @@ const VendorScoring = () => {
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [performanceData, setPerformanceData] = useState(null);
     const [tempScores, setTempScores] = useState({ qsr: 1, cost: 1, delivery: 1 });
+    const [columnFilters, setColumnFilters] = useState({});
+    const [activeFilterKey, setActiveFilterKey] = useState(null);
+    const [filterSearchText, setFilterSearchText] = useState({});
+    const [gridWidth, setGridWidth] = useState(0);
+    const gridContainerRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchVendorScores());
@@ -203,8 +205,13 @@ const VendorScoring = () => {
             console.log('Form values:', values);
 
             if (editingScore) {
-                // Update - only send editable fields
                 const updateData = {
+                    vendorId: editingScore.vendorId,
+                    vendorCode: editingScore.vendorCode,
+                    vendorName: editingScore.vendorName,
+                    location: editingScore.location,
+                    scoringMonth: editingScore.scoringMonth,
+                    scoringYear: editingScore.scoringYear,
                     qsrScore: values.qsrScore,
                     costScore: values.costScore,
                     deliveryScore: values.deliveryScore,
@@ -324,100 +331,287 @@ const VendorScoring = () => {
         event.target.value = '';
     };
 
+    const applyColumnFilters = (rows) => {
+        if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
 
+        return rows.filter(row =>
+            Object.entries(columnFilters).every(([key, values]) => {
+                if (!values || values.length === 0) return true;
+                const value = row[key];
+                const str = value == null ? '' : String(value);
+                return values.includes(str);
+            })
+        );
+    };
 
-    const columnDefs = useMemo(() => [
-        createSerialNumberColumn(),
+    const FilterHeaderCell = ({ column }) => {
+        const key = column.key;
+        const valuesSet = new Set();
+        (scores || []).forEach(row => {
+            const value = row[key];
+            const str = value == null ? '' : String(value);
+            valuesSet.add(str);
+        });
+        const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
+
+        const searchValue = filterSearchText[key] || '';
+        const rawSelected = columnFilters[key];
+        const selectedValues = rawSelected === undefined ? values : rawSelected;
+
+        const visibleValues = values.filter(v =>
+            v.toLowerCase().includes(searchValue.toLowerCase())
+        );
+
+        const toggleValue = (value) => {
+            const strValue = value;
+            setColumnFilters(prev => {
+                const base = prev[key] === undefined ? values : prev[key];
+                const exists = base.includes(strValue);
+                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const updated = { ...prev };
+
+                if (next.length === values.length) {
+                    delete updated[key];
+                } else {
+                    updated[key] = next;
+                }
+
+                return updated;
+            });
+            setActiveFilterKey(null);
+        };
+
+        const handleSelectAll = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const handleClear = () => {
+            setColumnFilters(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+            setFilterSearchText(prev => {
+                const clone = { ...prev };
+                delete clone[key];
+                return clone;
+            });
+        };
+
+        const hasFilter = rawSelected !== undefined;
+
+        return (
+            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+                <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-white truncate">{column.name}</span>
+                </div>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFilterKey(prev => (prev === key ? null : key));
+                    }}
+                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                    <FilterIcon size={10} />
+                </button>
+                {activeFilterKey === key && (
+                    <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <button
+                                type="button"
+                                onClick={handleSelectAll}
+                                className="text-[10px] font-semibold text-tvs-blue"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleClear}
+                                className="text-[10px] font-semibold text-gray-500"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={searchValue}
+                                onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
+                                placeholder="Search..."
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                            />
+                        </div>
+                        <div className="max-h-40 overflow-auto space-y-1">
+                            {visibleValues.map(value => {
+                                const label = value || '(Blank)';
+                                const checked = selectedValues.includes(value);
+                                return (
+                                    <label
+                                        key={label}
+                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => toggleValue(value)}
+                                            className="w-3 h-3"
+                                        />
+                                        <span className="truncate">{label}</span>
+                                    </label>
+                                );
+                            })}
+                            {visibleValues.length === 0 && (
+                                <div className="text-[10px] text-gray-400">No values</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const gridRows = applyColumnFilters(scores || []);
+
+    const dataGridColumns = [
         {
-            ...createBoldColumn('vendorCode', 'VENDOR CODE', { width: 140 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            key: 'serial',
+            name: '#',
+            width: 80,
+            frozen: true,
+            renderCell: ({ rowIdx }) => (
+                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            )
         },
         {
-            ...createBoldColumn('vendorName', 'VENDOR NAME', { width: 220 }),
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
-        },
-        {
-            field: 'location',
-            headerName: 'LOCATION',
+            key: 'vendorCode',
+            name: 'VENDOR CODE',
             width: 160,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.vendorCode}</span>
+            )
         },
         {
-            field: 'qsrScore',
-            headerName: 'QSR (40%)',
-            width: 130,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
+            key: 'vendorName',
+            name: 'VENDOR NAME',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">{row.vendorName}</span>
+            )
+        },
+        {
+            key: 'location',
+            name: 'LOCATION',
+            width: 180,
+            renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'qsrScore',
+            name: 'QSR (40%)',
+            width: 140,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-yellow-500 fill-yellow-500" />
-                    {params.value}
+                    {row.qsrScore}
                 </div>
             )
         },
         {
-            field: 'costScore',
-            headerName: 'COST (30%)',
-            width: 130,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
+            key: 'costScore',
+            name: 'COST (30%)',
+            width: 140,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-blue-500 fill-blue-500" />
-                    {params.value}
+                    {row.costScore}
                 </div>
             )
         },
         {
-            field: 'deliveryScore',
-            headerName: 'ONTIME DELIVERY (30%)',
-            width: 180,
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
+            key: 'deliveryScore',
+            name: 'ONTIME DELIVERY (30%)',
+            width: 200,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="flex items-center gap-1 font-bold text-gray-700">
                     <Star size={14} className="text-green-500 fill-green-500" />
-                    {params.value}
+                    {row.deliveryScore}
                 </div>
             )
         },
         {
-            field: 'qcdScore',
-            headerName: 'QCD SCORE',
-            width: 140,
-            sort: 'desc',
-            headerComponent: CustomHeader,
-            filter: CustomCheckboxFilter,
-            cellRenderer: (params) => (
+            key: 'qcdScore',
+            name: 'QCD SCORE',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="bg-tvs-blue/10 text-tvs-blue font-black px-3 py-1 rounded-lg border border-tvs-blue/20 text-center">
-                    {params.value}
+                    {row.qcdScore}
                 </div>
             )
         },
-        createActionColumn([
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>',
-                title: 'View Performance',
-                className: 'p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all',
-                onClick: (data) => handleViewPerformance(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
-                title: 'Edit Scores',
-                className: 'p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all',
-                onClick: (data) => handleEditClick(data)
-            },
-            {
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
-                title: 'Delete Score',
-                className: 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all',
-                onClick: (data) => handleDeleteClick(data._id)
-            }
-        ])
-    ], []);
+        {
+            key: 'actions',
+            name: 'ACTIONS',
+            width: 220,
+            sortable: false,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => handleViewPerformance(row)}
+                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
+                        title="View Performance"
+                    >
+                        <Eye size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleEditClick(row)}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        title="Edit Scores"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDeleteClick(row._id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Score"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
+    const autoFitColumns = useMemo(() => {
+        if (!gridWidth) return dataGridColumns;
+
+        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+            return sum + (column.width || 0);
+        }, 0);
+
+        if (!totalDefinedWidth) return dataGridColumns;
+
+        const scale = gridWidth / totalDefinedWidth;
+
+        return dataGridColumns.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+
+            return {
+                ...column,
+                width: scaledWidth
+            };
+        });
+    }, [dataGridColumns, gridWidth]);
 
 
 
@@ -468,6 +662,23 @@ const VendorScoring = () => {
         };
     };
 
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+
+        const updateWidth = () => {
+            setGridWidth(gridContainerRef.current.clientWidth);
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
 
@@ -513,16 +724,29 @@ const VendorScoring = () => {
                     </div>
                 </div>
 
-                <div className="ag-theme-alpine w-full h-[620px]">
-                    <AgGridReact
-                        ref={gridRef}
-                        theme="legacy"
-                        rowData={scores}
-                        columnDefs={columnDefs}
-                        defaultColDef={defaultColDef}
-                        {...defaultGridOptions}
-                        loading={loading}
-                    />
+                <div
+                    ref={gridContainerRef}
+                    className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
+                >
+                    <div className="h-full">
+                        <DataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id}
+                            className="rdg-light mh-development-grid"
+                            style={{ blockSize: '100%' }}
+                            rowHeight={60}
+                            headerRowHeight={52}
+                            defaultColumnOptions={{
+                                resizable: true
+                            }}
+                        />
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

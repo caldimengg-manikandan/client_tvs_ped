@@ -8,7 +8,9 @@ import KPICards from '../components/KPICards';
 import { 
     TrendingUp, Activity, Clock, BarChart3, PieChart, Users, 
     FileText, Filter, RefreshCw, Search, Bell, 
-    ChevronRight, ArrowUpRight, Zap, Target
+    ChevronRight, ArrowUpRight, Zap, Target, Check,
+    ClipboardList, Stamp, ShoppingBag, PenTool, FileSignature,
+    Beaker, BadgeCheck, Handshake, Rocket
 } from 'lucide-react';
 import { DataGrid } from 'react-data-grid';
 import { useAuth } from '../context/AuthContext';
@@ -45,12 +47,54 @@ const Dashboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [pptLoading, setPptLoading] = useState(false);
 
-    // KPI Modal State
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
 
-    // Date range for trends
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+
+    const kpiSource = stats
+        ? stats.kpiCards || {
+            totalRequests: stats.totalRequests,
+            accepted: stats.accepted,
+            rejected: stats.rejected,
+            implemented: stats.implemented
+        }
+        : null;
+
+    const kpiChartData = kpiSource
+        ? [
+            {
+                id: 'total',
+                label: 'Total',
+                value: kpiSource.totalRequests || 0,
+                barColor: 'bg-indigo-500',
+                glowColor: 'shadow-indigo-200'
+            },
+            {
+                id: 'accepted',
+                label: 'Accepted',
+                value: kpiSource.accepted || 0,
+                barColor: 'bg-emerald-500',
+                glowColor: 'shadow-emerald-200'
+            },
+            {
+                id: 'implemented',
+                label: 'Implemented',
+                value: kpiSource.implemented || 0,
+                barColor: 'bg-amber-500',
+                glowColor: 'shadow-amber-200'
+            },
+            {
+                id: 'rejected',
+                label: 'Rejected',
+                value: kpiSource.rejected || 0,
+                barColor: 'bg-rose-500',
+                glowColor: 'shadow-rose-200'
+            }
+        ]
+        : [];
+
+    const maxKpiValue = kpiChartData.length > 0 ? Math.max(...kpiChartData.map(kpi => kpi.value), 1) : 1;
 
     const handleKpiClick = (type) => {
         let title = '';
@@ -209,47 +253,56 @@ const Dashboard = () => {
         {
             id: 'mh-requests',
             label: 'MH Requests',
-            description: 'Request raised and captured'
+            description: 'Request raised and captured',
+            icon: ClipboardList
         },
         {
             id: 'approval-stage',
             label: 'Approval Stage',
-            description: 'Screening and approvals'
+            description: 'Screening and approvals',
+            icon: Stamp
         },
         {
             id: 'vendor-selection',
             label: 'Vendor Selection',
-            description: 'Partner identification'
+            description: 'Partner identification',
+            icon: Users
         },
         {
             id: 'design-release',
             label: 'Design Release',
-            description: 'Engineering design finalized'
+            description: 'Engineering design finalized',
+            icon: PenTool
         },
         {
             id: 'pr-po-release',
             label: 'PR / PO Release',
-            description: 'Commercial release to vendor'
+            description: 'Commercial release to vendor',
+            icon: FileSignature
         },
         {
             id: 'sample-receipt',
             label: 'Sample Receipt / Trials',
-            description: 'Trials and validation'
+            description: 'Trials and validation',
+            icon: Beaker
         },
         {
             id: 'bulk-lot-clearance',
             label: 'Bulk Lot Clearance',
-            description: 'Bulk production cleared'
+            description: 'Bulk production cleared',
+            icon: BadgeCheck
         },
         {
             id: 'handover-signoff',
             label: 'Handover and Sign-off',
-            description: 'Process handover completed'
+            description: 'Process handover completed',
+            icon: Handshake
         },
         {
             id: 'asset-implementation',
             label: 'Asset Implementation',
-            description: 'Asset rolled into production'
+            description: 'Asset rolled into production',
+            icon: Rocket
         }
     ];
 
@@ -286,6 +339,30 @@ const Dashboard = () => {
         if (index < activeWorkflowIndex) return 'completed';
         if (index === activeWorkflowIndex) return 'active';
         return 'pending';
+    };
+
+    const getStageStatusMeta = (status) => {
+        if (status === 'completed') {
+            return {
+                label: 'Completed',
+                badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+                circleClass: 'bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-400/40'
+            };
+        }
+
+        if (status === 'active') {
+            return {
+                label: 'In Progress',
+                badgeClass: 'bg-indigo-50 text-indigo-700 border border-indigo-100',
+                circleClass: 'bg-white text-gray-900 border-gray-900 ring-2 ring-indigo-300 shadow-lg shadow-indigo-200/80'
+            };
+        }
+
+        return {
+            label: 'Pending',
+            badgeClass: 'bg-gray-50 text-gray-500 border border-gray-200',
+            circleClass: 'bg-white text-gray-400 border-gray-300'
+        };
     };
 
     const handleGeneratePPT = async () => {
@@ -362,15 +439,94 @@ const Dashboard = () => {
                 </button>
             </div>
 
-            {/* Main KPI Cards */}
-            <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-base font-bold text-gray-800 flex items-center gap-2.5">
-                        Key Performance Indicators
-                    </h2>
+            <motion.section
+                variants={itemVariants}
+                className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden"
+            >
+                <div className="absolute top-0 right-0 w-72 h-72 bg-tvs-blue/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-base font-bold text-gray-800 flex items-center gap-2.5">
+                            Key Performance Indicators
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                        <div className="lg:col-span-2 lg:border-r lg:border-gray-100 lg:pr-6">
+                            <div className="h-full rounded-2xl bg-white/40 border border-white/60 shadow-sm flex items-center">
+                                <div className="w-full p-4">
+                                    <KPICards stats={stats?.kpiCards} onCardClick={handleKpiClick} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center lg:pl-6">
+                            <div className="w-full rounded-2xl bg-white/70 border border-gray-200 shadow-md p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[3px] text-gray-400">
+                                            KPI Distribution
+                                        </p>
+                                        <p className="text-sm font-bold text-gray-800 mt-1">
+                                            Snapshot of current request mix
+                                        </p>
+                                    </div>
+                                </div>
+                                {kpiChartData.length === 0 ? (
+                                    <div className="flex items-center justify-center h-40 text-xs font-semibold text-gray-400">
+                                        No KPI data available
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-end justify-between gap-4 mt-6">
+                                            {kpiChartData.map((kpi, index) => {
+                                                const heightPercent = maxKpiValue > 0 ? Math.max((kpi.value / maxKpiValue) * 100, 10) : 0;
+
+                                                return (
+                                                    <div key={kpi.id} className="flex-1 flex flex-col items-center gap-2 h-40">
+                                                        <div className="w-full h-full flex items-end justify-center">
+                                                            <motion.div
+                                                                initial={{ height: 0 }}
+                                                                animate={{ height: `${heightPercent}%` }}
+                                                                transition={{ type: 'spring', stiffness: 140, damping: 18, delay: 0.1 + index * 0.05 }}
+                                                                className={`relative w-6 md:w-5 rounded-xl ${kpi.barColor} shadow-lg ${kpi.glowColor} overflow-hidden`}
+                                                            >
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-white/0 to-white/30 mix-blend-overlay"></div>
+                                                            </motion.div>
+                                                        </div>
+                                                        <div className="text-[11px] font-semibold text-gray-500">
+                                                            {kpi.label}
+                                                        </div>
+                                                        <div className="text-xs font-bold text-gray-900">
+                                                            {kpi.value}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-[10px] font-semibold text-gray-400">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                                <span>Total</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                <span>Accepted</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                                <span>Implemented</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                                <span>Rejected</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <KPICards stats={stats?.kpiCards} onCardClick={handleKpiClick} />
-            </section>
+            </motion.section>
 
             <motion.section variants={itemVariants} className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-tvs-blue/5 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-tvs-blue/10 transition-colors duration-700"></div>
@@ -378,72 +534,70 @@ const Dashboard = () => {
                     Production Workflow Status
                 </h2>
                 <div className="relative">
-                    <div className="relative mx-auto max-w-2xl w-full aspect-square">
-                        <div className="absolute inset-[18%] rounded-full border border-dashed border-gray-200"></div>
-                        <div className="absolute inset-[24%] rounded-full bg-gradient-to-br from-tvs-blue/10 via-white to-amber-50 shadow-inner"></div>
-                        {workflowStages.map((stage, index) => {
-                            const status = getStageStatus(index);
-                            const totalStages = workflowStages.length;
-                            const angleStep = (2 * Math.PI) / totalStages;
-                            const angle = angleStep * index - Math.PI / 2;
-                            const outerRadius = 32;
-                            const markerRadius = outerRadius + 6;
-                            const x = 50 + markerRadius * Math.cos(angle);
-                            const y = 50 + markerRadius * Math.sin(angle);
-                            const labelRadiusOffset = 20;
-                            const labelOffsetX = labelRadiusOffset * Math.cos(angle);
-                            const labelOffsetY = labelRadiusOffset * Math.sin(angle);
+                    <div className="relative mx-auto w-full">
+                        <div className="relative w-full">
+                            <div className="flex flex-col gap-6">
+                                {/* Stepper track with icons and aligned labels */}
+                                <div className="flex items-start gap-0">
+                                    {workflowStages.map((stage, index) => {
+                                        const status = getStageStatus(index);
+                                        const statusMeta = getStageStatusMeta(status);
+                                        const Icon = stage.icon;
 
-                            return (
-                                <motion.div
-                                    key={stage.id}
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.05 * index }}
-                                    className="absolute"
-                                    style={{
-                                        top: `${y}%`,
-                                        left: `${x}%`,
-                                        transform: 'translate(-50%, -50%)'
-                                    }}
-                                >
-                                    <div className="relative flex items-center justify-center">
-                                        <div
-                                            className={
-                                                `w-2.5 h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 ` +
-                                                (status === 'completed'
-                                                    ? 'bg-emerald-500 shadow-md shadow-emerald-200'
-                                                    : status === 'active'
-                                                        ? 'bg-tvs-blue shadow-md shadow-tvs-blue/40 ring-4 ring-tvs-blue/15'
-                                                        : 'bg-gray-300')
-                                            }
-                                        />
-                                        <div
-                                            className="absolute top-1/2 left-1/2"
-                                            style={{
-                                                transform: `translate(-50%, -50%) translate(${labelOffsetX}px, ${labelOffsetY}px)`
-                                            }}
-                                        >
-                                            <div className="px-2.5 py-1.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm text-center min-w-[96px] md:min-w-[120px]">
-                                                <div className={`text-[9px] md:text-[10px] font-black uppercase tracking-[2px] ${status === 'pending' ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    {stage.label}
+                                        const connectorStatus = index - 1 < activeWorkflowIndex ? 'completed' : 'pending';
+                                        const connectorClass =
+                                            connectorStatus === 'completed'
+                                                ? 'bg-gradient-to-r from-tvs-blue to-tvs-blue/70'
+                                                : 'bg-gray-200';
+
+                                        let circleClass = 'w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center border transition-all duration-300 shadow-sm';
+                                        let iconClass = 'shrink-0';
+
+                                        if (status === 'completed') {
+                                            circleClass += ' bg-tvs-blue text-white border-tvs-blue shadow-md shadow-tvs-blue/40';
+                                            iconClass += ' text-white';
+                                        } else if (status === 'active') {
+                                            circleClass += ' bg-white text-tvs-blue border-tvs-blue ring-2 ring-tvs-blue/30 shadow-md shadow-tvs-blue/30';
+                                            iconClass += ' text-tvs-blue';
+                                        } else {
+                                            circleClass += ' bg-white text-gray-400 border-gray-300';
+                                            iconClass += ' text-gray-300';
+                                        }
+
+                                        return (
+                                            <div key={stage.id} className="flex-1 flex flex-col items-center min-w-0 px-1 md:px-2">
+                                                <div className="w-full flex items-center">
+                                                    <div className={`h-[3px] flex-1 rounded-full ${index === 0 ? 'bg-transparent' : connectorClass}`} />
+                                                    <div className="flex-none flex items-center justify-center px-2">
+                                                        <div className={circleClass}>
+                                                            <Icon size={16} className={iconClass} />
+                                                        </div>
+                                                    </div>
+                                                    <div className={`h-[3px] flex-1 rounded-full ${index === workflowStages.length - 1 ? 'bg-transparent' : connectorClass}`} />
+                                                </div>
+
+                                                <div className="mt-3 flex flex-col items-center text-center">
+                                                    <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[2px]">
+                                                        {`Step ${index + 1}`}
+                                                    </div>
+                                                    <div className={`mt-1 text-xs md:text-sm font-black ${status === 'pending' ? 'text-gray-500' : status === 'active' ? 'text-gray-900' : 'text-gray-800'}`}>
+                                                        {stage.label}
+                                                    </div>
+                                                    {status === 'active' && (
+                                                        <div className={`mt-2 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[9px] font-semibold leading-none ${statusMeta.badgeClass}`}>
+                                                            {statusMeta.label}
+                                                        </div>
+                                                    )}
+                                                    {status === 'completed' && (
+                                                        <div className="mt-2 text-[9px] font-semibold text-gray-400">
+                                                            Completed
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-
-                        <div className="absolute inset-[30%] rounded-full bg-white/90 border border-gray-100 shadow-xl flex flex-col items-center justify-center gap-1.5 md:gap-2 px-4 text-center">
-                            <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[3px]">
-                                MH Workflow
-                            </div>
-                            <div className="text-lg md:text-xl font-black text-gray-900">
-                                Circular Lifecycle
-                            </div>
-                            <div className="text-[9px] md:text-[10px] font-medium text-gray-400 uppercase tracking-[2px]">
-                                {workflowStages.length} stages
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>
