@@ -1,20 +1,14 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Modal, Form, Input, Select, DatePicker, Button, Upload, message } from 'antd';
-import {
-    Plus, Download, Upload as UploadIcon, Eye, Edit, Trash2,
-    FileText, Calendar, MapPin, Package, TrendingUp, AlertCircle,
-    CheckCircle, Clock, XCircle, Users, Filter
-} from 'lucide-react';
+import { Modal, Form, Input, Select, DatePicker, Button, Upload } from 'antd';
+import { Download, Upload as UploadIcon, Edit, Trash2, Filter, Pin } from 'lucide-react';
 import dayjs from 'dayjs';
 import { toast } from 'react-hot-toast';
 import {
     fetchTrackers,
-    createTracker,
     updateTracker,
     deleteTracker,
     uploadDrawing,
-    fetchVendorsForSelection,
     clearError,
     clearSuccess
 } from '../../redux/slices/mhDevelopmentTrackerSlice';
@@ -42,9 +36,7 @@ const deriveCurrentStageFromMilestones = (milestones) => {
 
     let lastCompletedIndex = -1;
     milestones.forEach((m, index) => {
-        if (m.actualEnd) {
-            lastCompletedIndex = index;
-        }
+        if (m.actualEnd) lastCompletedIndex = index;
     });
 
     if (lastCompletedIndex === -1) {
@@ -71,14 +63,10 @@ const deriveStatusFromMilestones = (milestones) => {
 
         if (planEnd && actualEnd) {
             const diff = actualEnd.diff(planEnd, 'day');
-            if (!Number.isNaN(diff) && diff > maxDelay) {
-                maxDelay = diff;
-            }
+            if (!Number.isNaN(diff) && diff > maxDelay) maxDelay = diff;
         } else if (planEnd && !actualEnd) {
             const diff = today.diff(planEnd, 'day');
-            if (!Number.isNaN(diff) && diff > maxDelay) {
-                maxDelay = diff;
-            }
+            if (!Number.isNaN(diff) && diff > maxDelay) maxDelay = diff;
         }
     });
 
@@ -95,7 +83,6 @@ const computeDerivedTrackerFields = (tracker) => {
             currentStage: tracker.currentStage || 'Not Started'
         };
     }
-
     return {
         status: deriveStatusFromMilestones(milestones),
         currentStage: deriveCurrentStageFromMilestones(milestones)
@@ -121,12 +108,17 @@ const MHDevelopmentTracker = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const gridContainerRef = useRef(null);
 
+    // Freeze column state
+    const [freezePopupVisible, setFreezePopupVisible] = useState(false);
+    const freezePopupRef = useRef(null);
+    const [pendingFrozen, setPendingFrozen] = useState(new Set());
+    const [frozenColumns, setFrozenColumns] = useState(new Set());
+
     useEffect(() => {
         dispatch(fetchTrackers());
         dispatch(fetchAssetRequests());
     }, [dispatch]);
 
-    // Handle success/error messages
     useEffect(() => {
         if (error) {
             toast.error(error);
@@ -143,16 +135,6 @@ const MHDevelopmentTracker = () => {
             setFileList([]);
         }
     }, [error, success, dispatch, form]);
-
-    const handleAddClick = () => {
-        setEditingTracker(null);
-        form.resetFields();
-        form.setFieldsValue({
-            status: 'Not Started',
-            currentStage: 'Not Started'
-        });
-        setIsModalVisible(true);
-    };
 
     const handleEditClick = (data) => {
         setEditingTracker(data);
@@ -171,9 +153,7 @@ const MHDevelopmentTracker = () => {
         if (mhRequests && mhRequests.length > 0 && data.assetRequestId) {
             const linkedRequest = mhRequests.find(req => req.mhRequestId === data.assetRequestId);
             if (linkedRequest) {
-                form.setFieldsValue({
-                    location: linkedRequest.location
-                });
+                form.setFieldsValue({ location: linkedRequest.location });
             }
         }
         setIsModalVisible(true);
@@ -181,9 +161,7 @@ const MHDevelopmentTracker = () => {
 
     const handleAssetRequestChange = (mhRequestId) => {
         if (!mhRequestId) {
-            form.setFieldsValue({
-                assetRequestId: null
-            });
+            form.setFieldsValue({ assetRequestId: null });
             return;
         }
         const selectedRequest = (mhRequests || []).find(req => req.mhRequestId === mhRequestId);
@@ -198,9 +176,7 @@ const MHDevelopmentTracker = () => {
                 location: selectedRequest.location
             });
         } else {
-            form.setFieldsValue({
-                assetRequestId: mhRequestId
-            });
+            form.setFieldsValue({ assetRequestId: mhRequestId });
         }
     };
 
@@ -211,26 +187,18 @@ const MHDevelopmentTracker = () => {
             okText: 'Delete',
             okType: 'danger',
             cancelText: 'Cancel',
-            onOk: () => {
-                dispatch(deleteTracker(id));
-            }
+            onOk: () => { dispatch(deleteTracker(id)); }
         });
     };
 
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
-
             const trackerData = {
                 ...values,
                 implementationTarget: values.implementationTarget ? values.implementationTarget.toISOString() : null
             };
-
-            if (editingTracker) {
-                dispatch(updateTracker({ id: editingTracker._id, data: trackerData }));
-            } else {
-                dispatch(createTracker(trackerData));
-            }
+            dispatch(updateTracker({ id: editingTracker._id, data: trackerData }));
         } catch (err) {
             console.error('Validation failed:', err);
         }
@@ -249,88 +217,60 @@ const MHDevelopmentTracker = () => {
 
     const handleProjectPlanSave = (planData) => {
         if (selectedTrackerId) {
-            dispatch(updateTracker({
-                id: selectedTrackerId,
-                data: { projectPlan: planData }
-            }));
+            dispatch(updateTracker({ id: selectedTrackerId, data: { projectPlan: planData } }));
         }
     };
 
     const handleFileUpload = (trackerId, file) => {
         dispatch(uploadDrawing({ id: trackerId, file }));
-        return false; // Prevent default upload behavior
+        return false;
     };
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
         if (!drawingUrl) return;
-
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
-        // Normalize slashes (replace backslashes with forward slashes)
         let normalizedUrl = drawingUrl.replace(/\\/g, '/');
-
-        // Remove leading slash if present to avoid double slashes when joining
-        if (normalizedUrl.startsWith('/')) {
-            normalizedUrl = normalizedUrl.slice(1);
-        }
-
-        // Construct full URL
+        if (normalizedUrl.startsWith('/')) normalizedUrl = normalizedUrl.slice(1);
         const fullUrl = `${API_BASE_URL.replace(/\/$/, '')}/${normalizedUrl}`;
-
-        console.log('Downloading file from:', fullUrl);
-
-        // Use window.open for better compatibility, or fetch blob if needed
         const link = document.createElement('a');
         link.href = fullUrl;
         link.download = fileName || normalizedUrl.split('/').pop() || 'drawing.pdf';
-        link.target = '_blank'; // Open in new tab if download fails
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
     const filteredTrackers = useMemo(
-        () =>
-            (trackers || []).map(tracker => {
-                const derived = computeDerivedTrackerFields(tracker);
-                return { ...tracker, ...derived };
-            }),
+        () => (trackers || []).map(tracker => {
+            const derived = computeDerivedTrackerFields(tracker);
+            return { ...tracker, ...derived };
+        }),
         [trackers]
     );
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'On Track':
-                return 'text-green-700 bg-green-50 border-green-200';
-            case 'Likely Delay':
-                return 'text-amber-700 bg-amber-50 border-amber-200';
-            case 'Delayed':
-                return 'text-red-700 bg-red-50 border-red-200';
-            default:
-                return 'text-gray-700 bg-gray-50 border-gray-200';
+            case 'On Track': return 'text-green-700 bg-green-50 border-green-200';
+            case 'Likely Delay': return 'text-amber-700 bg-amber-50 border-amber-200';
+            case 'Delayed': return 'text-red-700 bg-red-50 border-red-200';
+            default: return 'text-gray-700 bg-gray-50 border-gray-200';
         }
     };
 
     const getStageColor = (stage) => {
         switch (stage) {
-            case 'Design':
-                return 'text-blue-700 bg-blue-50';
-            case 'PR/PO':
-                return 'text-purple-700 bg-purple-50';
-            case 'Sample Production':
-                return 'text-indigo-700 bg-indigo-50';
-            case 'Production Ready':
-                return 'text-emerald-700 bg-emerald-50';
-            case 'Completed':
-                return 'text-green-700 bg-green-50';
-            default:
-                return 'text-gray-700 bg-gray-50';
+            case 'Design': return 'text-blue-700 bg-blue-50';
+            case 'PR/PO': return 'text-purple-700 bg-purple-50';
+            case 'Sample Production': return 'text-indigo-700 bg-indigo-50';
+            case 'Production Ready': return 'text-emerald-700 bg-emerald-50';
+            case 'Completed': return 'text-green-700 bg-green-50';
+            default: return 'text-gray-700 bg-gray-50';
         }
     };
 
     const applyColumnFilters = (rows) => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
-
         return rows.filter(row =>
             Object.entries(columnFilters).every(([key, values]) => {
                 if (!values || values.length === 0) return true;
@@ -346,93 +286,56 @@ const MHDevelopmentTracker = () => {
         const valuesSet = new Set();
         filteredTrackers.forEach(row => {
             const value = row[key];
-            const str = value == null ? '' : String(value);
-            valuesSet.add(str);
+            valuesSet.add(value == null ? '' : String(value));
         });
         const values = Array.from(valuesSet).sort((a, b) => a.localeCompare(b));
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
         const selectedValues = rawSelected === undefined ? values : rawSelected;
-
-        const visibleValues = values.filter(v =>
-            v.toLowerCase().includes(searchValue.toLowerCase())
-        );
+        const visibleValues = values.filter(v => v.toLowerCase().includes(searchValue.toLowerCase()));
 
         const toggleValue = (value) => {
-            const strValue = value;
             setColumnFilters(prev => {
                 const base = prev[key] === undefined ? values : prev[key];
-                const exists = base.includes(strValue);
-                const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
+                const exists = base.includes(value);
+                const next = exists ? base.filter(v => v !== value) : [...base, value];
                 const updated = { ...prev };
-
-                if (next.length === values.length) {
-                    delete updated[key];
-                } else {
-                    updated[key] = next;
-                }
-
+                if (next.length === values.length) delete updated[key];
+                else updated[key] = next;
                 return updated;
             });
             setActiveFilterKey(null);
         };
 
-        const handleSelectAll = () => {
-            setColumnFilters(prev => {
-                const clone = { ...prev };
-                delete clone[key];
-                return clone;
-            });
-        };
-
+        const handleSelectAll = () => setColumnFilters(prev => { const c = { ...prev }; delete c[key]; return c; });
         const handleClear = () => {
-            setColumnFilters(prev => {
-                const clone = { ...prev };
-                delete clone[key];
-                return clone;
-            });
-            setFilterSearchText(prev => {
-                const clone = { ...prev };
-                delete clone[key];
-                return clone;
-            });
+            setColumnFilters(prev => { const c = { ...prev }; delete c[key]; return c; });
+            setFilterSearchText(prev => { const c = { ...prev }; delete c[key]; return c; });
         };
 
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+            <div
+                className="relative h-full w-full flex items-center justify-between px-3 text-xs"
+                style={{ backgroundColor: '#253C80' }}
+            >
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-white truncate">{column.name}</span>
+                    <span className="font-bold text-white text-[11px] leading-tight tracking-wide">{column.name}</span>
                 </div>
                 <button
                     type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveFilterKey(prev => (prev === key ? null : key));
-                    }}
-                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                    onClick={(e) => { e.stopPropagation(); setActiveFilterKey(prev => (prev === key ? null : key)); }}
+                    className={`ml-2 p-1 rounded flex-shrink-0 ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
-                    <Filter size={10} />
+                    <Filter size={11} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
                         <div className="flex items-center justify-between mb-2">
-                            <button
-                                type="button"
-                                onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
-                            >
-                                Select All
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleClear}
-                                className="text-[10px] font-semibold text-gray-500"
-                            >
-                                Clear
-                            </button>
+                            <button type="button" onClick={handleSelectAll} className="text-[10px] font-semibold text-tvs-blue">Select All</button>
+                            <button type="button" onClick={handleClear} className="text-[10px] font-semibold text-gray-500">Clear</button>
                         </div>
                         <div className="mb-2">
                             <input
@@ -448,23 +351,13 @@ const MHDevelopmentTracker = () => {
                                 const label = value || '(Blank)';
                                 const checked = selectedValues.includes(value);
                                 return (
-                                    <label
-                                        key={label}
-                                        className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={() => toggleValue(value)}
-                                            className="w-3 h-3"
-                                        />
+                                    <label key={label} className="flex items-center gap-1.5 text-[10px] text-gray-700 cursor-pointer">
+                                        <input type="checkbox" checked={checked} onChange={() => toggleValue(value)} className="w-3 h-3" />
                                         <span className="truncate">{label}</span>
                                     </label>
                                 );
                             })}
-                            {visibleValues.length === 0 && (
-                                <div className="text-[10px] text-gray-400">No values</div>
-                            )}
+                            {visibleValues.length === 0 && <div className="text-[10px] text-gray-400">No values</div>}
                         </div>
                     </div>
                 )}
@@ -472,42 +365,86 @@ const MHDevelopmentTracker = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(filteredTrackers);
+    // Uniform plain header for columns without filters
+    const PlainHeaderCell = ({ column }) => (
+        <div
+            className="h-full w-full flex items-center px-3"
+            style={{ backgroundColor: '#253C80' }}
+        >
+            <span className="font-bold text-white text-[11px] leading-tight tracking-wide">
+                {column.name}
+            </span>
+        </div>
+    );
 
-    const dataGridColumns = [
+    const dataGridColumns = useMemo(() => [
+        // 1. S.no
         {
             key: 'serial',
             name: 'S.no',
-            width: 50,
+            width: 60,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ rowIdx }) => (
                 <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
             )
         },
+        // 2. Department Name
+        {
+            key: 'departmentName',
+            name: 'DEPARTMENT NAME',
+            width: 200,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.departmentName || '-'}</span>
+        },
+        // 3. Username
+        {
+            key: 'userName',
+            name: 'USERNAME',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.userName || '-'}</span>
+        },
+        // 4. Asset Request ID
         {
             key: 'assetRequestId',
-            name: 'ASSET REQ ID',
-            width: 160,
+            name: 'ASSET REQUEST ID',
+            width: 190,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-900">{row.assetRequestId}</span>
+                <span className="font-semibold text-gray-900">{row.assetRequestId || '-'}</span>
             )
         },
+        // 5. Request Type
         {
-            key: 'assetId',
-            name: 'ASSET ID',
-            width: 160,
+            key: 'requestType',
+            name: 'REQUEST TYPE',
+            width: 175,
             renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-900">
-                    {row.assetId || '-'}
-                </span>
-            )
+            renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.requestType || '-'}</span>
         },
+        // 6. Product Model
+        {
+            key: 'productModel',
+            name: 'PRODUCT MODEL',
+            width: 175,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.productModel || '-'}</span>
+        },
+        // 7. Plant Location
+        {
+            key: 'plantLocation',
+            name: 'PLANT LOCATION',
+            width: 175,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.plantLocation || '-'}</span>
+        },
+        // 8. Vendor Selection
         {
             key: 'vendorSelection',
             name: 'VENDOR SELECTION',
-            width: 220,
+            width: 200,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex flex-col gap-1 py-1">
                     {row.vendorCode ? (
@@ -528,10 +465,12 @@ const MHDevelopmentTracker = () => {
                 </div>
             )
         },
+        // 9. Project Plan
         {
             key: 'projectPlan',
             name: 'PROJECT PLAN',
             width: 160,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <Button
                     size="small"
@@ -543,10 +482,23 @@ const MHDevelopmentTracker = () => {
                 </Button>
             )
         },
+        // 10. Implementation Target
+        {
+            key: 'implementationTarget',
+            name: 'IMPLEMENTATION TARGET',
+            width: 210,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="text-xs text-gray-700">
+                    {row.implementationTarget ? dayjs(row.implementationTarget).format('DD-MMM-YYYY') : '-'}
+                </span>
+            )
+        },
+        // 11. Status
         {
             key: 'status',
             name: 'STATUS',
-            width: 120,
+            width: 145,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(row.status)}`}>
@@ -554,46 +506,88 @@ const MHDevelopmentTracker = () => {
                 </span>
             )
         },
+        // 12. Implementation Visibility
+        {
+            key: 'implementationVisibility',
+            name: 'IMPLEMENTATION VISIBILITY',
+            width: 225,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => {
+                const val = row.implementationVisibility;
+                if (!val) return <span className="text-[10px] text-gray-400">-</span>;
+                const colorMap = {
+                    'High': 'text-green-700 bg-green-50 border-green-200',
+                    'Medium': 'text-amber-700 bg-amber-50 border-amber-200',
+                    'Low': 'text-red-700 bg-red-50 border-red-200',
+                };
+                const cls = colorMap[val] || 'text-gray-700 bg-gray-50 border-gray-200';
+                return (
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${cls}`}>
+                        {val}
+                    </span>
+                );
+            }
+        },
+        // 13. Current Stage
         {
             key: 'currentStage',
             name: 'CURRENT STAGE',
-            width: 180,
+            width: 185,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${getStageColor(row.currentStage)}`}>
-                    {row.currentStage}
+                    {row.currentStage || '-'}
                 </span>
             )
         },
+        // 14. Remarks
+        {
+            key: 'remarks',
+            name: 'REMARKS',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="text-xs text-gray-500 truncate">{row.remarks || '-'}</span>
+            )
+        },
+        // 15. Drawing (image / PDF / Word / Excel)
         {
             key: 'drawing',
-            name: 'DRAWING',
-            width: 120,
+            name: 'DRAWING / FILE',
+            width: 160,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center gap-2">
                     {row.drawingUrl ? (
                         <Button
                             size="small"
                             icon={<Download size={14} />}
-                            className="text-tvs-blue"
+                            className="text-tvs-blue text-[10px]"
                             onClick={() => handleDownloadDrawing(row.drawingUrl, row.drawingFileName)}
-                        />
+                        >
+                            Download
+                        </Button>
                     ) : (
                         <Upload
                             beforeUpload={(file) => handleFileUpload(row._id, file)}
                             showUploadList={false}
+                            accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
                         >
-                            <Button size="small" icon={<UploadIcon size={14} />}>Upload</Button>
+                            <Button size="small" icon={<UploadIcon size={14} />} className="text-[10px]">
+                                Upload
+                            </Button>
                         </Upload>
                     )}
                 </div>
             )
         },
+        // 16. Actions
         {
             key: 'actions',
             name: 'ACTIONS',
-            width: 160,
+            width: 120,
             sortable: false,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -613,63 +607,145 @@ const MHDevelopmentTracker = () => {
                 </div>
             )
         }
-    ];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    ], [
+        filteredTrackers,
+        columnFilters,
+        activeFilterKey,
+        filterSearchText,
+        frozenColumns,
+        mhRequests,
+        requestsLoading,
+    ]);
 
+    // react-data-grid requires frozen columns to be CONTIGUOUS at the START of the array.
+    // So we reorder: [serial] → [user-frozen cols] → [remaining cols], each with frozen: true/false.
     const autoFitColumns = useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+        const serial = dataGridColumns.find(c => c.key === 'serial');
+        const frozen = dataGridColumns.filter(c => c.key !== 'serial' && frozenColumns.has(c.key));
+        const rest = dataGridColumns.filter(c => c.key !== 'serial' && !frozenColumns.has(c.key));
+        return [
+            { ...serial, frozen: true },
+            ...frozen.map(c => ({ ...c, frozen: true })),
+            ...rest.map(c => ({ ...c, frozen: false })),
+        ];
+    }, [dataGridColumns, frozenColumns]);
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
-            return sum + (column.width || 0);
-        }, 0);
+    // Freeze popup - column options (exclude serial)
+    const freezableColumns = dataGridColumns.filter(c => c.key !== 'serial');
 
-        if (!totalDefinedWidth) return dataGridColumns;
+    const handleFreezeButtonClick = () => {
+        setPendingFrozen(new Set(frozenColumns));
+        setFreezePopupVisible(true);
+    };
 
-        const scale = gridWidth / totalDefinedWidth;
-
-        return dataGridColumns.map((column) => {
-            if (!column.width || column.key === 'serial') return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
-
-            return {
-                ...column,
-                width: scaledWidth
-            };
-        });
-    }, [dataGridColumns, gridWidth]);
+    const handleFreezeApply = () => {
+        setFrozenColumns(new Set(pendingFrozen));
+        setFreezePopupVisible(false);
+    };
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
-
-        const updateWidth = () => {
-            setGridWidth(gridContainerRef.current.clientWidth);
-        };
-
+        const updateWidth = () => setGridWidth(gridContainerRef.current.clientWidth);
         updateWidth();
-
         const observer = new ResizeObserver(updateWidth);
         observer.observe(gridContainerRef.current);
-
-        return () => {
-            observer.disconnect();
-        };
+        return () => observer.disconnect();
     }, []);
+
+    const gridRows = applyColumnFilters(filteredTrackers);
 
     return (
         <div className="min-h-screen bg-gray-50/50">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-        
-                </div>
-                <button
-                    onClick={handleAddClick}
-                    className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={20} /> Add Tracker
-                </button>
-            </div>
-
             <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                <div className="px-6 py-4">
+                {/* Table toolbar */}
+                <div className="px-6 pt-4 pb-2 flex items-center gap-3">
+                    {/* Freeze Column Button + Popup */}
+                    <div className="relative" ref={freezePopupRef}>
+                        <button
+                            onClick={handleFreezeButtonClick}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${frozenColumns.size > 0
+                                ? 'bg-tvs-blue text-white border-tvs-blue shadow-sm'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-tvs-blue hover:text-tvs-blue'
+                                }`}
+                        >
+                            <Pin size={13} />
+                            Freeze Columns
+                            {frozenColumns.size > 0 && (
+                                <span className="ml-1 bg-white/30 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+                                    {frozenColumns.size}
+                                </span>
+                            )}
+                        </button>
+
+                        {freezePopupVisible && (
+                            <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Pin size={13} className="text-tvs-blue" />
+                                        <span className="text-xs font-bold text-gray-700">Freeze Columns</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setFreezePopupVisible(false)}
+                                        className="text-gray-400 hover:text-gray-600 text-xs"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Always-frozen note */}
+                                <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg mb-2">
+                                    <input type="checkbox" checked readOnly className="w-3 h-3 accent-tvs-blue" />
+                                    <span className="text-[11px] text-gray-400 italic">S.no (always frozen)</span>
+                                </div>
+
+                                {/* Scrollable column list */}
+                                <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                                    {freezableColumns.map(col => (
+                                        <label
+                                            key={col.key}
+                                            className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer group"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={pendingFrozen.has(col.key)}
+                                                onChange={() => {
+                                                    setPendingFrozen(prev => {
+                                                        const next = new Set(prev);
+                                                        next.has(col.key) ? next.delete(col.key) : next.add(col.key);
+                                                        return next;
+                                                    });
+                                                }}
+                                                className="w-3.5 h-3.5 accent-tvs-blue flex-shrink-0"
+                                            />
+                                            <span className="text-[11px] text-gray-700 font-medium group-hover:text-tvs-blue transition-colors truncate">
+                                                {col.name}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                {/* Footer actions */}
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                    <button
+                                        onClick={() => setPendingFrozen(new Set())}
+                                        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-500 hover:bg-gray-50 transition-all"
+                                    >
+                                        Clear All
+                                    </button>
+                                    <button
+                                        onClick={handleFreezeApply}
+                                        className="flex-1 px-3 py-1.5 rounded-lg bg-tvs-blue text-white text-[11px] font-semibold hover:bg-blue-700 transition-all shadow-sm"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="px-6 pb-4">
                     <div ref={gridContainerRef} className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
                         <div className="h-full">
                             <DataGrid
@@ -678,11 +754,9 @@ const MHDevelopmentTracker = () => {
                                 rowKeyGetter={(row) => row._id || row.assetRequestId}
                                 className="rdg-light mh-development-grid"
                                 style={{ blockSize: '100%' }}
-                                rowHeight={60}
+                                rowHeight={44}
                                 headerRowHeight={52}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
+                                defaultColumnOptions={{ resizable: true, minWidth: 100 }}
                             />
                             {loading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
@@ -694,20 +768,20 @@ const MHDevelopmentTracker = () => {
                 </div>
             </div>
 
-            {/* Modals */}
+            {/* Edit Modal */}
             <Modal
                 title={
                     <div className="flex items-center gap-3 pb-4 border-b">
                         <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue">
-                            <Plus size={20} />
+                            <Edit size={20} />
                         </div>
-                        <span className="text-xl font-bold">{editingTracker ? 'Update Tracker' : 'Add New Tracker'}</span>
+                        <span className="text-xl font-bold">Update Tracker</span>
                     </div>
                 }
                 open={isModalVisible}
                 onOk={handleModalOk}
                 onCancel={() => setIsModalVisible(false)}
-                okText={editingTracker ? "Update" : "Create"}
+                okText="Update"
                 width={800}
                 centered
                 className="custom-modal"
@@ -720,20 +794,8 @@ const MHDevelopmentTracker = () => {
                         <Form.Item name="userName" label={<span className="text-xs font-bold uppercase text-gray-500">User Name</span>} rules={[{ required: true }]}>
                             <Input size="large" placeholder="E.g. John Doe" />
                         </Form.Item>
-                        <Form.Item
-                            name="assetRequestId"
-                            label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>}
-                            rules={[{ required: true }]}
-                        >
-                            <Select
-                                size="large"
-                                placeholder="Select Asset Request"
-                                showSearch
-                                optionFilterProp="children"
-                                onChange={handleAssetRequestChange}
-                                loading={requestsLoading}
-                                allowClear
-                            >
+                        <Form.Item name="assetRequestId" label={<span className="text-xs font-bold uppercase text-gray-500">Asset Request ID</span>} rules={[{ required: true }]}>
+                            <Select size="large" placeholder="Select Asset Request" showSearch optionFilterProp="children" onChange={handleAssetRequestChange} loading={requestsLoading} allowClear>
                                 {(mhRequests || []).map(request => (
                                     <Option key={request._id} value={request.mhRequestId}>
                                         {request.mhRequestId} - {request.departmentName} - {request.productModel}
@@ -781,10 +843,7 @@ const MHDevelopmentTracker = () => {
             {/* Vendor Selection Popup */}
             <VendorSelectionPopup
                 visible={vendorPopupVisible}
-                onCancel={() => {
-                    setVendorPopupVisible(false);
-                    setSelectedPlantLocation(null);
-                }}
+                onCancel={() => { setVendorPopupVisible(false); setSelectedPlantLocation(null); }}
                 trackerId={selectedTrackerId}
                 plantLocation={selectedPlantLocation}
             />
@@ -803,4 +862,3 @@ const MHDevelopmentTracker = () => {
 };
 
 export default MHDevelopmentTracker;
-

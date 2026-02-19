@@ -168,6 +168,13 @@ body,
   color: #ffffff;
 }
 
+/* Set rdg CSS variables so frozen sticky cells (background-color:inherit) resolve correctly */
+.mh-development-grid {
+  --rdg-header-background-color: #253C80;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f8fafc;
+}
+
 .mh-development-grid .rdg-row .rdg-cell {
   border-inline: none !important;
   padding-block: 12px;
@@ -180,7 +187,7 @@ body,
   border-inline: none;
   border-bottom: 2px solid #e2e8f0;
   position: relative;
-  background-color: #253C80;
+  background-color: #253C80 !important;
   color: #ffffff;
 }
 
