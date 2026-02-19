@@ -431,7 +431,17 @@ const MHDevelopmentTracker = () => {
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.productModel || '-'}</span>
         },
-        // 7. Plant Location
+        // 7. Material Handling Equipment
+        {
+            key: 'materialHandlingEquipment',
+            name: 'MATERIAL HANDLING EQUIPMENT',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="text-xs text-gray-700">{row.materialHandlingEquipment || '-'}</span>
+            )
+        },
+        // 8. Plant Location
         {
             key: 'plantLocation',
             name: 'PLANT LOCATION',
@@ -439,7 +449,7 @@ const MHDevelopmentTracker = () => {
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => <span className="text-xs text-gray-700">{row.plantLocation || '-'}</span>
         },
-        // 8. Vendor Selection
+        // 9. Vendor Selection
         {
             key: 'vendorSelection',
             name: 'VENDOR SELECTION',
@@ -448,10 +458,7 @@ const MHDevelopmentTracker = () => {
             renderCell: ({ row }) => (
                 <div className="flex flex-col gap-1 py-1">
                     {row.vendorCode ? (
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-tvs-blue">{row.vendorCode}</span>
-                            <span className="text-[10px] text-gray-500 truncate">{row.vendorName}</span>
-                        </div>
+                        <span className="text-xs font-bold text-tvs-blue">{row.vendorCode}</span>
                     ) : (
                         <Button
                             size="small"
@@ -465,7 +472,7 @@ const MHDevelopmentTracker = () => {
                 </div>
             )
         },
-        // 9. Project Plan
+        // 10. Project Plan
         {
             key: 'projectPlan',
             name: 'PROJECT PLAN',
@@ -482,7 +489,7 @@ const MHDevelopmentTracker = () => {
                 </Button>
             )
         },
-        // 10. Implementation Target
+        // 11. Implementation Target
         {
             key: 'implementationTarget',
             name: 'IMPLEMENTATION TARGET',
@@ -494,7 +501,7 @@ const MHDevelopmentTracker = () => {
                 </span>
             )
         },
-        // 11. Status
+        // 12. Status
         {
             key: 'status',
             name: 'STATUS',
@@ -506,7 +513,7 @@ const MHDevelopmentTracker = () => {
                 </span>
             )
         },
-        // 12. Implementation Visibility
+        // 13. Implementation Visibility
         {
             key: 'implementationVisibility',
             name: 'IMPLEMENTATION VISIBILITY',
@@ -528,7 +535,7 @@ const MHDevelopmentTracker = () => {
                 );
             }
         },
-        // 13. Current Stage
+        // 14. Current Stage
         {
             key: 'currentStage',
             name: 'CURRENT STAGE',
@@ -540,7 +547,7 @@ const MHDevelopmentTracker = () => {
                 </span>
             )
         },
-        // 14. Remarks
+        // 15. Remarks
         {
             key: 'remarks',
             name: 'REMARKS',
@@ -550,7 +557,7 @@ const MHDevelopmentTracker = () => {
                 <span className="text-xs text-gray-500 truncate">{row.remarks || '-'}</span>
             )
         },
-        // 15. Drawing (image / PDF / Word / Excel)
+        // 16. Drawing (image / PDF / Word / Excel)
         {
             key: 'drawing',
             name: 'DRAWING / FILE',
@@ -581,7 +588,7 @@ const MHDevelopmentTracker = () => {
                 </div>
             )
         },
-        // 16. Actions
+        // 17. Actions
         {
             key: 'actions',
             name: 'ACTIONS',

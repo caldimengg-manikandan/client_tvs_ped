@@ -9,12 +9,14 @@ const {
     uploadDrawing,
     getVendorsForSelection,
     allocateVendor,
+    getProjectsByVendor,
     upload
 } = require('../controllers/mhDevelopmentTrackerController');
 
 // Tracker CRUD routes
 router.get('/', getAllTrackers);
 router.get('/vendors', getVendorsForSelection);
+router.get('/vendor-projects', getProjectsByVendor);
 router.get('/:id', getTrackerById);
 router.post('/', createTracker);
 router.put('/:id', updateTracker);

@@ -307,6 +307,17 @@ const CreateMHRequestList = () => {
             renderHeaderCell: FilterHeaderCell
         },
         {
+            key: 'materialHandlingEquipment',
+            name: 'MATERIAL HANDLING EQUIPMENT',
+            width: 220,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">
+                    {row.materialHandlingEquipment || '-'}
+                </span>
+            )
+        },
+        {
             key: 'materialHandlingLocation',
             name: 'HANDLING LOC',
             width: 180,
@@ -544,7 +555,6 @@ const CreateMHRequestList = () => {
                             <Plus size={32} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-gray-900 font-outfit tracking-tight">System Initialization</h2>
                             <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">Create New Material Handling Entry</p>
                         </div>
                     </div>
@@ -630,7 +640,7 @@ const CreateMHRequestList = () => {
                                 </Col>
                             </Row>
                             <Row gutter={24}>
-                                <Col span={12}>
+                                <Col span={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">PRODUCT MODEL</span>} name="productModel" rules={[{ required: true }]}>
                                         <Select mode="tags" className="custom-select-large min-h-[48px]" placeholder="Scooter, Motorcycle, or type new...">
                                             <Option value="Scooter">Scooter</Option>
@@ -639,9 +649,14 @@ const CreateMHRequestList = () => {
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
+                                <Col span={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">HANDLING PART NAME</span>} name="handlingPartName" rules={[{ required: true }]}>
                                         <Input placeholder="e.g. Engine Block, Chassis" className="h-12 rounded-2xl font-semibold border-gray-100" />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">MATERIAL HANDLING EQUIPMENT</span>} name="materialHandlingEquipment">
+                                        <Input placeholder="e.g. Conveyor, Forklift" className="h-12 rounded-2xl font-semibold border-gray-100" />
                                     </Form.Item>
                                 </Col>
                             </Row>

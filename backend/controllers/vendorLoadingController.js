@@ -1,37 +1,95 @@
 const VendorLoading = require('../models/VendorLoading');
 const VendorScoring = require('../models/VendorScoring');
+const Vendor = require('../models/Vendor');
 
-// @desc    Get all vendor loading data with scoring details joined
-// @route   GET /api/vendor-loading
-// @access  Private
 const getVendorLoadingData = async (req, res) => {
     try {
-        const loadingData = await VendorLoading.aggregate([
+        const loadingData = await Vendor.aggregate([
+            { $sort: { sNo: 1 } },
             {
                 $lookup: {
-                    from: 'vendorscorings', // MongoDB collection name for VendorScoring
+                    from: 'vendorloadings',
                     localField: 'vendorCode',
                     foreignField: 'vendorCode',
-                    as: 'details'
+                    as: 'loading'
                 }
             },
             {
-                $unwind: '$details'
+                $unwind: {
+                    path: '$loading',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vendorscorings',
+                    let: { vCode: '$vendorCode' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$vendorCode', '$$vCode'] }
+                            }
+                        },
+                        {
+                            $sort: {
+                                scoringYear: -1,
+                                scoringMonth: -1
+                            }
+                        },
+                        { $limit: 1 }
+                    ],
+                    as: 'score'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$score',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // Lookup actual projects from MH Development Tracker
+            {
+                $lookup: {
+                    from: 'mhdevelopmenttrackers',
+                    localField: 'vendorCode',
+                    foreignField: 'vendorCode',
+                    as: 'trackerProjects'
+                }
+            },
+            {
+                $addFields: {
+                    _totalProjects: { $size: '$trackerProjects' },
+                    _vendorCapacity: { $ifNull: ['$vendorCapacity', 10] }
+                }
             },
             {
                 $project: {
+                    _id: '$_id',
+                    vendorId: '$_id',
+                    loadingId: '$loading._id',
                     vendorCode: 1,
-                    totalProjects: 1,
-                    completedProjects: 1,
-                    designStageProjects: 1,
-                    trialStageProjects: 1,
-                    bulkProjects: 1,
-                    vendorCapacity: 1,
-                    loadingPercentage: 1,
-                    gap: 1,
-                    vendorName: '$details.vendorName',
-                    location: '$details.location',
-                    qcdScore: '$details.qcdScore'
+                    vendorName: 1,
+                    location: '$vendorLocation',
+                    totalProjects: '$_totalProjects',
+                    completedProjects: { $ifNull: ['$loading.completedProjects', 0] },
+                    designStageProjects: { $ifNull: ['$loading.designStageProjects', 0] },
+                    trialStageProjects: { $ifNull: ['$loading.trialStageProjects', 0] },
+                    bulkProjects: { $ifNull: ['$loading.bulkProjects', 0] },
+                    vendorCapacity: '$_vendorCapacity',
+                    loadingPercentage: {
+                        $cond: {
+                            if: { $gt: ['$_vendorCapacity', 0] },
+                            then: {
+                                $round: [
+                                    { $multiply: [{ $divide: ['$_totalProjects', '$_vendorCapacity'] }, 100] },
+                                    2
+                                ]
+                            },
+                            else: 0
+                        }
+                    },
+                    gap: { $subtract: ['$_vendorCapacity', '$_totalProjects'] },
+                    qcdScore: '$score.qcdScore'
                 }
             }
         ]);

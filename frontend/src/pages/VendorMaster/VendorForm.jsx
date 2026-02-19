@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, X, ArrowLeft, AlertCircle, Building, MapPin, Hash, Mail, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Save, X, ArrowLeft, AlertCircle, Building, MapPin, Hash, Mail, FileText, CheckCircle, XCircle, Gauge } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createVendor, updateVendor, fetchVendorById, fetchNextVendorId } from '../../redux/slices/vendorSlice';
@@ -18,6 +18,7 @@ const VendorForm = ({ mode = 'add' }) => {
         GSTIN: '',
         vendorLocation: '',
         vendorMailId: '',
+        vendorCapacity: 10,
         remarks: ''
     });
 
@@ -45,6 +46,7 @@ const VendorForm = ({ mode = 'add' }) => {
                 GSTIN: currentItem.GSTIN,
                 vendorLocation: currentItem.vendorLocation,
                 vendorMailId: currentItem.vendorMailId,
+                vendorCapacity: currentItem.vendorCapacity || 10,
                 remarks: currentItem.remarks || ''
             });
             validateGSTIN(currentItem.GSTIN);
@@ -126,6 +128,7 @@ const VendorForm = ({ mode = 'add' }) => {
             GSTIN: formData.GSTIN.toUpperCase(),
             vendorLocation: formData.vendorLocation,
             vendorMailId: formData.vendorMailId.toLowerCase(),
+            vendorCapacity: Number(formData.vendorCapacity) || 10,
             remarks: formData.remarks
         };
 
@@ -343,6 +346,28 @@ const VendorForm = ({ mode = 'add' }) => {
                                     <AlertCircle size={14} /> {errors.vendorMailId}
                                 </p>
                             )}
+                        </div>
+
+                        {/* Vendor Capacity */}
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Vendor Capacity
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <Gauge size={18} className="text-gray-400" />
+                                <input
+                                    type="number"
+                                    name="vendorCapacity"
+                                    value={formData.vendorCapacity}
+                                    onChange={handleChange}
+                                    min="1"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="10"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                Max number of projects vendor can handle
+                            </p>
                         </div>
 
                         {/* Remarks */}

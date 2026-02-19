@@ -1,5 +1,7 @@
 const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
+const MHRequest = require('../models/MHRequest');
 const Vendor = require('../models/Vendor');
+const VendorLoading = require('../models/VendorLoading');
 const VendorScoring = require('../models/VendorScoring');
 const multer = require('multer');
 const path = require('path');
@@ -36,9 +38,53 @@ const upload = multer({
     }
 });
 
-// Get all tracker records
+async function ensureTrackerForRequest(request) {
+    if (!request || !request.mhRequestId) return;
+
+    const basePayload = {
+        departmentName: request.departmentName,
+        userName: request.userName,
+        assetRequestId: request.mhRequestId,
+        requestType: request.requestType,
+        productModel: request.productModel,
+        plantLocation: request.plantLocation,
+        implementationTarget: null,
+        status: 'Not Started',
+        currentStage: 'Not Started',
+        remarks: ''
+    };
+
+    const update = {
+        $setOnInsert: basePayload,
+        $set: {
+            materialHandlingEquipment: request.materialHandlingEquipment || ''
+        }
+    };
+
+    if (request.allocationAssetId) {
+        update.$set.assetId = request.allocationAssetId;
+    } else {
+        update.$setOnInsert.assetId = '';
+    }
+
+    await MHDevelopmentTracker.findOneAndUpdate(
+        { assetRequestId: request.mhRequestId },
+        update,
+        { new: true, upsert: true }
+    );
+}
+
+async function syncTrackersFromAcceptedRequests() {
+    const acceptedRequests = await MHRequest.find({ status: 'Accepted', activeStatus: true });
+    for (const request of acceptedRequests) {
+        await ensureTrackerForRequest(request);
+    }
+}
+
 const getAllTrackers = async (req, res) => {
     try {
+        await syncTrackersFromAcceptedRequests();
+
         const trackers = await MHDevelopmentTracker.find()
             .sort({ createdAt: -1 });
 
@@ -90,6 +136,7 @@ const createTracker = async (req, res) => {
             assetRequestId,
             requestType,
             productModel,
+            materialHandlingEquipment,
             plantLocation,
             implementationTarget,
             status,
@@ -121,6 +168,7 @@ const createTracker = async (req, res) => {
             assetRequestId,
             requestType,
             productModel,
+            materialHandlingEquipment: materialHandlingEquipment || '',
             plantLocation,
             implementationTarget,
             status: status || 'Not Started',
@@ -159,7 +207,7 @@ const updateTracker = async (req, res) => {
 
         // Update fields
         const allowedUpdates = [
-            'departmentName', 'userName', 'requestType', 'productModel', 'plantLocation',
+            'departmentName', 'userName', 'requestType', 'productModel', 'materialHandlingEquipment', 'plantLocation',
             'vendorCode', 'vendorName', 'vendorLocation', 'vendorId',
             'projectPlan', 'implementationTarget', 'status', 'implementationVisibility',
             'currentStage', 'remarks', 'assetId'
@@ -364,7 +412,39 @@ const allocateVendor = async (req, res) => {
 
         await tracker.save();
 
-        // 2. Send notification to vendor
+        // 2. Sync vendor loading counts
+        try {
+            const upperCode = vendorCode.trim().toUpperCase();
+            const allVendorTrackers = await MHDevelopmentTracker.find({ vendorCode: upperCode });
+
+            let completedProjects = 0;
+            let designStageProjects = 0;
+            let trialStageProjects = 0;
+            let bulkProjects = 0;
+
+            allVendorTrackers.forEach(t => {
+                const stage = t.currentStage || 'Not Started';
+                if (stage === 'Completed') completedProjects++;
+                else if (stage === 'Design' || stage === 'PR/PO') designStageProjects++;
+                else if (stage === 'Sample Production') trialStageProjects++;
+                else if (stage === 'Production Ready') bulkProjects++;
+            });
+
+            let loadingEntry = await VendorLoading.findOne({ vendorCode: upperCode });
+            if (!loadingEntry) {
+                loadingEntry = new VendorLoading({ vendorCode: upperCode });
+            }
+            loadingEntry.totalProjects = allVendorTrackers.length;
+            loadingEntry.completedProjects = completedProjects;
+            loadingEntry.designStageProjects = designStageProjects;
+            loadingEntry.trialStageProjects = trialStageProjects;
+            loadingEntry.bulkProjects = bulkProjects;
+            await loadingEntry.save();
+        } catch (syncErr) {
+            console.error('Error syncing vendor loading counts:', syncErr);
+        }
+
+        // 3. Send notification to vendor
         if (vendorMailId) {
             await sendVendorAllocationEmail(vendorMailId, {
                 projectId: tracker.assetRequestId,
@@ -387,6 +467,49 @@ const allocateVendor = async (req, res) => {
     }
 };
 
+// Get projects assigned to a specific vendor (for Loading Chart → Total Projects → List of projects)
+const getProjectsByVendor = async (req, res) => {
+    try {
+        const { vendorCode } = req.query;
+        if (!vendorCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'vendorCode query parameter is required'
+            });
+        }
+
+        const trackers = await MHDevelopmentTracker.find({
+            vendorCode: vendorCode.trim().toUpperCase()
+        }).sort({ createdAt: -1 });
+
+        // Return project list with MH Request info
+        const projects = trackers.map((t, idx) => ({
+            id: t._id,
+            sno: idx + 1,
+            project: t.materialHandlingEquipment || `Project ${idx + 1}`,
+            status: t.status || 'Not Started',
+            currentStage: t.currentStage || 'Not Started',
+            departmentName: t.departmentName || '-',
+            productModel: t.productModel || '-',
+            plantLocation: t.plantLocation || '-',
+            requestType: t.requestType || '-',
+            materialHandlingEquipment: t.materialHandlingEquipment || '-'
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: projects,
+            count: projects.length
+        });
+    } catch (error) {
+        console.error('Error fetching vendor projects:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch vendor projects'
+        });
+    }
+};
+
 module.exports = {
     getAllTrackers,
     getTrackerById,
@@ -396,5 +519,6 @@ module.exports = {
     uploadDrawing,
     getVendorsForSelection,
     allocateVendor,
+    getProjectsByVendor,
     upload
 };

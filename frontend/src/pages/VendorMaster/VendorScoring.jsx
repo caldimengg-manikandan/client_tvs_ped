@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp, Filter as FilterIcon } from 'lucide-react';
+import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp, Filter as FilterIcon, Zap } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendorScores, createVendorScore, updateVendorScore, deleteVendorScore, fetchVendorPerformance } from '../../redux/slices/vendorScoringSlice';
@@ -480,7 +480,7 @@ const VendorScoring = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
+            name: 'S.No',
             width: 80,
             frozen: true,
             renderCell: ({ rowIdx }) => (

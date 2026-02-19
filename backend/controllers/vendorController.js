@@ -45,7 +45,7 @@ const getVendorById = async (req, res) => {
 // @access  Private
 const createVendor = async (req, res) => {
     try {
-        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, remarks } = req.body;
+        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, vendorCapacity, remarks } = req.body;
 
         // Check if vendor already exists
         const vendorExists = await Vendor.findOne({ $or: [{ vendorCode }, { GSTIN }] });
@@ -59,6 +59,7 @@ const createVendor = async (req, res) => {
             GSTIN,
             vendorLocation,
             vendorMailId,
+            vendorCapacity: vendorCapacity || 10,
             remarks
         });
 
@@ -73,7 +74,7 @@ const createVendor = async (req, res) => {
 // @access  Private
 const updateVendor = async (req, res) => {
     try {
-        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, remarks } = req.body;
+        const { vendorCode, vendorName, GSTIN, vendorLocation, vendorMailId, vendorCapacity, remarks } = req.body;
 
         const vendor = await Vendor.findById(req.params.id);
 
@@ -96,7 +97,8 @@ const updateVendor = async (req, res) => {
         vendor.GSTIN = GSTIN || vendor.GSTIN;
         vendor.vendorLocation = vendorLocation || vendor.vendorLocation;
         vendor.vendorMailId = vendorMailId || vendor.vendorMailId;
-        vendor.remarks = remarks || vendor.remarks;
+        if (vendorCapacity !== undefined) vendor.vendorCapacity = vendorCapacity;
+        vendor.remarks = remarks !== undefined ? remarks : vendor.remarks;
 
         const updatedVendor = await vendor.save();
         res.status(200).json(updatedVendor);
