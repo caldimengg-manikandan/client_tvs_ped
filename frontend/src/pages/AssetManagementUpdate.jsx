@@ -21,6 +21,10 @@ const AssetManagementUpdate = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [acceptedRequests, setAcceptedRequests] = useState([]);
+    const [selectedRequestId, setSelectedRequestId] = useState('');
+    const [generating, setGenerating] = useState(false);
+    const [generatedAssetId, setGeneratedAssetId] = useState('');
 
     const gridContainerRef = useRef(null);
 
@@ -40,8 +44,8 @@ const AssetManagementUpdate = () => {
         fetchAssets();
         fetchVendors();
         fetchDepartments();
+        fetchAcceptedRequests();
 
-        // Auto-fetch department from logged-in user if available
         if (user && user.departmentName) {
             setFormData(prev => ({ ...prev, departmentName: user.departmentName }));
         }
@@ -55,6 +59,17 @@ const AssetManagementUpdate = () => {
         } catch (error) {
             console.error('Error fetching assets:', error);
             setLoading(false);
+        }
+    };
+
+    const fetchAcceptedRequests = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/asset-request`);
+            const data = Array.isArray(response.data) ? response.data : [];
+            const accepted = data.filter(req => req.status === 'Accepted');
+            setAcceptedRequests(accepted);
+        } catch (error) {
+            console.error('Error fetching asset requests:', error);
         }
     };
 
@@ -101,6 +116,19 @@ const AssetManagementUpdate = () => {
         }
     };
 
+    const handleAcceptedRequestChange = (value) => {
+        setSelectedRequestId(value);
+        const selected = acceptedRequests.find(r => r._id === value);
+        if (selected) {
+            setFormData(prev => ({
+                ...prev,
+                plantLocation: selected.plantLocation || prev.plantLocation,
+                assetLocation: selected.materialHandlingLocation || selected.location || prev.assetLocation,
+                assetName: selected.handlingPartName || selected.productModel || prev.assetName
+            }));
+        }
+    };
+
     const openAddModal = () => {
         setEditMode(false);
         setCurrentAsset(null);
@@ -114,6 +142,8 @@ const AssetManagementUpdate = () => {
         });
         setSignOffDocument(null);
         setDrawing(null);
+        setSelectedRequestId('');
+        setGeneratedAssetId('');
         setShowModal(true);
     };
 
@@ -164,6 +194,37 @@ const AssetManagementUpdate = () => {
         } catch (error) {
             console.error('Error saving asset:', error);
             alert(error.response?.data?.message || 'Error saving asset');
+        }
+    };
+
+    const handleGenerateFromRequest = async () => {
+        if (!selectedRequestId) {
+            alert('Please select an accepted request');
+            return;
+        }
+
+        try {
+            setGenerating(true);
+            const response = await axios.post(`${API_BASE_URL}/api/asset-request/${selectedRequestId}/generate-asset`);
+            const updatedRequest = response.data;
+            const allocationId = updatedRequest && updatedRequest.allocationAssetId;
+            if (allocationId) {
+                setGeneratedAssetId(allocationId);
+            } else {
+                setGeneratedAssetId('');
+            }
+            await fetchAssets();
+            await fetchAcceptedRequests();
+            if (allocationId) {
+                alert(`Asset ID ${allocationId} generated successfully`);
+            } else {
+                alert('Asset ID generated successfully');
+            }
+        } catch (error) {
+            console.error('Error generating asset from request:', error);
+            alert(error.response?.data?.message || 'Error generating asset from request');
+        } finally {
+            setGenerating(false);
         }
     };
 
@@ -513,12 +574,13 @@ const AssetManagementUpdate = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-            {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-bold text-gray-700">Total Assets: <span className="text-emerald-700">{assets.length}</span></span>
+                        <span className="text-sm font-bold text-gray-700">
+                            Total Assets: <span className="text-emerald-700">{assets.length}</span>
+                        </span>
                     </div>
                 </div>
                 <div>
@@ -570,7 +632,48 @@ const AssetManagementUpdate = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            {!editMode && (
+                                <div className="flex flex-col gap-2 mb-2">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex-1">
+                                            <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                                Select Accepted Request
+                                            </label>
+                                            <select
+                                                value={selectedRequestId}
+                                                onChange={(e) => handleAcceptedRequestChange(e.target.value)}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-tvs-blue bg-white"
+                                            >
+                                                <option value="">Select Accepted Request</option>
+                                                {acceptedRequests.map(request => (
+                                                    <option key={request._id} value={request._id}>
+                                                        {request.mhRequestId} - {request.departmentName} - {request.productModel}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerateFromRequest}
+                                            disabled={!selectedRequestId || generating}
+                                            className={`mt-5 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors ${
+                                                !selectedRequestId || generating
+                                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                            }`}
+                                        >
+                                            {generating ? 'Generating...' : 'Generate Asset ID'}
+                                        </button>
+                                    </div>
+                                    {generatedAssetId && (
+                                        <div className="text-xs font-semibold text-emerald-700">
+                                            Generated Asset ID: {generatedAssetId}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Vendor Selection */}
                                 <div className="col-span-2">

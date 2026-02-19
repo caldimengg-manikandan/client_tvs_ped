@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, UserPlus, X, Check, ArrowRight, Paperclip, Package, Filter } from 'lucide-react';
+import { UserPlus, X, Check, ArrowRight, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAssetRequests, updateAssetRequest, sendEmailNotification, upsertRequest } from '../redux/slices/assetRequestSlice';
 import { fetchEmployees } from '../redux/slices/employeeSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import api from '../api/axiosConfig';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const RequestTracker = () => {
     const dispatch = useDispatch();
@@ -161,27 +158,6 @@ const RequestTracker = () => {
         }
     };
 
-    // Helper to get file URL
-    const getFileUrl = (path) => {
-        if (!path) return null;
-        return `${API_BASE_URL.replace('/api', '')}${path}`;
-    };
-
-    // Helper to download file
-    const downloadFile = (path, filename) => {
-        const url = getFileUrl(path);
-        if (url) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            toast.error('File not found or URL is invalid.');
-        }
-    };
-
     const handleAccept = (id) => {
         const request = requests.find(req => req._id === id);
         if (!request) return;
@@ -189,7 +165,7 @@ const RequestTracker = () => {
         toast((t) => (
             <div className="px-3 py-2 text-xs">
                 <div className="mb-2 font-semibold text-gray-800">
-                    Approve this request {request.mhRequestId}? Asset ID will be generated automatically on approval.
+                    Approve this request {request.mhRequestId}? Status will be changed to Accepted.
                 </div>
                 <div className="flex justify-end gap-2">
                     <button
@@ -200,21 +176,15 @@ const RequestTracker = () => {
                     </button>
                     <button
                         onClick={async () => {
-    const updated = await handleStatusChange(request, 'Accepted');
+                            const updated = await handleStatusChange(request, 'Accepted');
 
-    if (updated) {
-        dispatch(upsertRequest(updated)); 
-        console.log(updated);
-  // ← important line
-    }
+                            if (updated) {
+                                dispatch(upsertRequest(updated));
+                                toast.success(`Request ${request.mhRequestId} approved successfully.`);
+                            }
 
-    if (updated?.allocationAssetId) {
-        toast.success(`Asset ${updated.allocationAssetId} created successfully.`);
-    }
-
-    toast.dismiss(t.id);
-}}
-
+                            toast.dismiss(t.id);
+                        }}
                         className="px-3 py-1 text-[11px] rounded bg-green-600 text-white hover:bg-green-700"
                     >
                         Approve
@@ -406,24 +376,6 @@ const RequestTracker = () => {
             renderHeaderCell: FilterHeaderCell
         },
         {
-            key: 'status',
-            name: 'STATUS',
-            width: 140,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => {
-                const statusColors = {
-                    'Active': 'bg-blue-50 text-tvs-blue border-blue-200',
-                    'Accepted': 'bg-green-50 text-green-700 border-green-200',
-                    'Rejected': 'bg-red-50 text-red-700 border-red-200'
-                };
-                return (
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${statusColors[row.status] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
-                        {row.status}
-                    </span>
-                );
-            }
-        },
-        {
             key: 'location',
             name: 'LOCATION',
             width: 140,
@@ -478,69 +430,70 @@ const RequestTracker = () => {
             renderHeaderCell: FilterHeaderCell
         },
         {
-            key: 'attachments',
-            name: 'ATTACHMENTS',
-            width: 100,
-            renderCell: ({ row }) => {
-                const hasDrawing = row.drawingFile?.filename;
-                return hasDrawing ? (
-                    <button
-                        onClick={() => downloadFile(row.drawingFile.path, row.drawingFile.filename)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                        <Paperclip size={14} />
-                        <Download size={14} />
-                    </button>
-                ) : (
-                    <span className="text-gray-400 text-xs">No file</span>
-                );
-            }
-        },
-        {
-            key: 'allocationAssetId',
-            name: 'ASSET ID',
+            key: 'status',
+            name: 'STATUS',
             width: 140,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
-                return row.allocationAssetId ? (
-                    <span className="px-2.5 py-1 bg-tvs-blue text-white rounded-lg font-bold text-xs inline-block">
-                        {row.allocationAssetId}
+                const statusColors = {
+                    'Active': 'bg-blue-50 text-tvs-blue border-blue-200',
+                    'Accepted': 'bg-green-50 text-green-700 border-green-200',
+                    'Rejected': 'bg-red-50 text-red-700 border-red-200'
+                };
+                return (
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${statusColors[row.status] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                        {row.status}
                     </span>
-                ) : (
-                    <span className="text-gray-400 text-xs">Not Allocated</span>
                 );
             }
         },
         {
             key: 'actions',
             name: 'ACTIONS',
-            width: 120,
+            width: 140,
             renderCell: ({ row }) => {
                 const isPending = row.status === 'Active';
+                const isAccepted = row.status === 'Accepted';
                 const isRejected = row.status === 'Rejected';
-              return (
-    <div className="flex gap-2">
-        {isPending && (
-            <>
-                <button
-                    onClick={() => handleAccept(row._id)}
-                    className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                    title="Accept Request"
-                >
-                    <Check size={16} />
-                </button>
-                <button
-                    onClick={() => handleReject(row._id)}
-                    className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
-                    title="Reject Request"
-                >
-                    <X size={16} />
-                </button>
-            </>
-        )}
-    </div>
-);
 
+                if (isPending) {
+                    return (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleAccept(row._id)}
+                                className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                                title="Accept Request"
+                            >
+                                <Check size={16} />
+                            </button>
+                            <button
+                                onClick={() => handleReject(row._id)}
+                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
+                                title="Reject Request"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    );
+                }
+
+                if (isAccepted) {
+                    return (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 inline-block text-center">
+                            Approved
+                        </span>
+                    );
+                }
+
+                if (isRejected) {
+                    return (
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 inline-block text-center">
+                            Rejected
+                        </span>
+                    );
+                }
+
+                return null;
             }
         },
         {

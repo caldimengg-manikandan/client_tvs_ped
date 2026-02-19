@@ -744,31 +744,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Quick Stats Highlight */}
-                    <motion.div 
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        className="bg-gradient-to-br from-tvs-blue via-[#1a2b5e] to-black rounded-2xl p-6 text-white shadow-xl shadow-tvs-blue/30 relative overflow-hidden group"
-                    >
-                        <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-                        <div className="relative">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="text-[10px] font-black opacity-60 uppercase tracking-[3px]">Portfolio Overview</div>
-                                <Activity size={20} className="text-emerald-400" />
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-5xl font-black font-outfit tracking-tighter">
-                                    {stats?.additionalStats?.totalActiveRequests || 0}
-                                </span>
-                                <span className="text-xs font-black opacity-70 uppercase tracking-widest bg-white/10 px-2 py-1 rounded-lg">Active</span>
-                            </div>
-                            <div className="mt-4 flex items-center justify-between">
-                                <p className="text-xs opacity-60 font-medium">Lifecycle Success Rate</p>
-                                <span className="text-xs font-bold text-emerald-400">98.4%</span>
-                            </div>
-                            <div className="mt-2 h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full w-[98%] bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
-                            </div>
-                        </div>
-                    </motion.div>
+                   
                 </motion.div>
             </div>
 

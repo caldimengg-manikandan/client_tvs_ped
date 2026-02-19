@@ -3,7 +3,7 @@ import { Home, Settings, FileText, ClipboardList, Activity, Users, Shield, BarCh
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import tvsLogo from '../assets/tvslogo.jpg';
+import tvsLogo from '../assets/tvs bg.webp';
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const { hasPermission, loading } = useAuth();
@@ -101,7 +101,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                             transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
                                             className="relative"
                                         >
-                                            <img src={tvsLogo} alt="TVS Logo" className="h-12 w-full object-cover drop-shadow-sm" />
+                                            <img src={tvsLogo} alt="TVS Logo" className="h-16 w-[240px] object-cover drop-shadow-sm" />
                                         </motion.div>
                                     </div>
                                     <button

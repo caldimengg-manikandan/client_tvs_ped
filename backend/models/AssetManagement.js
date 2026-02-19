@@ -61,24 +61,27 @@ const assetManagementSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Auto-generate Asset ID before validation
 assetManagementSchema.pre('validate', async function() {
     if (!this.isNew || this.assetId) return;
-    
-    const lastAsset = await this.constructor.findOne({}, {}, { sort: { 'assetId': -1 } });
-    
+
+    const prefix = 'ASSEST/TVS/';
+
+    const lastAsset = await this.constructor.findOne(
+        { assetId: { $regex: `^${prefix}` } },
+        {},
+        { sort: { assetId: -1 } }
+    );
+
+    let nextNumber = 1;
+
     if (lastAsset && lastAsset.assetId) {
-        // Extract number from AID001, AID002, etc.
-        const match = lastAsset.assetId.match(/AID(\d+)/);
+        const match = lastAsset.assetId.match(/ASSEST\/TVS\/(\d+)/);
         if (match) {
-            const nextNumber = parseInt(match[1]) + 1;
-            this.assetId = `AID${String(nextNumber).padStart(3, '0')}`;
-        } else {
-            this.assetId = 'AID001';
+            nextNumber = parseInt(match[1], 10) + 1;
         }
-    } else {
-        this.assetId = 'AID001';
     }
+
+    this.assetId = `${prefix}${String(nextNumber).padStart(3, '0')}`;
 });
 
 module.exports = mongoose.model('AssetManagement', assetManagementSchema);
