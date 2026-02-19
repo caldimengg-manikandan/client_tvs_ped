@@ -94,7 +94,8 @@ const createTracker = async (req, res) => {
             implementationTarget,
             status,
             currentStage,
-            remarks
+            remarks,
+            assetId
         } = req.body;
 
         // Validate required fields
@@ -124,7 +125,8 @@ const createTracker = async (req, res) => {
             implementationTarget,
             status: status || 'Not Started',
             currentStage: currentStage || 'Not Started',
-            remarks: remarks || ''
+            remarks: remarks || '',
+            assetId: assetId || ''
         });
 
         const savedTracker = await tracker.save();
@@ -160,7 +162,7 @@ const updateTracker = async (req, res) => {
             'departmentName', 'userName', 'requestType', 'productModel', 'plantLocation',
             'vendorCode', 'vendorName', 'vendorLocation', 'vendorId',
             'projectPlan', 'implementationTarget', 'status', 'implementationVisibility',
-            'currentStage', 'remarks'
+            'currentStage', 'remarks', 'assetId'
         ];
 
         allowedUpdates.forEach(field => {

@@ -1,5 +1,6 @@
 const MHRequest = require('../models/MHRequest');
 const AssetManagement = require('../models/AssetManagement');
+const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 
 // @desc    Create a new MH request
 // @route   POST /api/asset-request
@@ -184,6 +185,11 @@ const generateAssetForRequest = async (req, res) => {
             details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
         });
 
+        await MHDevelopmentTracker.findOneAndUpdate(
+            { assetRequestId: request.mhRequestId },
+            { $set: { assetId: asset.assetId } }
+        );
+
         request = await request.save();
 
         res.json(request);
@@ -332,6 +338,11 @@ if (updatedRequest.status === 'Accepted' && !updatedRequest.allocationAssetId) {
         date: new Date(),
         details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
     });
+
+    await MHDevelopmentTracker.findOneAndUpdate(
+        { assetRequestId: updatedRequest.mhRequestId },
+        { $set: { assetId: asset.assetId } }
+    );
 
     await updatedRequest.save();
 }

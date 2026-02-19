@@ -494,6 +494,17 @@ const MHDevelopmentTracker = () => {
             )
         },
         {
+            key: 'assetId',
+            name: 'ASSET ID',
+            width: 160,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-900">
+                    {row.assetId || '-'}
+                </span>
+            )
+        },
+        {
             key: 'vendorSelection',
             name: 'VENDOR SELECTION',
             width: 220,

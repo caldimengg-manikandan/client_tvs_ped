@@ -17,6 +17,11 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    assetId: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     requestType: {
         type: String,
         required: true,
