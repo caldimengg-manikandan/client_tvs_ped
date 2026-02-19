@@ -2,6 +2,38 @@ const MHRequest = require('../models/MHRequest');
 const AssetManagement = require('../models/AssetManagement');
 const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 
+async function ensureMHDevelopmentTrackerForRequest(request, assetId) {
+    if (!request || !request.mhRequestId) return;
+
+    const basePayload = {
+        departmentName: request.departmentName,
+        userName: request.userName,
+        assetRequestId: request.mhRequestId,
+        requestType: request.requestType,
+        productModel: request.productModel,
+        plantLocation: request.plantLocation,
+        implementationTarget: null,
+        status: 'Not Started',
+        currentStage: 'Not Started',
+        remarks: '',
+        assetId: assetId || ''
+    };
+
+    const update = {
+        $setOnInsert: basePayload
+    };
+
+    if (assetId) {
+        update.$set = { assetId };
+    }
+
+    await MHDevelopmentTracker.findOneAndUpdate(
+        { assetRequestId: request.mhRequestId },
+        update,
+        { new: true, upsert: true }
+    );
+}
+
 // @desc    Create a new MH request
 // @route   POST /api/asset-request
 // @access  Private
@@ -26,6 +58,7 @@ const createMHRequest = async (req, res) => {
             userName,
             requestType,
             productModel,
+            materialHandlingEquipment,
             problemStatement,
             handlingPartName,
             materialHandlingLocation,
@@ -90,6 +123,7 @@ const createMHRequest = async (req, res) => {
             userName,
             requestType,
             productModel,
+            materialHandlingEquipment,
             problemStatement,
             handlingPartName,
             materialHandlingLocation,
@@ -160,6 +194,7 @@ const generateAssetForRequest = async (req, res) => {
         }
 
         if (request.allocationAssetId) {
+            await ensureMHDevelopmentTrackerForRequest(request, request.allocationAssetId);
             return res.json(request);
         }
 
@@ -185,10 +220,7 @@ const generateAssetForRequest = async (req, res) => {
             details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
         });
 
-        await MHDevelopmentTracker.findOneAndUpdate(
-            { assetRequestId: request.mhRequestId },
-            { $set: { assetId: asset.assetId } }
-        );
+        await ensureMHDevelopmentTrackerForRequest(request, asset.assetId);
 
         request = await request.save();
 
@@ -315,38 +347,36 @@ const updateMHRequest = async (req, res) => {
             { new: true, runValidators: true }
         ).populate('assignedVendor');
 
-if (updatedRequest.status === 'Accepted' && !updatedRequest.allocationAssetId) {
-    console.log('Generating asset for:', updatedRequest._id);
+        if (updatedRequest.status === 'Accepted') {
+            await ensureMHDevelopmentTrackerForRequest(updatedRequest, updatedRequest.allocationAssetId);
+        }
 
-    const asset = await AssetManagement.create({
-        vendorCode: 'AUTO',
-        vendorName: 'Auto Generated',
-        departmentName: updatedRequest.departmentName,
-        plantLocation: updatedRequest.plantLocation,
-        assetLocation: updatedRequest.materialHandlingLocation || updatedRequest.location,
-        assetName: updatedRequest.handlingPartName || updatedRequest.productModel,
-        createdBy: updatedRequest.user
-    });
+        if (updatedRequest.status === 'Accepted' && !updatedRequest.allocationAssetId) {
+            const asset = await AssetManagement.create({
+                vendorCode: 'AUTO',
+                vendorName: 'Auto Generated',
+                departmentName: updatedRequest.departmentName,
+                plantLocation: updatedRequest.plantLocation,
+                assetLocation: updatedRequest.materialHandlingLocation || updatedRequest.location,
+                assetName: updatedRequest.handlingPartName || updatedRequest.productModel,
+                createdBy: updatedRequest.user
+            });
 
-    updatedRequest.allocationAssetId = asset.assetId;
-    updatedRequest.progressStatus = 'Implementation';
-    updatedRequest.production = true;
-    updatedRequest.implementation = true;
+            updatedRequest.allocationAssetId = asset.assetId;
+            updatedRequest.progressStatus = 'Implementation';
+            updatedRequest.production = true;
+            updatedRequest.implementation = true;
 
-    updatedRequest.history.push({
-        action: 'Updated',
-        date: new Date(),
-        details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
-    });
+            updatedRequest.history.push({
+                action: 'Updated',
+                date: new Date(),
+                details: `Final approval completed. Asset ${asset.assetId} created in Asset Master.`
+            });
 
-    await MHDevelopmentTracker.findOneAndUpdate(
-        { assetRequestId: updatedRequest.mhRequestId },
-        { $set: { assetId: asset.assetId } }
-    );
+            await ensureMHDevelopmentTrackerForRequest(updatedRequest, asset.assetId);
 
-    await updatedRequest.save();
-}
-
+            await updatedRequest.save();
+        }
 
         res.json(updatedRequest);
     } catch (err) {

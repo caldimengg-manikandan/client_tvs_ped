@@ -27,6 +27,10 @@ const mhRequestSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    materialHandlingEquipment: {
+        type: String,
+        default: ''
+    },
     problemStatement: {
         type: String,
         required: true

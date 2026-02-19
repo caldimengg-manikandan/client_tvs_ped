@@ -8,6 +8,7 @@ import { Modal, Form, InputNumber } from 'antd';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
+import api from '../../api/axiosConfig';
 
 const VendorLoadingChart = () => {
     const dispatch = useDispatch();
@@ -45,6 +46,10 @@ const VendorLoadingChart = () => {
     }, [error]);
 
     const handleEditClick = (entry) => {
+        if (!entry.loadingId) {
+            toast.error('No loading data found for this vendor. Please import loading data first.');
+            return;
+        }
         setEditingEntry(entry);
         form.setFieldsValue({
             completedProjects: entry.completedProjects,
@@ -59,7 +64,7 @@ const VendorLoadingChart = () => {
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
-            const result = await dispatch(updateVendorLoading({ id: editingEntry._id, loadingData: values }));
+            const result = await dispatch(updateVendorLoading({ id: editingEntry.loadingId, loadingData: values }));
             if (updateVendorLoading.fulfilled.match(result)) {
                 toast.success('Vendor workload updated');
                 setIsModalVisible(false);
@@ -376,16 +381,29 @@ const VendorLoadingChart = () => {
 
     const gridRows = applyColumnFilters(loadingData || []);
 
-    const handleTotalProjectsClick = (row) => {
-        const count = Number(row.totalProjects) || 0;
-        const rows = Array.from({ length: count }, (_, index) => ({
-            id: index + 1,
-            project: `Project ${index + 1}`,
-            status: ''
-        }));
-        setProjectRows(rows);
+    const handleTotalProjectsClick = async (row) => {
         setProjectModalVendor(row);
         setIsProjectModalVisible(true);
+        setProjectRows([]);
+        try {
+            const response = await api.get(`/mh-development-tracker/vendor-projects?vendorCode=${encodeURIComponent(row.vendorCode)}`);
+            if (response.data && response.data.data && response.data.data.length > 0) {
+                setProjectRows(response.data.data);
+            } else {
+                // No projects found for this vendor
+                setProjectRows([]);
+            }
+        } catch (err) {
+            console.error('Failed to fetch vendor projects:', err);
+            // Fallback to placeholder rows
+            const count = Number(row.totalProjects) || 0;
+            const rows = Array.from({ length: count }, (_, index) => ({
+                id: index + 1,
+                project: `Project ${index + 1}`,
+                status: ''
+            }));
+            setProjectRows(rows);
+        }
     };
 
     const dataGridColumns = [

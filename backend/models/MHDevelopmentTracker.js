@@ -32,6 +32,11 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    materialHandlingEquipment: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     plantLocation: {
         type: String,
         required: true,

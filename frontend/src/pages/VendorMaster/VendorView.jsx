@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Building, MapPin, Hash, FileText, Edit, Calendar } from 'lucide-react';
+import { ArrowLeft, Mail, Building, MapPin, Hash, FileText, Edit, Calendar, Gauge } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchVendorById } from '../../redux/slices/vendorSlice';
@@ -72,6 +72,7 @@ const VendorView = () => {
         { label: 'GSTIN', value: vendor.GSTIN, icon: Hash },
         { label: 'Location', value: vendor.vendorLocation, icon: MapPin },
         { label: 'Email', value: vendor.vendorMailId, icon: Mail },
+        { label: 'Vendor Capacity', value: `${vendor.vendorCapacity || 10} projects`, icon: Gauge },
         { label: 'Remarks', value: vendor.remarks || 'No remarks', icon: FileText },
         { label: 'Created', value: formatDate(vendor.createdAt), icon: Calendar },
         { label: 'Last Updated', value: formatDate(vendor.updatedAt), icon: Calendar },

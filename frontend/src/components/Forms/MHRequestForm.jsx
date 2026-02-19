@@ -188,7 +188,7 @@ const MHRequestForm = () => {
                     </Row>
 
                     <Row gutter={24}>
-                        <Col span={12}>
+                        <Col span={8}>
                             <Form.Item label="Product Model" name="productModel" rules={[{ required: true }]}>
                                 <Select mode="tags" className="rounded-xl h-11 w-full" placeholder="e.g. Scooter, Motorcycle..." size="large">
                                     <Option value="Scooter">Scooter</Option>
@@ -197,7 +197,12 @@ const MHRequestForm = () => {
                                 </Select>
                             </Form.Item>
                         </Col>
-                        <Col span={12}>
+                        <Col span={8}>
+                            <Form.Item label="Material Handling Equipment" name="materialHandlingEquipment">
+                                <Input placeholder="e.g. Conveyor, Forklift" className="rounded-xl h-11 border-gray-200" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
                             <Form.Item label="Handling Part Name" name="handlingPartName" rules={[{ required: true }]}>
                                 <Input placeholder="e.g. Engine Block" className="rounded-xl h-11 border-gray-200" />
                             </Form.Item>
