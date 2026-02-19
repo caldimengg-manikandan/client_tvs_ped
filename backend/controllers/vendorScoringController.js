@@ -283,18 +283,19 @@ const getVendorPerformance = async (req, res) => {
                 },
                 currentYear,
                 monthlyPerformance: monthlyScores.map(m => ({
-                    month: m.scoringMonth,
-                    avgScore: m.qcdScore,
-                    avgQSR: m.qsrScore,
-                    avgCost: m.costScore,
-                    avgDelivery: m.deliveryScore
+                    scoringMonth: m.scoringMonth,
+                    qcdScore: m.qcdScore,
+                    qsrScore: m.qsrScore,
+                    costScore: m.costScore,
+                    deliveryScore: m.deliveryScore,
+                    completionRate: m.completionRate || 0
                 })),
                 yearlyPerformance: yearlyScores.map(y => ({
-                    year: y._id,
-                    avgScore: parseFloat(y.avgQcdScore.toFixed(2)),
-                    avgQSR: parseFloat(y.avgQsrScore.toFixed(2)),
-                    avgCost: parseFloat(y.avgCostScore.toFixed(2)),
-                    avgDelivery: parseFloat(y.avgDeliveryScore.toFixed(2)),
+                    _id: y._id,
+                    avgQcdScore: parseFloat(y.avgQcdScore.toFixed(2)),
+                    avgQsrScore: parseFloat(y.avgQsrScore.toFixed(2)),
+                    avgCostScore: parseFloat(y.avgCostScore.toFixed(2)),
+                    avgDeliveryScore: parseFloat(y.avgDeliveryScore.toFixed(2)),
                     totalScores: y.count
                 })),
                 overallStats: {
@@ -302,7 +303,9 @@ const getVendorPerformance = async (req, res) => {
                     avgOverallScore: parseFloat(avgOverallScore.toFixed(2)),
                     avgQSR: parseFloat(avgQSR.toFixed(2)),
                     avgCost: parseFloat(avgCost.toFixed(2)),
-                    avgDelivery: parseFloat(avgDelivery.toFixed(2)),
+                    avgDelivery: totalScores > 0
+                        ? parseFloat((allScores.reduce((sum, s) => sum + s.deliveryScore, 0) / totalScores).toFixed(2))
+                        : 0,
                     latestScore: allScores.length > 0 ? allScores[allScores.length - 1].qcdScore : 0
                 },
                 liveInsight: {

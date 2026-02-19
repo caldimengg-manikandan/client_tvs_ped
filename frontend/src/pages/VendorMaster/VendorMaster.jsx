@@ -352,7 +352,7 @@ const VendorMaster = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: '#',
+            name: 'S.No',
             width: 80,
             frozen: true,
             renderCell: ({ rowIdx }) => (
