@@ -76,14 +76,14 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             >
                 <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                     <div className="flex flex-col items-center gap-1 flex-1">
-                        <img src={tvsLogo} alt="TVS logo" className="h-20 w-auto object-contain" />
+                        <img src={tvsLogo} alt="TVS logo" className="h-24 w-auto object-contain" />
                         {isSidebarOpen && (
                             <>
-                                <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-tvs-blue">
+                                <span className="text-[14px] font-bold tracking-[0.18em] uppercase text-tvs-blue">
                                     TVS Motors
                                 </span>
-                                <span className="text-[10px] text-gray-400">
-                                    Plant engineering department..
+                                <span className="text-[12px] text-gray-400">
+                                  PLANT ENGINEERING DEPARTMENT 
                                 </span>
                             </>
                         )}

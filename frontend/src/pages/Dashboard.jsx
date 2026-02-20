@@ -693,7 +693,7 @@ const Dashboard = () => {
                             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
                                 <Target size={20} />
                             </div>
-                            Core Breakdown
+                            MAN HANDLING PRODUCTS
                         </h2>
 
                         {/* Product Model Breakdown */}
