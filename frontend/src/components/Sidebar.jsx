@@ -48,86 +48,56 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         { name: 'Settings', icon: Settings, path: '/settings', permission: 'settings' }
     ];
 
-    const toggleGroup = (key) => {
-        if (!key) return;
-        setOpenGroups(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
-    };
-
-    if (loading) return null;
-
     return (
         <>
-            {/* Mobile Overlay */}
             <AnimatePresence>
-                {isSidebarOpen && (
+                {windowWidth <= 1024 && isSidebarOpen && (
                     <motion.div
+                        key="sidebar-backdrop"
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        animate={{ opacity: 0.3 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 bg-black/30 z-backdrop lg:hidden"
                         onClick={() => setIsSidebarOpen(false)}
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[950] lg:hidden"
                     />
                 )}
             </AnimatePresence>
 
             <motion.aside
-                initial={false}
-                animate={{
-                    width: isSidebarOpen ? 280 : 72,
-                    x: (isSidebarOpen || (windowWidth && windowWidth > 1024)) ? 0 : -280
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-colors duration-300`}
+                key="sidebar"
+                initial={{ x: windowWidth <= 1024 ? -280 : 0, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -280, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-[width] duration-300 ${
+                    isSidebarOpen ? 'w-[280px]' : 'w-[72px]'
+                }`}
             >
-                {/* Logo Section */}
-                <div className={`h-header flex items-center ${isSidebarOpen ? 'px-4' : 'px-0 justify-center'} border-b border-gray-50 bg-white/50 backdrop-blur-md overflow-hidden transition-all duration-300`}>
-                    <div className={`flex items-center gap-3 group cursor-pointer ${isSidebarOpen ? 'w-full' : ''}`}>
-                        <AnimatePresence mode="wait">
-                            {isSidebarOpen ? (
-                                <motion.div
-                                    key="full-logo"
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -10 }}
-                                    className="flex items-center justify-between w-full"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <motion.div
-                                            whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
-                                            animate={{ y: [0, -2, 0] }}
-                                            transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-                                            className="relative"
-                                        >
-                                            <img src={tvsLogo} alt="TVS Logo" className="h-16 w-[240px] object-cover drop-shadow-sm" />
-                                        </motion.div>
-                                    </div>
-                                    <button
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-tvs-blue transition-colors"
-                                    >
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                </motion.div>
-                            ) : (
-                                <motion.button
-                                    key="collapsed-menu"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    onClick={() => setIsSidebarOpen(true)}
-                                    className="p-2 hover:bg-gray-100 rounded-xl text-tvs-blue transition-colors"
-                                >
-                                    <Menu size={24} />
-                                </motion.button>
-                            )}
-                        </AnimatePresence>
+                <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                        <img src={tvsLogo} alt="TVS logo" className="h-20 w-auto object-contain" />
+                        {isSidebarOpen && (
+                            <>
+                                <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-tvs-blue">
+                                    TVS Motors
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                    Plant engineering department..
+                                </span>
+                            </>
+                        )}
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-tvs-blue hidden lg:inline-flex"
+                    >
+                        {isSidebarOpen ? <ChevronLeft size={18} /> : <Menu size={18} />}
+                    </button>
                 </div>
 
-                {/* Navigation Section */}
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden py-8 custom-scrollbar">
                     {isSidebarOpen && (
                         <motion.div
@@ -135,7 +105,9 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             animate={{ opacity: 1 }}
                             className="px-8 mb-4"
                         >
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px]">Main Menu</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px]">
+                                Main Menu
+                            </span>
                         </motion.div>
                     )}
                     <ul className={`space-y-2 list-none ${isSidebarOpen ? 'px-3' : 'px-2'}`}>
@@ -144,43 +116,60 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                 return null;
                             }
 
-                            // Completely hide headers and sub-items when collapsed
-                            if (!isSidebarOpen && (item.isHeader || item.isSubItem)) return null;
+                            if (!isSidebarOpen && (item.isHeader || item.isSubItem)) {
+                                return null;
+                            }
 
-                            // Hide grouped sub-items when their parent group is collapsed
                             if (item.groupKey && !item.isHeader && openGroups[item.groupKey] === false) {
                                 return null;
                             }
 
                             if (item.isHeader) {
                                 const isGroupActive = item.groupKey === 'vendorManagement' && isVendorGroupActive;
+
                                 return (
                                     <li key={item.name} className="pt-1 pb-1 shadow-none">
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                if (item.groupKey === 'vendorManagement') {
-                                                    navigate('/vendor-master');
+                                                if (item.groupKey) {
+                                                    setOpenGroups(prev => ({
+                                                        ...prev,
+                                                        [item.groupKey]: !prev[item.groupKey]
+                                                    }));
                                                 }
-                                                toggleGroup(item.groupKey);
+                                                navigate('/vendor-master');
                                             }}
-                                            className={`group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors duration-300 font-semibold text-sm ${
-                                                isGroupActive ? 'bg-tvs-blue/5 text-tvs-blue' : 'text-gray-500 hover:bg-gray-50'
+                                            className={`group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-xs ${
+                                                isGroupActive
+                                                    ? 'bg-tvs-blue/5 text-tvs-blue'
+                                                    : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-xl transition-all duration-300 flex items-center justify-center bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110">
+                                                <div
+                                                    className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${
+                                                        isGroupActive
+                                                            ? 'bg-tvs-blue text-white'
+                                                            : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:text-tvs-blue'
+                                                    }`}
+                                                >
                                                     <item.icon size={18} />
                                                 </div>
                                                 {isSidebarOpen && (
-                                                    <span className="font-inter whitespace-nowrap truncate">{item.name}</span>
+                                                    <span className="font-inter whitespace-nowrap truncate">
+                                                        {item.name}
+                                                    </span>
                                                 )}
                                             </div>
+
                                             {item.groupKey && (
                                                 <ChevronDown
                                                     size={14}
                                                     className={`transition-transform duration-200 ${
-                                                        openGroups[item.groupKey] ? 'rotate-180 text-tvs-blue' : 'text-gray-300'
+                                                        openGroups[item.groupKey]
+                                                            ? 'rotate-180 text-tvs-blue'
+                                                            : 'text-gray-300'
                                                     }`}
                                                 />
                                             )}
@@ -192,43 +181,87 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             return (
                                 <motion.li
                                     key={item.name}
-                                    initial={item.isSubItem && isSidebarOpen ? { opacity: 0, x: -10 } : false}
-                                    animate={item.isSubItem && isSidebarOpen ? { opacity: 1, x: 0 } : false}
+                                    initial={
+                                        item.isSubItem && isSidebarOpen
+                                            ? { opacity: 0, x: -10 }
+                                            : false
+                                    }
+                                    animate={
+                                        item.isSubItem && isSidebarOpen
+                                            ? { opacity: 1, x: 0 }
+                                            : false
+                                    }
                                     transition={{ duration: 0.2, delay: index * 0.05 }}
                                 >
                                     <NavLink
                                         to={item.path}
                                         end
                                         className={({ isActive }) =>
-                                            `group flex items-center ${isSidebarOpen ? 'justify-between' : 'justify-center'} px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm transform relative
-                                         ${isSidebarOpen && item.isSubItem ? 'ml-4 py-2.5' : ''}
-                                         ${isActive && item.path !== '#' ? 'scale-[1.03] bg-tvs-blue/5 text-tvs-blue' : 'hover:scale-[1.01] text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'}`
+                                            `group flex items-center ${
+                                                isSidebarOpen ? 'justify-between' : 'justify-center'
+                                            } px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm transform relative
+                                         ${
+                                             isSidebarOpen && item.isSubItem
+                                                 ? 'ml-4 py-2.5'
+                                                 : ''
+                                         }
+                                         ${
+                                             isActive && item.path !== '#'
+                                                 ? 'scale-[1.03] bg-tvs-blue/5 text-tvs-blue'
+                                                 : 'hover:scale-[1.01] text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
+                                         }`
                                         }
                                     >
                                         {({ isActive }) => (
                                             <>
                                                 <div className="flex items-center gap-3">
                                                     {!item.isSubItem ? (
-                                                        <div className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isActive ? 'bg-tvs-blue text-white scale-100' : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'}`}>
+                                                        <div
+                                                            className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${
+                                                                isActive
+                                                                    ? 'bg-tvs-blue text-white scale-100'
+                                                                    : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'
+                                                            }`}
+                                                        >
                                                             <item.icon size={18} />
                                                         </div>
                                                     ) : (
-                                                        <div className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${isActive ? 'bg-tvs-blue/10 text-tvs-blue' : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'}`}>
+                                                        <div
+                                                            className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${
+                                                                isActive
+                                                                    ? 'bg-tvs-blue/10 text-tvs-blue'
+                                                                    : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'
+                                                            }`}
+                                                        >
                                                             <item.icon size={14} />
                                                         </div>
                                                     )}
                                                     {isSidebarOpen && (
-                                                        <span className={`${item.isSubItem ? 'text-xs font-bold' : 'font-inter'}`}>{item.name}</span>
+                                                        <span
+                                                            className={`${
+                                                                item.isSubItem
+                                                                    ? 'text-xs font-bold'
+                                                                    : 'font-inter'
+                                                            }`}
+                                                        >
+                                                            {item.name}
+                                                        </span>
                                                     )}
                                                 </div>
 
-                                                {isSidebarOpen && isActive && item.path !== '#' && (
-                                                    <motion.div
-                                                        layoutId="active-nav"
-                                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                                        className="w-1.5 h-1.5 rounded-full bg-tvs-blue shadow-[0_0_8px_rgba(30,58,138,0.4)]"
-                                                    />
-                                                )}
+                                                {isSidebarOpen &&
+                                                    isActive &&
+                                                    item.path !== '#' && (
+                                                        <motion.div
+                                                            layoutId="active-nav"
+                                                            transition={{
+                                                                type: 'spring',
+                                                                stiffness: 400,
+                                                                damping: 30
+                                                            }}
+                                                            className="w-1.5 h-1.5 rounded-full bg-tvs-blue shadow-[0_0_8px_rgba(30,58,138,0.4)]"
+                                                        />
+                                                    )}
 
                                                 {!isSidebarOpen && isActive && (
                                                     <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-1 h-6 bg-tvs-blue rounded-l-full shadow-[0_0_8px_rgba(30,58,138,0.3)]" />
@@ -242,17 +275,24 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                     </ul>
                 </nav>
 
-                {/* User Access Highlight */}
                 <div className="p-4 border-t border-gray-50">
-                    <div className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 transition-all duration-300 ${isSidebarOpen ? 'p-4' : 'p-2 flex justify-center'}`}>
+                    <div
+                        className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 transition-all duration-300 ${
+                            isSidebarOpen ? 'p-4' : 'p-2 flex justify-center'
+                        }`}
+                    >
                         {isSidebarOpen ? (
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
                                     <Shield size={16} className="text-tvs-blue" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-gray-700">System Secure</span>
-                                    <span className="text-[10px] text-gray-400 font-medium">Access Level: High</span>
+                                    <span className="text-xs font-bold text-gray-700">
+                                        System Secure
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 font-medium">
+                                        Access Level: High
+                                    </span>
                                 </div>
                             </div>
                         ) : (
