@@ -198,7 +198,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                     <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <Users size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Available Pool</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Available Vendors</span>
                         </div>
                         <p className="text-2xl font-black text-blue-900">{vendors.length || 0}</p>
                     </div>

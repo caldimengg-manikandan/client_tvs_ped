@@ -1,6 +1,8 @@
 const MHRequest = require('../models/MHRequest');
-
-// @desc    Get dashboard statistics
+const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
+const Vendor = require('../models/Vendor');
+const VendorLoading = require('../models/VendorLoading');
+const AssetManagement = require('../models/AssetManagement');// @desc    Get dashboard statistics
 // @route   GET /api/dashboard/stats
 // @access  Private
 const getStats = async (req, res) => {
@@ -66,6 +68,48 @@ const getStats = async (req, res) => {
             avgProcessingTime = (totalDays / completedRequests.length).toFixed(1);
         }
 
+        const mhTrackers = await MHDevelopmentTracker.find({});
+        const assetManagementRecords = await AssetManagement.find({});
+
+        const stageMetrics = {
+            mhRequests: {
+                pendingList: allRequests.filter(r => r.status === 'Active').map(r => ({ id: r.mhRequestId, name: r.materialHandlingEquipment || r.handlingPartName || r.productModel })),
+                completedList: allRequests.filter(r => r.status === 'Accepted').map(r => ({ id: r.mhRequestId, name: r.materialHandlingEquipment || r.handlingPartName || r.productModel }))
+            },
+            approval: {
+                pendingList: allRequests.filter(r => r.status === 'Active').map(r => ({ id: r.mhRequestId, name: r.handlingPartName || r.productModel })),
+                completedList: allRequests.filter(r => r.status === 'Accepted').map(r => ({ id: r.mhRequestId, name: r.handlingPartName || r.productModel }))
+            },
+            vendorSelection: {
+                pendingList: mhTrackers.filter(t => !t.vendorCode).map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName })),
+                completedList: mhTrackers.filter(t => t.vendorCode).map(t => ({ id: t.assetRequestId, name: t.vendorName || t.vendorCode }))
+            },
+            designRelease: {
+                pendingList: mhTrackers.filter(t => t.currentStage === 'Design').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName })),
+                completedList: mhTrackers.filter(t => t.currentStage !== 'Design' && t.currentStage !== 'Not Started').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName }))
+            },
+            prPoRelease: {
+                pendingList: mhTrackers.filter(t => t.currentStage === 'PR/PO').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName })),
+                completedList: mhTrackers.filter(t => ['Sample Production', 'Production Ready', 'Completed'].includes(t.currentStage)).map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName }))
+            },
+            sampleReceipt: {
+                pendingList: mhTrackers.filter(t => t.currentStage === 'Sample Production').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName })),
+                completedList: mhTrackers.filter(t => ['Production Ready', 'Completed'].includes(t.currentStage)).map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName }))
+            },
+            bulkLot: {
+                pendingList: mhTrackers.filter(t => t.currentStage === 'Production Ready').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName })),
+                completedList: mhTrackers.filter(t => t.currentStage === 'Completed').map(t => ({ id: t.assetRequestId, name: t.productModel || t.departmentName }))
+            },
+            handover: {
+                pendingList: assetManagementRecords.filter(a => !a.signOffDocument?.filename).map(a => ({ id: a.assetId, name: a.assetName })),
+                completedList: assetManagementRecords.filter(a => a.signOffDocument?.filename).map(a => ({ id: a.assetId, name: a.assetName }))
+            },
+            assetImplementation: {
+                pendingList: assetManagementRecords.filter(a => !a.signOffDocument?.filename).map(a => ({ id: a.assetId, name: a.assetName })),
+                completedList: assetManagementRecords.filter(a => a.signOffDocument?.filename).map(a => ({ id: a.assetId, name: a.assetName }))
+            }
+        };
+
         res.json({
             kpiCards: {
                 totalRequests,
@@ -87,7 +131,8 @@ const getStats = async (req, res) => {
                 typeBreakdown,
                 recentRequests,
                 avgProcessingTime
-            }
+            },
+            stageMetrics
         });
     } catch (err) {
         console.error(err);
