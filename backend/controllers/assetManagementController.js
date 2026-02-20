@@ -257,12 +257,23 @@ const deleteAsset = async (req, res) => {
     }
 };
 
-// @desc    Get vendors from VendorScoring
+// @desc    Get vendors from VendorScoring (deduplicated by vendorCode)
 // @route   GET /api/asset-management/vendors/list
 // @access  Private
 const getVendors = async (req, res) => {
     try {
-        const vendors = await VendorScoring.find().select('vendorCode vendorName location');
+        // Use aggregation to get one unique entry per vendorCode
+        const vendors = await VendorScoring.aggregate([
+            {
+                $group: {
+                    _id: '$vendorCode',
+                    vendorCode: { $first: '$vendorCode' },
+                    vendorName: { $first: '$vendorName' },
+                    location: { $first: '$location' }
+                }
+            },
+            { $sort: { vendorName: 1 } }
+        ]);
         res.json(vendors);
     } catch (error) {
         console.error('Error fetching vendors:', error);

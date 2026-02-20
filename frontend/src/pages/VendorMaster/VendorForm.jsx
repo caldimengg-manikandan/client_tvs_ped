@@ -25,12 +25,6 @@ const VendorForm = ({ mode = 'add' }) => {
     const [errors, setErrors] = useState({});
     const [gstinValid, setGstinValid] = useState(null);
 
-    const locations = [
-        'Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune', 'Kolkata',
-        'Ahmedabad', 'Surat', 'Jaipur', 'Lucknow', 'Kanpur', 'Nagpur', 'Indore',
-        'Thane', 'Bhopal', 'Visakhapatnam', 'Patna', 'Vadodara', 'Ghaziabad', 'Other'
-    ];
-
     useEffect(() => {
         if (mode === 'edit' && id) {
             dispatch(fetchVendorById(id));
@@ -295,26 +289,22 @@ const VendorForm = ({ mode = 'add' }) => {
                             </p>
                         </div>
 
-                        {/* Vendor Location */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
                                 Vendor Location *
                             </label>
                             <div className="flex items-center gap-2">
                                 <MapPin size={18} className="text-gray-400" />
-                                <select
+                                <input
+                                    type="text"
                                     name="vendorLocation"
                                     value={formData.vendorLocation}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.vendorLocation ? 'border-red-300' : 'border-gray-300'
                                         }`}
+                                    placeholder="Enter vendor location"
                                     required
-                                >
-                                    <option value="">Select Location</option>
-                                    {locations.map(location => (
-                                        <option key={location} value={location}>{location}</option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                             {errors.vendorLocation && (
                                 <p className="text-sm text-red-600 flex items-center gap-1">

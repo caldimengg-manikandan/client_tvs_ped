@@ -22,6 +22,7 @@ const AssetManagementUpdate = () => {
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
     const [acceptedRequests, setAcceptedRequests] = useState([]);
+    const [trackers, setTrackers] = useState([]);
     const [selectedRequestId, setSelectedRequestId] = useState('');
     const [generating, setGenerating] = useState(false);
     const [generatedAssetId, setGeneratedAssetId] = useState('');
@@ -45,6 +46,7 @@ const AssetManagementUpdate = () => {
         fetchVendors();
         fetchDepartments();
         fetchAcceptedRequests();
+        fetchTrackers();
 
         if (user && user.departmentName) {
             setFormData(prev => ({ ...prev, departmentName: user.departmentName }));
@@ -73,10 +75,28 @@ const AssetManagementUpdate = () => {
         }
     };
 
+    const fetchTrackers = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/mh-development-tracker`);
+            const data = response.data?.data || response.data || [];
+            setTrackers(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Error fetching trackers:', error);
+        }
+    };
+
     const fetchVendors = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/asset-management/vendors/list`);
-            setVendors(response.data);
+            // Deduplicate: VendorScoring has multiple records per vendor (one per scoring month).
+            // Keep only the first occurrence of each vendorCode for the dropdown.
+            const seen = new Set();
+            const unique = (Array.isArray(response.data) ? response.data : []).filter(v => {
+                if (seen.has(v.vendorCode)) return false;
+                seen.add(v.vendorCode);
+                return true;
+            });
+            setVendors(unique);
         } catch (error) {
             console.error('Error fetching vendors:', error);
         }
@@ -120,11 +140,35 @@ const AssetManagementUpdate = () => {
         setSelectedRequestId(value);
         const selected = acceptedRequests.find(r => r._id === value);
         if (selected) {
+            // Look up the MHDevelopmentTracker for this request to get the allocated vendor
+            const tracker = trackers.find(t => t.assetRequestId === selected.mhRequestId);
+
+            // Prefer tracker vendor (explicitly allocated in MH Dev Tracker)
+            // Fall back to assignedVendor on the MH Request itself
+            const assignedV = selected.assignedVendor;
+            const resolvedVendorCode = tracker?.vendorCode || assignedV?.vendorCode || '';
+            const resolvedVendorName = tracker?.vendorName || assignedV?.vendorName || '';
+            const resolvedVendorLocation = tracker?.vendorLocation || assignedV?.location || '';
+
             setFormData(prev => ({
                 ...prev,
-                plantLocation: selected.plantLocation || prev.plantLocation,
+                vendorCode: resolvedVendorCode || prev.vendorCode,
+                vendorName: resolvedVendorName || prev.vendorName,
+                departmentName: selected.departmentName || prev.departmentName,
+                plantLocation: selected.plantLocation || resolvedVendorLocation || prev.plantLocation,
                 assetLocation: selected.materialHandlingLocation || selected.location || prev.assetLocation,
                 assetName: selected.handlingPartName || selected.productModel || prev.assetName
+            }));
+        } else {
+            // Reset all auto-filled fields when request is cleared
+            setFormData(prev => ({
+                ...prev,
+                vendorCode: '',
+                vendorName: '',
+                departmentName: user?.departmentName || '',
+                plantLocation: '',
+                assetLocation: '',
+                assetName: ''
             }));
         }
     };
@@ -619,7 +663,7 @@ const AssetManagementUpdate = () => {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-modal">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-gray-800">
                                 {editMode ? 'Edit Asset' : 'Add New Asset'}
@@ -635,7 +679,7 @@ const AssetManagementUpdate = () => {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             {!editMode && (
                                 <div className="flex flex-col gap-2 mb-2">
-                                    <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-end gap-3">
                                         <div className="flex-1">
                                             <label className="block text-xs font-semibold text-gray-600 mb-1">
                                                 Select Accepted Request
@@ -657,56 +701,87 @@ const AssetManagementUpdate = () => {
                                             type="button"
                                             onClick={handleGenerateFromRequest}
                                             disabled={!selectedRequestId || generating}
-                                            className={`mt-5 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors ${
-                                                !selectedRequestId || generating
-                                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                            }`}
+                                            className={`px-4 py-2 text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-colors ${!selectedRequestId || generating
+                                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                                : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                                }`}
                                         >
                                             {generating ? 'Generating...' : 'Generate Asset ID'}
                                         </button>
+                                        {generatedAssetId && (
+                                            <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-300 rounded-lg whitespace-nowrap">
+                                                <span className="text-emerald-500 font-bold text-sm">✓</span>
+                                                <span className="text-xs font-bold text-emerald-700">{generatedAssetId}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {generatedAssetId && (
-                                        <div className="text-xs font-semibold text-emerald-700">
-                                            Generated Asset ID: {generatedAssetId}
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Vendor Selection */}
+                                {/* Vendor */}
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                         Vendor <span className="text-red-500">*</span>
+                                        {selectedRequestId && formData.vendorCode && (
+                                            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                ✓ Auto-filled from MH Development Tracker
+                                            </span>
+                                        )}
                                     </label>
-                                    <select
-                                        value={formData.vendorCode}
-                                        onChange={(e) => handleVendorChange(e.target.value)}
-                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        required
-                                    >
-                                        <option value="">Select Vendor</option>
-                                        {vendors.map(vendor => (
-                                            <option key={vendor.vendorCode} value={vendor.vendorCode}>
-                                                {vendor.vendorName} ({vendor.vendorCode})
-                                            </option>
-                                        ))}
-                                    </select>
+
+                                    {selectedRequestId && formData.vendorCode ? (
+                                        /* Read-only vendor display card — shown when a request is selected */
+                                        <div className="flex items-center gap-4 px-4 py-3 bg-emerald-50 border border-emerald-300 rounded-lg">
+                                            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
+                                                <span className="text-emerald-700 font-black text-sm">V</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-emerald-800 truncate">{formData.vendorName}</p>
+                                                <p className="text-xs text-emerald-600 font-semibold">{formData.vendorCode}</p>
+                                            </div>
+                                            {/* Hidden inputs ensure vendorCode & vendorName are submitted */}
+                                            <input type="hidden" name="vendorCode" value={formData.vendorCode} />
+                                            <input type="hidden" name="vendorName" value={formData.vendorName} />
+                                        </div>
+                                    ) : (
+                                        /* Normal dropdown — shown when no request is selected */
+                                        <select
+                                            value={formData.vendorCode}
+                                            onChange={(e) => handleVendorChange(e.target.value)}
+                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            required
+                                        >
+                                            <option value="">Select Vendor</option>
+                                            {vendors.map(vendor => (
+                                                <option key={vendor.vendorCode} value={vendor.vendorCode}>
+                                                    {vendor.vendorName} ({vendor.vendorCode})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
 
                                 {/* Department */}
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                                         Department <span className="text-red-500">*</span>
+                                        {selectedRequestId && formData.departmentName && (
+                                            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                ✓ Auto-filled from MH Request
+                                            </span>
+                                        )}
                                     </label>
                                     <select
                                         name="departmentName"
                                         value={formData.departmentName}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedRequestId && formData.departmentName
+                                            ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold'
+                                            : 'bg-gray-50 border-gray-300'
+                                            }`}
                                         required
-                                        disabled={user?.departmentName} // Auto-filled, read-only
+                                        disabled={!!(user?.departmentName && !selectedRequestId)}
                                     >
                                         <option value="">Select Department</option>
                                         {departments.map(dept => (
