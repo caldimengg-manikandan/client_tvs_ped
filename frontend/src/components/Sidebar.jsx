@@ -70,9 +70,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -280, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-[width] duration-300 ${
-                    isSidebarOpen ? 'w-[280px]' : 'w-[72px]'
-                }`}
+                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-[width] duration-300 ${isSidebarOpen ? 'w-[280px]' : 'w-[72px]'
+                    }`}
             >
                 <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
                     <div className="flex flex-col items-center gap-1 flex-1">
@@ -83,7 +82,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                     TVS Motors
                                 </span>
                                 <span className="text-[12px] text-gray-400">
-                                  PLANT ENGINEERING DEPARTMENT 
+                                    PLANT ENGINEERING DEPARTMENT
                                 </span>
                             </>
                         )}
@@ -140,19 +139,17 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                 }
                                                 navigate('/vendor-master');
                                             }}
-                                            className={`group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-xs ${
-                                                isGroupActive
+                                            className={`group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-xs ${isGroupActive
                                                     ? 'bg-tvs-blue/5 text-tvs-blue'
                                                     : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${
-                                                        isGroupActive
+                                                    className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isGroupActive
                                                             ? 'bg-tvs-blue text-white'
                                                             : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:text-tvs-blue'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <item.icon size={18} />
                                                 </div>
@@ -166,11 +163,10 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                             {item.groupKey && (
                                                 <ChevronDown
                                                     size={14}
-                                                    className={`transition-transform duration-200 ${
-                                                        openGroups[item.groupKey]
+                                                    className={`transition-transform duration-200 ${openGroups[item.groupKey]
                                                             ? 'rotate-180 text-tvs-blue'
                                                             : 'text-gray-300'
-                                                    }`}
+                                                        }`}
                                                 />
                                             )}
                                         </button>
@@ -197,19 +193,16 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                         to={item.path}
                                         end
                                         className={({ isActive }) =>
-                                            `group flex items-center ${
-                                                isSidebarOpen ? 'justify-between' : 'justify-center'
+                                            `group flex items-center ${isSidebarOpen ? 'justify-between' : 'justify-center'
                                             } px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm transform relative
-                                         ${
-                                             isSidebarOpen && item.isSubItem
-                                                 ? 'ml-4 py-2.5'
-                                                 : ''
-                                         }
-                                         ${
-                                             isActive && item.path !== '#'
-                                                 ? 'scale-[1.03] bg-tvs-blue/5 text-tvs-blue'
-                                                 : 'hover:scale-[1.01] text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
-                                         }`
+                                         ${isSidebarOpen && item.isSubItem
+                                                ? 'ml-4 py-2.5'
+                                                : ''
+                                            }
+                                         ${isActive && item.path !== '#'
+                                                ? 'scale-[1.03] bg-tvs-blue/5 text-tvs-blue'
+                                                : 'hover:scale-[1.01] text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
+                                            }`
                                         }
                                     >
                                         {({ isActive }) => (
@@ -217,32 +210,29 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                 <div className="flex items-center gap-3">
                                                     {!item.isSubItem ? (
                                                         <div
-                                                            className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${
-                                                                isActive
+                                                            className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isActive
                                                                     ? 'bg-tvs-blue text-white scale-100'
                                                                     : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <item.icon size={18} />
                                                         </div>
                                                     ) : (
                                                         <div
-                                                            className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${
-                                                                isActive
+                                                            className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${isActive
                                                                     ? 'bg-tvs-blue/10 text-tvs-blue'
                                                                     : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <item.icon size={14} />
                                                         </div>
                                                     )}
                                                     {isSidebarOpen && (
                                                         <span
-                                                            className={`${
-                                                                item.isSubItem
+                                                            className={`${item.isSubItem
                                                                     ? 'text-xs font-bold'
                                                                     : 'font-inter'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {item.name}
                                                         </span>
@@ -277,9 +267,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
 
                 <div className="p-4 border-t border-gray-50">
                     <div
-                        className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 transition-all duration-300 ${
-                            isSidebarOpen ? 'p-4' : 'p-2 flex justify-center'
-                        }`}
+                        className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 transition-all duration-300 ${isSidebarOpen ? 'p-4' : 'p-2 flex justify-center'
+                            }`}
                     >
                         {isSidebarOpen ? (
                             <div className="flex items-center gap-3">
