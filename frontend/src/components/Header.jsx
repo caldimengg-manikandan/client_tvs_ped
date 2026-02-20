@@ -104,7 +104,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                     case 'employee-master': name = 'Employee Master'; break;
                     case 'mh-requests': name = 'MH Requests'; break;
                     case 'request-tracker': name = 'Request Tracker'; break;
-                    case 'mh-development-tracker': name = 'MH Dev Tracker'; break;
+                    case 'mh-development-tracker': name = 'MH Development Tracker'; break;
                     case 'vendor-master': name = 'Vendor Master'; break;
                     case 'settings': name = 'Settings'; break;
                     case 'scoring': name = 'Vendor Scoring'; break;
@@ -143,7 +143,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
         <header className={`h-header fixed top-0 right-0 ${isSidebarOpen ? 'lg:left-[280px]' : 'lg:left-[72px]'} left-0 bg-white/70 backdrop-blur-xl border-b border-gray-100/50 z-header px-4 lg:px-8 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all duration-300`}>
             {/* Left side - Breadcrumbs & Title */}
             <div className="flex items-center gap-3">
-                <button 
+                <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     className="p-2 hover:bg-gray-100 rounded-lg text-tvs-blue lg:hidden transition-colors"
                 >
@@ -151,13 +151,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 </button>
                 <div className="flex flex-col justify-center">
                     <nav className="hidden md:flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                    {location.pathname === '/' ? (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md">
-                            <Activity size={10} className="text-tvs-blue" />
-                            Live Metrics
-                        </span>
-                    ) : (
-                        breadcrumbs.map((crumb, index) => (
+                        {breadcrumbs.map((crumb, index) => (
                             <React.Fragment key={crumb.path}>
                                 {index > 0 && <ChevronRight size={10} className="mx-1 text-gray-300" />}
                                 <Link
@@ -167,34 +161,21 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                     {crumb.name}
                                 </Link>
                             </React.Fragment>
-                        ))
-                    )}
-                </nav>
-                <h2 className="text-xl font-black text-gray-900 font-outfit m-0 leading-none">
-                    {currentPageTitle}
-                </h2>
+                        ))}
+                    </nav>
+                    <h2 className="text-xl font-black text-gray-900 font-outfit m-0 leading-none">
+                        {currentPageTitle}
+                    </h2>
                 </div>
             </div>
 
             {/* Right side - Actions & Profile */}
             <div className="flex items-center gap-4">
-                {/* Search Bar */}
-                <div className="hidden lg:flex items-center gap-2 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 py-2 w-64 group focus-within:w-80 focus-within:bg-white focus-within:border-tvs-blue/30 focus-within:shadow-xl focus-within:shadow-tvs-blue/5 transition-all duration-500">
-                    <Search size={16} className="text-gray-400 group-focus-within:text-tvs-blue transition-colors" />
-                    <input 
-                        type="text" 
-                        placeholder="Search assets, requests..." 
-                        className="bg-transparent border-none focus:ring-0 text-xs font-semibold text-gray-600 w-full"
-                    />
-                </div>
+
 
                 <div className="h-8 w-[1px] bg-gray-100 mx-2 hidden md:block"></div>
 
-                {/* Notifications */}
-                <button className="relative p-2.5 rounded-xl hover:bg-gray-50 text-gray-500 transition-colors">
-                    <Bell size={20} />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-tvs-red border-2 border-white rounded-full"></span>
-                </button>
+
 
                 {/* Last Login Button */}
                 {userActivity && (
@@ -230,7 +211,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
                     <AnimatePresence>
                         {isPopoverOpen && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -242,7 +223,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                     </div>
                                     <h4 className="m-0 text-base font-black text-gray-900 font-outfit">{displayName}</h4>
                                     <span className="text-xs font-medium text-gray-400 mt-1">{displayEmail}</span>
-                                    
+
                                     <div className="flex gap-2 mt-4">
                                         <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue text-[10px] font-black rounded-lg uppercase tracking-wider">{user?.role || 'User'}</span>
                                         <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-lg uppercase tracking-wider">Active</span>
