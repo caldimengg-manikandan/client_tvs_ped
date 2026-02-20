@@ -15,16 +15,20 @@ async function ensureMHDevelopmentTrackerForRequest(request, assetId) {
         implementationTarget: null,
         status: 'Not Started',
         currentStage: 'Not Started',
-        remarks: '',
-        assetId: assetId || ''
+        remarks: ''
     };
 
     const update = {
-        $setOnInsert: basePayload
+        $setOnInsert: basePayload,
+        $set: {
+            materialHandlingEquipment: request.materialHandlingEquipment || ''
+        }
     };
 
     if (assetId) {
-        update.$set = { assetId };
+        update.$set.assetId = assetId;
+    } else {
+        update.$setOnInsert.assetId = '';
     }
 
     await MHDevelopmentTracker.findOneAndUpdate(
@@ -144,6 +148,20 @@ const createMHRequest = async (req, res) => {
         res.status(201).json(savedRequest);
     } catch (err) {
         console.error('Create MH Request Error:', err);
+
+        if (err.name === 'ValidationError') {
+            const errors = err.errors || {};
+            const messages = Object.values(errors)
+                .map(e => e.message || (e.reason && e.reason.message) || '')
+                .filter(Boolean);
+            const message = messages[0] || 'Validation error while creating MH Request';
+            return res.status(400).json({ message });
+        }
+
+        if (err.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid data provided for MH Request creation' });
+        }
+
         res.status(500).json({ message: 'Internal Server Error', error: err.message });
     }
 };
@@ -241,6 +259,7 @@ const updateMHRequest = async (req, res) => {
             productModel,
             problemStatement,
             handlingPartName,
+            materialHandlingEquipment,
             materialHandlingLocation,
             plantLocation,
             from,
@@ -302,19 +321,20 @@ const updateMHRequest = async (req, res) => {
         else if (isDesignReceipt) progressStatus = 'Design';
         else progressStatus = 'Initial';
 
-        // Build Update Data
+        // Build Update Data with safe fallbacks so required fields are never unset
         const updateData = {
-            requestType,
-            productModel,
-            problemStatement,
-            handlingPartName,
-            materialHandlingLocation,
-            plantLocation,
-            from,
-            to,
+            requestType: requestType ?? existingRequest.requestType,
+            productModel: productModel ?? existingRequest.productModel,
+            problemStatement: problemStatement ?? existingRequest.problemStatement,
+            handlingPartName: handlingPartName ?? existingRequest.handlingPartName,
+            materialHandlingEquipment: materialHandlingEquipment ?? existingRequest.materialHandlingEquipment,
+            materialHandlingLocation: materialHandlingLocation ?? existingRequest.materialHandlingLocation,
+            plantLocation: plantLocation ?? existingRequest.plantLocation,
+            from: from ?? existingRequest.from,
+            to: to ?? existingRequest.to,
             volumePerDay: volumePerDay ? Number(volumePerDay) : existingRequest.volumePerDay,
             status: status || existingRequest.status,
-            remark: remark || existingRequest.remark,
+            remark: remark ?? existingRequest.remark,
             designReceiptFromVendor: isDesignReceipt,
             designApproval: isDesignApproval,
             production: isProduction,
@@ -346,6 +366,10 @@ const updateMHRequest = async (req, res) => {
             },
             { new: true, runValidators: true }
         ).populate('assignedVendor');
+
+        if (!updatedRequest) {
+            return res.status(404).json({ message: 'Request not found after update' });
+        }
 
         if (updatedRequest.status === 'Accepted') {
             await ensureMHDevelopmentTrackerForRequest(updatedRequest, updatedRequest.allocationAssetId);
@@ -381,6 +405,20 @@ const updateMHRequest = async (req, res) => {
         res.json(updatedRequest);
     } catch (err) {
         console.error('Update MH Request Error:', err);
+
+        if (err.name === 'ValidationError') {
+            const errors = err.errors || {};
+            const messages = Object.values(errors)
+                .map(e => e.message || (e.reason && e.reason.message) || '')
+                .filter(Boolean);
+            const message = messages[0] || 'Validation error while updating MH Request';
+            return res.status(400).json({ message });
+        }
+
+        if (err.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid data provided for MH Request update' });
+        }
+
         res.status(500).json({ message: 'Internal Server Error', error: err.message });
     }
 };
@@ -410,8 +448,13 @@ const deleteMHRequest = async (req, res) => {
 
         res.json({ message: 'Request deleted successfully', id: req.params.id });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Delete MH Request Error:', err);
+
+        if (err.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid MH Request ID for deletion' });
+        }
+
+        res.status(500).json({ message: 'Server Error', error: err.message });
     }
 };
 
