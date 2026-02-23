@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Button, Tag, Space, Tooltip, message } from 'antd';
-import { AgGridReact } from 'ag-grid-react';
+import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckCircle, MapPin, Star, Users, Zap, Award, Target, Info } from 'lucide-react';
 import { fetchVendorsForSelection, allocateVendor } from '../../redux/slices/mhDevelopmentTrackerSlice';
-import { createSerialNumberColumn, createBoldColumn, defaultColDef, defaultGridOptions } from '../../config/agGridConfig';
 
 const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) => {
     const dispatch = useDispatch();
@@ -19,6 +19,22 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
             setSuggestedVendorId(null);
         }
     }, [visible, plantLocation, dispatch]);
+
+    const highestQcdScore = useMemo(() => {
+        if (!vendors || vendors.length === 0) return '0.00';
+        return Math.max(...vendors.map(v => v.qcdScore || 0)).toFixed(2);
+    }, [vendors]);
+
+    const topVendorName = useMemo(() => {
+        if (!vendors || vendors.length === 0) return 'N/A';
+        const scoredVendors = vendors.map(v => {
+            const baseScore = ((v.qcdScore || 0) * 0.4) + ((v.qsrScore || 0) * 0.2) + ((v.costScore || 0) * 0.2) + ((v.deliveryScore || 0) * 0.2);
+            const loadPenalty = (v.currentLoad || 0) * 0.5;
+            return { ...v, efficiencyScore: baseScore - loadPenalty };
+        });
+        const best = scoredVendors.sort((a, b) => b.efficiencyScore - a.efficiencyScore)[0];
+        return best ? best.vendorName : 'N/A';
+    }, [vendors]);
 
     const handleSystemSuggestion = () => {
         if (!vendors || vendors.length === 0) return;
@@ -65,79 +81,87 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
         }
     };
 
-    const columnDefs = useMemo(() => [
+    const PlainHeaderCell = ({ column }) => (
+        <div
+            className={`h-full w-full flex items-center px-3 ${column.key !== 'vendorName' && column.key !== 'selection' ? 'justify-center' : ''}`}
+            style={{ backgroundColor: '#253C80' }}
+        >
+            <span className={`font-bold text-white text-[11px] leading-tight tracking-wide ${column.key !== 'vendorName' && column.key !== 'selection' ? 'text-center' : ''}`}>
+                {column.name}
+            </span>
+        </div>
+    );
+
+    const columns = useMemo(() => [
         {
-            headerName: '',
-            width: 50,
-            pinned: 'left',
-            cellRenderer: (params) => (
+            key: 'selection',
+            name: '',
+            width: 60,
+            frozen: true,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="flex items-center justify-center h-full">
                     <input
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue pointer-events-none"
-                        checked={selectedVendor?._id === params.data._id}
+                        checked={selectedVendor?._id === row._id}
                         readOnly
                     />
                 </div>
             )
         },
         {
-            headerName: 'VENDOR',
-            field: 'vendorName',
-            width: 220,
-            pinned: 'left',
-            cellRenderer: (params) => (
+            key: 'vendorName',
+            name: 'VENDOR',
+            width: 290,
+            frozen: true,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
                 <div className="flex flex-col py-1">
                     <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{params.data.vendorName}</span>
-                        {suggestedVendorId === params.data._id && (
+                        <span className="font-bold text-gray-900">{row.vendorName}</span>
+                        {suggestedVendorId === row._id && (
                             <Tooltip title="System Recommended">
                                 <Award size={14} className="text-amber-500 fill-amber-100" />
                             </Tooltip>
                         )}
                     </div>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{params.data.vendorCode}</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{row.vendorCode}</span>
                 </div>
             )
         },
         {
-            field: 'qcdScore',
-            headerName: 'QCD',
-            width: 100,
-            cellRenderer: (params) => (
-                <Tag color={params.value >= 4 ? 'success' : params.value >= 3 ? 'warning' : 'error'} className="font-bold border-none px-3">
-                    {params.value?.toFixed(1) || '0.0'}
-                </Tag>
+            key: 'qcdScore',
+            name: 'QCD',
+            width: 110,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="flex items-center justify-center h-full">
+                    <Tag color={row.qcdScore >= 4 ? 'success' : row.qcdScore >= 3 ? 'warning' : 'error'} className="font-bold border-none px-3 m-0">
+                        {row.qcdScore?.toFixed(1) || '0.0'}
+                    </Tag>
+                </div>
             )
         },
-        { field: 'qsrScore', headerName: 'QSR', width: 90, cellClass: 'font-bold' },
-        { field: 'costScore', headerName: 'COST', width: 90, cellClass: 'font-bold' },
-        { field: 'deliveryScore', headerName: 'DELIVERY', width: 110, cellClass: 'font-bold' },
+        { key: 'qsrScore', name: 'QSR', width: 110, renderHeaderCell: PlainHeaderCell, renderCell: ({ row }) => <div className="flex items-center justify-center h-full font-bold text-xs">{row.qsrScore}</div> },
+        { key: 'costScore', name: 'COST', width: 110, renderHeaderCell: PlainHeaderCell, renderCell: ({ row }) => <div className="flex items-center justify-center h-full font-bold text-xs">{row.costScore}</div> },
+        { key: 'deliveryScore', name: 'DELIVERY', width: 110, renderHeaderCell: PlainHeaderCell, renderCell: ({ row }) => <div className="flex items-center justify-center h-full font-bold text-xs">{row.deliveryScore}</div> },
         {
-            field: 'currentLoad',
-            headerName: 'CURRENT LOAD',
-            width: 140,
-            cellRenderer: (params) => (
-                <div className={`flex items-center gap-2 font-bold ${params.value > 5 ? 'text-rose-600' : 'text-emerald-600'}`}>
+            key: 'currentLoad',
+            name: 'CURRENT LOAD',
+            width: 160,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
+                <div className={`flex items-center justify-center h-full gap-2 font-bold text-xs ${row.currentLoad > 5 ? 'text-rose-600' : 'text-emerald-600'}`}>
                     <Target size={14} />
-                    <span>{params.value || 0} Projects</span>
+                    <span>{row.currentLoad || 0} Projects</span>
                 </div>
             )
         }
     ], [selectedVendor, suggestedVendorId]);
 
-    const onRowClicked = (event) => {
-        setSelectedVendor(event.data);
-    };
-
-    const getRowStyle = (params) => {
-        if (selectedVendor?._id === params.data._id) {
-            return { background: '#eff6ff', borderLeft: '4px solid #253C80' };
-        }
-        if (suggestedVendorId === params.data._id) {
-            return { background: '#fffbeb' };
-        }
-        return null;
+    const handleCellClick = (args) => {
+        setSelectedVendor(args.row);
     };
 
     return (
@@ -205,18 +229,18 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                     <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
                         <div className="flex items-center gap-2 text-emerald-600 mb-1">
                             <Award size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Avg. QCD Score</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Highest QCD Score</span>
                         </div>
                         <p className="text-2xl font-black text-emerald-900">
-                            {(vendors.reduce((acc, v) => acc + (v.qcdScore || 0), 0) / (vendors.length || 1)).toFixed(2)}
+                            {highestQcdScore}
                         </p>
                     </div>
                     <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl">
                         <div className="flex items-center gap-2 text-amber-600 mb-1">
-                            <Info size={14} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Strategy</span>
+                            <Star size={14} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Top Performance Vendor</span>
                         </div>
-                        <p className="text-xs font-bold text-amber-900 leading-tight mt-1">Optimization based on quality performance and current workload.</p>
+                        <p className="text-sm font-bold text-amber-900 leading-tight mt-1 pt-1 truncate" title={topVendorName}>{topVendorName}</p>
                     </div>
                 </div>
 
@@ -227,16 +251,27 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                         <p className="text-gray-400 text-sm mt-2 max-w-xs text-center border-t pt-4 border-gray-100">There are no registered vendors for the location: <span className="font-black text-tvs-blue">{plantLocation}</span></p>
                     </div>
                 ) : (
-                    <div className="ag-theme-alpine w-full h-[400px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/50">
-                        <AgGridReact
-                            rowData={vendors}
-                            columnDefs={columnDefs}
-                            defaultColDef={defaultColDef}
-                            {...defaultGridOptions}
-                            onRowClicked={onRowClicked}
-                            getRowStyle={getRowStyle}
-                            loading={loading}
+                    <div className="w-full h-[400px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/50">
+                        <DataGrid
+                            columns={columns}
+                            rows={vendors}
+                            rowKeyGetter={(row) => row._id}
+                            className="rdg-light vendor-selection-grid"
+                            style={{ blockSize: '100%' }}
+                            rowHeight={52}
+                            headerRowHeight={44}
+                            onCellClick={handleCellClick}
+                            rowClass={(row) => {
+                                if (selectedVendor?._id === row._id) return '!bg-blue-50 border-l-4 !border-l-tvs-blue';
+                                if (suggestedVendorId === row._id) return '!bg-amber-50';
+                                return undefined;
+                            }}
                         />
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none z-10">
+                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

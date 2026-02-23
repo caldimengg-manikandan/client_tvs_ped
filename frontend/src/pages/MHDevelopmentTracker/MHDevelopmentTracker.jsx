@@ -663,8 +663,8 @@ const MHDevelopmentTracker = () => {
     const gridRows = applyColumnFilters(filteredTrackers);
 
     return (
-        <div className="min-h-screen bg-gray-50/50">
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 {/* Table toolbar */}
                 <div className="px-6 pt-4 pb-2 flex items-center gap-3">
                     {/* Freeze Column Button + Popup */}
@@ -752,9 +752,9 @@ const MHDevelopmentTracker = () => {
                     </div>
                 </div>
 
-                <div className="px-6 pb-4">
-                    <div ref={gridContainerRef} className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-                        <div className="h-full">
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
                             <DataGrid
                                 columns={autoFitColumns}
                                 rows={gridRows}

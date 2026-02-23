@@ -35,20 +35,20 @@ const Layout = () => {
     return (
         <div className="flex h-screen bg-tvs-light selection:bg-tvs-blue/10 selection:text-tvs-blue font-inter overflow-hidden">
             <InactivityTracker />
-            <Sidebar 
-                isSidebarOpen={isSidebarOpen} 
-                setIsSidebarOpen={handleToggleSidebar} 
-                windowWidth={windowWidth} 
+            <Sidebar
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={handleToggleSidebar}
+                windowWidth={windowWidth}
             />
-            
+
             <div className={`flex-1 ${isSidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[72px]'} pl-0 flex flex-col min-h-screen transition-all duration-300 relative overflow-hidden`}>
                 {/* Global decorative background elements */}
                 <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-tvs-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
                 <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[30%] bg-tvs-red/5 rounded-full blur-[100px] pointer-events-none"></div>
-                
+
                 <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={handleToggleSidebar} />
-                
-                <main className="flex-1 overflow-x-hidden p-8 mt-20 relative z-10 custom-scrollbar">
+
+                <main className={`flex-1 overflow-x-hidden mt-20 relative z-10 custom-scrollbar flex flex-col ${['/mh-development-tracker', '/project-plan-model'].includes(location.pathname) ? 'p-4 md:p-6 lg:p-6' : 'p-8'}`}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={location.pathname}
@@ -56,7 +56,7 @@ const Layout = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.3, ease: "easeOut" }}
-                            className={location.pathname === '/project-plan-model' ? 'w-full' : 'container mx-auto'}
+                            className={['/project-plan-model', '/mh-development-tracker'].includes(location.pathname) ? 'w-full flex-1 flex flex-col' : 'container mx-auto'}
                         >
                             <Outlet />
                         </motion.div>

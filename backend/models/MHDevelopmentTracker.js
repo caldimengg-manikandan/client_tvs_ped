@@ -75,7 +75,7 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
             planEnd: Date,
             actualStart: Date,
             actualEnd: Date,
-            delayDays: Number,
+            delayInDays: { type: Number, default: 0 },
             remarks: String
         }],
         remarks: {
@@ -95,10 +95,8 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
         default: 'Not Started'
     },
     implementationVisibility: {
-        type: Number,
-        min: 0,
-        max: 100,
-        default: 0
+        type: String,
+        default: ''
     },
     currentStage: {
         type: String,
@@ -130,4 +128,4 @@ mhDevelopmentTrackerSchema.index({ departmentName: 1 });
 mhDevelopmentTrackerSchema.index({ status: 1 });
 mhDevelopmentTrackerSchema.index({ currentStage: 1 });
 
-module.exports = mongoose.model('MHDevelopmentTracker', mhDevelopmentTrackerSchema);
+module.exports = mongoose.model('MHDevelopmentTracker', mhDevelopmentTrackerSchema, 'mhdevelopmenttrackers');

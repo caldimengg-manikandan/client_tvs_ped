@@ -475,14 +475,10 @@ const VendorMaster = () => {
     }, [dataGridColumns, gridWidth]);
 
     return (
-        <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
-
-
-
-            {/* Vendor Master Table */}
-            <div className="px-8 py-6">
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 {/* Toolbar with Export */}
-                <div className="mb-5 flex items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm">
+                <div className="px-6 pt-4 pb-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -520,49 +516,48 @@ const VendorMaster = () => {
                     </div>
                 </div>
 
-                <div
-                    ref={gridContainerRef}
-                    className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
-                >
-                    <div className="h-full">
-                        <DataGrid
-                            columns={autoFitColumns}
-                            rows={gridRows}
-                            rowKeyGetter={(row) => row._id}
-                            className="rdg-light mh-development-grid"
-                            style={{ blockSize: '100%' }}
-                            rowHeight={60}
-                            headerRowHeight={52}
-                            defaultColumnOptions={{
-                                resizable: true
-                            }}
-                        />
-                        {loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                            </div>
-                        )}
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <DataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id}
+                                className="rdg-light mh-development-grid"
+                                style={{ blockSize: '100%' }}
+                                rowHeight={60}
+                                headerRowHeight={52}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Footer */}
-            <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-600">Showing</span>
-                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredVendors?.length || 0}</span>
-                        <span className="text-gray-600">of</span>
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{vendors?.length || 0}</span>
-                        <span className="text-gray-600">vendors</span>
-                    </div>
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="text-gray-600">Showing</span>
+                            <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredVendors?.length || 0}</span>
+                            <span className="text-gray-600">of</span>
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{vendors?.length || 0}</span>
+                            <span className="text-gray-600">vendors</span>
+                        </div>
 
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                        <Building size={16} className="text-blue-600" />
-                        <span className="text-sm font-bold text-blue-700">
-                            {vendors?.length || 0}
-                        </span>
-                        <span className="text-xs text-blue-600">total vendors</span>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                            <Building size={16} className="text-blue-600" />
+                            <span className="text-sm font-bold text-blue-700">
+                                {vendors?.length || 0}
+                            </span>
+                            <span className="text-xs text-blue-600">total vendors</span>
+                        </div>
                     </div>
                 </div>
             </div>
