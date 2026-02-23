@@ -75,7 +75,7 @@ const mhDevelopmentTrackerSchema = new mongoose.Schema({
             planEnd: Date,
             actualStart: Date,
             actualEnd: Date,
-            delayDays: Number,
+            delayInDays: { type: Number, default: 0 },
             remarks: String
         }],
         remarks: {

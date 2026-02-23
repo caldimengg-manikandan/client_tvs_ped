@@ -21,8 +21,8 @@ app.use(express.json());
 
 // Request logging middleware
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
 });
 
 // Routes
@@ -40,6 +40,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/user-activity', require('./routes/userActivityRoutes'));
 app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
 app.use('/api/mh-development-tracker', require('./routes/mhDevelopmentTrackerRoutes'));
+app.use('/api/project-plan', require('./routes/projectPlanRoutes'));
 
 
 // Static folder for uploads

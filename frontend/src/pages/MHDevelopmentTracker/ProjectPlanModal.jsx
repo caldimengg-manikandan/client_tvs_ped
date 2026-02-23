@@ -70,20 +70,19 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             const formattedMilestones = (values.milestones || []).map((m, index) => {
                 const planStart = m.planStart || null;
                 const planEnd = m.planEnd || null;
-
                 // Get preserved actual values from currentFormValue if they exist
                 const originalM = currentFormValue.milestones?.[index] || {};
                 const actualStart = m.actualStart || originalM.actualStart || null;
                 const actualEnd = m.actualEnd || originalM.actualEnd || null;
 
-                let delayDays = 0;
-                if (planEnd && actualEnd) {
-                    const diff = dayjs(actualEnd).startOf('day').diff(
-                        dayjs(planEnd).startOf('day'),
+                let delayInDays = 0;
+                if (m.planEnd && m.actualEnd) {
+                    const diff = dayjs(m.actualEnd).startOf('day').diff(
+                        dayjs(m.planEnd).startOf('day'),
                         'day'
                     );
                     if (!Number.isNaN(diff) && diff > 0) {
-                        delayDays = diff;
+                        delayInDays = diff;
                     }
                 }
 
@@ -91,11 +90,11 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                     sNo: m.sNo,
                     activity: m.activity,
                     responsibility: m.responsibility,
-                    planStart: planStart ? planStart.toISOString() : null,
-                    planEnd: planEnd ? planEnd.toISOString() : null,
-                    actualStart: actualStart ? (dayjs.isDayjs(actualStart) ? actualStart.toISOString() : actualStart) : null,
-                    actualEnd: actualEnd ? (dayjs.isDayjs(actualEnd) ? actualEnd.toISOString() : actualEnd) : null,
-                    delayDays,
+                    planStart: m.planStart ? (dayjs.isDayjs(m.planStart) ? m.planStart.toISOString() : m.planStart) : null,
+                    planEnd: m.planEnd ? (dayjs.isDayjs(m.planEnd) ? m.planEnd.toISOString() : m.planEnd) : null,
+                    actualStart: m.actualStart ? (dayjs.isDayjs(m.actualStart) ? m.actualStart.toISOString() : m.actualStart) : null,
+                    actualEnd: m.actualEnd ? (dayjs.isDayjs(m.actualEnd) ? m.actualEnd.toISOString() : m.actualEnd) : null,
+                    delayInDays,
                     remarks: m.remarks || ''
                 };
             });
@@ -117,9 +116,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             frozen: true,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center justify-center h-full px-3 w-full">
+                <div className="flex items-center justify-center h-full px-4 w-full">
                     <Form.Item name={[row.name, 'sNo']} className="m-0 w-full flex items-center justify-center">
-                        <Input disabled className="text-center text-sm h-10 border-none bg-transparent w-full" />
+                        <Input disabled bordered={false} className="text-center text-sm p-0 w-full bg-transparent text-gray-700" />
                     </Form.Item>
                 </div>
             )
@@ -130,9 +129,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             width: 280,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'activity']} rules={[{ required: true }]} className="m-0 w-full flex items-center justify-center">
-                        <Input className="text-sm h-10 w-full" />
+                <div className="flex items-center h-full px-4 w-full">
+                    <Form.Item name={[row.name, 'activity']} rules={[{ required: true }]} className="m-0 w-full flex items-center">
+                        <Input bordered={false} className="text-sm p-0 w-full text-gray-700" placeholder="Activity Name" />
                     </Form.Item>
                     {/* Preserve existing hidden fields so they stay in form state */}
                     <Form.Item name={[row.name, 'actualStart']} hidden><Input /></Form.Item>
@@ -146,9 +145,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             width: 200,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'responsibility']} className="m-0 w-full flex items-center justify-center">
-                        <Input className="text-sm h-10 w-full" />
+                <div className="flex items-center h-full px-4 w-full">
+                    <Form.Item name={[row.name, 'responsibility']} className="m-0 w-full flex items-center">
+                        <Input bordered={false} className="text-sm p-0 w-full text-gray-700" placeholder="Responsibility" />
                     </Form.Item>
                 </div>
             )
@@ -159,9 +158,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             width: 170,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
+                <div className="flex items-center h-full px-4 w-full">
                     <Form.Item name={[row.name, 'planStart']} className="m-0 w-full flex items-center justify-center">
-                        <DatePicker className="w-full text-sm h-10" format="DD-MMM-YYYY" />
+                        <DatePicker bordered={false} className="w-full text-sm p-0 text-gray-700 flex justify-center" format="DD-MMM-YYYY" placeholder="Select Date" />
                     </Form.Item>
                 </div>
             )
@@ -172,9 +171,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             width: 170,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
+                <div className="flex items-center h-full px-4 w-full">
                     <Form.Item name={[row.name, 'planEnd']} className="m-0 w-full flex items-center justify-center">
-                        <DatePicker className="w-full text-sm h-10" format="DD-MMM-YYYY" />
+                        <DatePicker bordered={false} className="w-full text-sm p-0 text-gray-700 flex justify-center" format="DD-MMM-YYYY" placeholder="Select Date" />
                     </Form.Item>
                 </div>
             )
@@ -185,9 +184,9 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             width: 230,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'remarks']} className="m-0 w-full flex items-center justify-center">
-                        <Input className="text-sm h-10 w-full" />
+                <div className="flex items-center h-full px-4 w-full">
+                    <Form.Item name={[row.name, 'remarks']} className="m-0 w-full flex items-center">
+                        <Input bordered={false} className="text-sm p-0 w-full text-gray-700" placeholder="Enter Remarks" />
                     </Form.Item>
                 </div>
             )

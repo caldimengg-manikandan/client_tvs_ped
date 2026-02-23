@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { fetchTrackers, updateTracker, clearError, clearSuccess } from '../redux/slices/mhDevelopmentTrackerSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import ProjectPlanModal from './MHDevelopmentTracker/ProjectPlanModal';
+import ProjectPlanActualModal from './ProjectPlanActualModal';
 import { toast } from 'react-hot-toast';
 
 const ProjectPlanModel = () => {
@@ -53,7 +53,7 @@ const ProjectPlanModel = () => {
                 let planEnd = null;
                 let actualStart = null;
                 let actualEnd = null;
-                let delayDays = 0;
+                let delayInDays = 0;
 
                 milestones.forEach(m => {
                     if (m.planStart) {
@@ -76,9 +76,9 @@ const ProjectPlanModel = () => {
                             actualEnd = m.actualEnd;
                         }
                     }
-                    if (typeof m.delayDays === 'number') {
-                        if (m.delayDays > delayDays) {
-                            delayDays = m.delayDays;
+                    if (typeof m.delayInDays === 'number') {
+                        if (m.delayInDays > delayInDays) {
+                            delayInDays = m.delayInDays;
                         }
                     }
                 });
@@ -90,7 +90,7 @@ const ProjectPlanModel = () => {
                     planEnd,
                     actualStart,
                     actualEnd,
-                    delayDays
+                    delayInDays
                 });
             }
         });
@@ -107,15 +107,10 @@ const ProjectPlanModel = () => {
         setViewPlanVisible(true);
     };
 
-    const handleProjectPlanSave = planData => {
-        if (selectedTrackerId) {
-            dispatch(
-                updateTracker({
-                    id: selectedTrackerId,
-                    data: { projectPlan: planData }
-                })
-            );
-        }
+    const handleProjectPlanSave = () => {
+        setProjectPlanVisible(false);
+        setSelectedTrackerId(null);
+        dispatch(fetchTrackers());
     };
 
     const applyColumnFilters = rows => {
@@ -202,9 +197,8 @@ const ProjectPlanModel = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded ${
-                        hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'
-                    }`}
+                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'
+                        }`}
                 >
                     <Filter size={10} />
                 </button>
@@ -317,7 +311,7 @@ const ProjectPlanModel = () => {
             )
         },
         {
-            key: 'delayDays',
+            key: 'delayInDays',
             name: 'DELAY IN DAYS',
             width: 160,
             renderHeaderCell: FilterHeaderCell
@@ -379,8 +373,8 @@ const ProjectPlanModel = () => {
     const viewMilestones = useMemo(
         () =>
             selectedViewTracker &&
-            selectedViewTracker.projectPlan &&
-            Array.isArray(selectedViewTracker.projectPlan.milestones)
+                selectedViewTracker.projectPlan &&
+                Array.isArray(selectedViewTracker.projectPlan.milestones)
                 ? selectedViewTracker.projectPlan.milestones
                 : [],
         [selectedViewTracker]
@@ -404,12 +398,12 @@ const ProjectPlanModel = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-2 lg:p-4">
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent">
             <div
                 ref={gridContainerRef}
-                className="w-full h-[620px] border border-gray-200 rounded-3xl overflow-hidden bg-white relative"
+                className="flex-1 w-full border border-gray-200 rounded-2xl overflow-hidden bg-white relative min-h-[400px]"
             >
-                <div className="h-full">
+                <div className="h-full w-full absolute inset-0">
                     <DataGrid
                         columns={autoFitColumns}
                         rows={gridRows}
@@ -432,16 +426,12 @@ const ProjectPlanModel = () => {
                 </div>
             </div>
 
-            <ProjectPlanModal
+            <ProjectPlanActualModal
                 visible={projectPlanVisible}
                 onCancel={() => setProjectPlanVisible(false)}
                 onSave={handleProjectPlanSave}
-                trackerId={selectedTrackerId}
-                initialData={
-                    trackers.find(t => t._id === selectedTrackerId)?.projectPlan
-                }
-                assetRequestId={
-                    trackers.find(t => t._id === selectedTrackerId)?.assetRequestId
+                trackerInfo={
+                    trackers.find(t => t._id === selectedTrackerId)
                 }
             />
 
@@ -481,16 +471,22 @@ const ProjectPlanModel = () => {
                                         Task
                                     </th>
                                     <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Duration
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
                                         Responsible Person
                                     </th>
                                     <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Start Date
+                                        Plan Start
                                     </th>
                                     <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        End Date
+                                        Plan End
+                                    </th>
+                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
+                                        Actual Start
+                                    </th>
+                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
+                                        Actual End
+                                    </th>
+                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
+                                        Delay
                                     </th>
                                 </tr>
                             </thead>
@@ -498,13 +494,9 @@ const ProjectPlanModel = () => {
                                 {viewMilestones.map(m => {
                                     const planStart = m.planStart ? dayjs(m.planStart) : null;
                                     const planEnd = m.planEnd ? dayjs(m.planEnd) : null;
-                                    let durationLabel = '-';
-                                    if (planStart && planEnd) {
-                                        const diff = planEnd.diff(planStart, 'day') + 1;
-                                        if (!Number.isNaN(diff) && diff > 0) {
-                                            durationLabel = `${diff} day${diff > 1 ? 's' : ''}`;
-                                        }
-                                    }
+                                    const actualStart = m.actualStart ? dayjs(m.actualStart) : null;
+                                    const actualEnd = m.actualEnd ? dayjs(m.actualEnd) : null;
+
                                     return (
                                         <tr key={m.sNo || m.activity} className="border-b border-gray-100">
                                             <td className="px-3 py-2 text-gray-800">
@@ -514,16 +506,22 @@ const ProjectPlanModel = () => {
                                                 {m.remarks || '-'}
                                             </td>
                                             <td className="px-3 py-2 text-gray-700">
-                                                {durationLabel}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
                                                 {m.responsibility || '-'}
                                             </td>
                                             <td className="px-3 py-2 text-gray-700">
-                                                {planStart ? planStart.format('D/M/YYYY') : '-'}
+                                                {planStart ? planStart.format('DD-MMM-YYYY') : '-'}
                                             </td>
                                             <td className="px-3 py-2 text-gray-700">
-                                                {planEnd ? planEnd.format('D/M/YYYY') : '-'}
+                                                {planEnd ? planEnd.format('DD-MMM-YYYY') : '-'}
+                                            </td>
+                                            <td className="px-3 py-2 text-gray-700">
+                                                {actualStart ? actualStart.format('DD-MMM-YYYY') : '-'}
+                                            </td>
+                                            <td className="px-3 py-2 text-gray-700">
+                                                {actualEnd ? actualEnd.format('DD-MMM-YYYY') : '-'}
+                                            </td>
+                                            <td className={`px-3 py-2 font-medium ${m.delayInDays > 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                                                {m.delayInDays > 0 ? `${m.delayInDays} days` : '-'}
                                             </td>
                                         </tr>
                                     );

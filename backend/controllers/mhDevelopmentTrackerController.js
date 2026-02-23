@@ -86,7 +86,29 @@ const getAllTrackers = async (req, res) => {
         await syncTrackersFromAcceptedRequests();
 
         const trackers = await MHDevelopmentTracker.find()
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const ProjectPlan = require('../models/ProjectPlan');
+        const projectPlans = await ProjectPlan.find().lean();
+        const planMap = {};
+        for (const p of projectPlans) {
+            planMap[p.trackerId.toString()] = p;
+        }
+
+        for (const t of trackers) {
+            const actualPlan = planMap[t._id.toString()];
+            if (actualPlan && actualPlan.milestones && t.projectPlan && t.projectPlan.milestones) {
+                for (let i = 0; i < t.projectPlan.milestones.length; i++) {
+                    const actualMs = actualPlan.milestones.find(m => m.sNo === t.projectPlan.milestones[i].sNo);
+                    if (actualMs) {
+                        t.projectPlan.milestones[i].actualStart = actualMs.actualStart;
+                        t.projectPlan.milestones[i].actualEnd = actualMs.actualEnd;
+                        t.projectPlan.milestones[i].delayInDays = actualMs.delayInDays;
+                    }
+                }
+            }
+        }
 
         res.status(200).json({
             success: true,
@@ -105,13 +127,26 @@ const getAllTrackers = async (req, res) => {
 // Get single tracker record
 const getTrackerById = async (req, res) => {
     try {
-        const tracker = await MHDevelopmentTracker.findById(req.params.id);
+        const tracker = await MHDevelopmentTracker.findById(req.params.id).lean();
 
         if (!tracker) {
             return res.status(404).json({
                 success: false,
                 message: 'Tracker record not found'
             });
+        }
+
+        const ProjectPlan = require('../models/ProjectPlan');
+        const actualPlan = await ProjectPlan.findOne({ trackerId: tracker._id }).lean();
+        if (actualPlan && actualPlan.milestones && tracker.projectPlan && tracker.projectPlan.milestones) {
+            for (let i = 0; i < tracker.projectPlan.milestones.length; i++) {
+                const actualMs = actualPlan.milestones.find(m => m.sNo === tracker.projectPlan.milestones[i].sNo);
+                if (actualMs) {
+                    tracker.projectPlan.milestones[i].actualStart = actualMs.actualStart;
+                    tracker.projectPlan.milestones[i].actualEnd = actualMs.actualEnd;
+                    tracker.projectPlan.milestones[i].delayInDays = actualMs.delayInDays;
+                }
+            }
         }
 
         res.status(200).json({

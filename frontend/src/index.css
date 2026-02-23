@@ -163,7 +163,6 @@ body,
   font-weight: 700;
   border-inline: none;
   border-bottom: 2px solid #e2e8f0;
-  position: relative;
   background-color: #253C80;
   color: #ffffff;
 }
@@ -186,10 +185,31 @@ body,
   font-weight: 700;
   border-inline: none;
   border-bottom: 2px solid #e2e8f0;
-  position: relative;
   background-color: #253C80 !important;
   color: #ffffff;
 }
+
+.vendor-selection-grid {
+  --rdg-header-background-color: #253C80;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f8fafc;
+}
+
+.vendor-selection-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.vendor-selection-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  background-color: #253C80 !important;
+  color: #ffffff;
+}
+
 
 /* ============================================================================
    AG GRID PREMIUM STYLING (Standardized Application-Wide)
