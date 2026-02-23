@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Edit, Trash2, Mail, User, Search, Filter, Download, RefreshCw, Eye, Shield, FileText, Upload } from 'lucide-react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { Plus, Edit, Trash2, Eye, Shield, User, Filter, Upload, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEmployees, deleteEmployee } from '../../redux/slices/employeeSlice';
 import { Modal } from 'antd';
-import { DataGrid } from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import 'react-data-grid/lib/styles.css';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
@@ -79,6 +81,8 @@ const EmployeeMaster = () => {
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [newDeptName, setNewDeptName] = useState('');
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
 
     const gridContainerRef = useRef(null);
 
@@ -92,6 +96,15 @@ const EmployeeMaster = () => {
             toast.error(typeof error === 'string' ? error : 'An error occurred');
         }
     }, [error]);
+
+    useEffect(() => {
+        if (!gridContainerRef.current) return;
+        const updateWidth = () => setGridWidth(gridContainerRef.current.clientWidth);
+        updateWidth();
+        const observer = new ResizeObserver(updateWidth);
+        observer.observe(gridContainerRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     const handleEdit = (employee) => {
         navigate(`/employee-master/edit/${employee._id}`);
@@ -428,7 +441,7 @@ const EmployeeMaster = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(filteredEmployees);
+    const gridRows = applyColumnFilters(filteredEmployees).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const dataGridColumns = [
         {
@@ -436,8 +449,8 @@ const EmployeeMaster = () => {
             name: 'S.No',
             width: 70,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -553,28 +566,28 @@ const EmployeeMaster = () => {
         };
     }, []);
 
-    const autoFitColumns = React.useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
-            return sum + (column.width || 0);
-        }, 0);
-
-        if (!totalDefinedWidth) return dataGridColumns;
-
-        const scale = gridWidth / totalDefinedWidth;
-
-        return dataGridColumns.map((column) => {
+    const autoFitColumns = useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+        if (!gridWidth) return withFreeze;
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => sum + (column.width || 0), 0);
+        if (!totalDefinedWidth) return withFreeze;
+        const scale = Math.max(gridWidth / totalDefinedWidth, 1);
+        return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), 80);
-
-            return {
-                ...column,
-                width: scaledWidth
-            };
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
+            return { ...column, width: scaledWidth };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
+
+    const frozenRows = gridRows.slice(0, frozenRowCount);
 
     return (
         <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
@@ -621,26 +634,31 @@ const EmployeeMaster = () => {
                     </div>
                 </div>
 
-                <div ref={gridContainerRef} className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-                    <div className="h-full">
-                        <DataGrid
-                            columns={autoFitColumns}
-                            rows={gridRows}
-                            rowKeyGetter={(row) => row._id || row.employeeId}
-                            className="rdg-light employee-master-grid"
-                            style={{ blockSize: '100%' }}
-                            rowHeight={52}
-                            headerRowHeight={48}
-                            defaultColumnOptions={{
-                                resizable: true
-                            }}
-                        />
-                        {loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                            </div>
-                        )}
-                    </div>
+                {/* Freeze Toolbar */}
+                <div className="mb-3">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 10)}
+                    />
+                </div>
+
+                <div ref={gridContainerRef} className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white mx-4 mb-4"
+                    style={{ height: '620px' }}>
+                    <FrozenRowsDataGrid
+                        columns={autoFitColumns}
+                        rows={gridRows}
+                        rowKeyGetter={(row) => row._id || row.employeeId}
+                        className="rdg-light employee-master-grid"
+                        rowHeight={52}
+                        headerRowHeight={48}
+                        frozenRowCount={frozenRowCount}
+                        defaultColumnOptions={{ resizable: true }}
+                        loading={loading}
+                    />
                 </div>
             </div>
 

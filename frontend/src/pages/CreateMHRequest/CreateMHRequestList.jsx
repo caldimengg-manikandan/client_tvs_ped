@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Plus, FileText, X, Filter, Eye, Pencil, Trash2 } from 'lucide-react';
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
-import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -25,6 +26,8 @@ const CreateMHRequestList = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [mhListGridWidth, setMhListGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
@@ -125,7 +128,7 @@ const CreateMHRequestList = () => {
     };
 
     const baseRows = requests || [];
-    const gridRows = applyColumnFilters(baseRows);
+    const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
@@ -266,8 +269,8 @@ const CreateMHRequestList = () => {
             name: 'Sno',
             width: 70,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -386,43 +389,35 @@ const CreateMHRequestList = () => {
         }
     ];
 
-    const autoFitColumns = React.useMemo(() => {
-        if (!mhListGridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
-            return sum + (column.width || 0);
-        }, 0);
-
-        if (!totalDefinedWidth) return dataGridColumns;
-
+    const autoFitColumns = useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+        if (!mhListGridWidth) return withFreeze;
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => sum + (column.width || 0), 0);
+        if (!totalDefinedWidth) return withFreeze;
         const scale = Math.max(mhListGridWidth / totalDefinedWidth, 1);
-
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
             const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
-
-            return {
-                ...column,
-                width: scaledWidth
-            };
+            return { ...column, width: scaledWidth };
         });
-    }, [dataGridColumns, mhListGridWidth]);
+    }, [dataGridColumns, mhListGridWidth, frozenKeys]);
+
+    const frozenRows = gridRows.slice(0, frozenRowCount);
 
     useEffect(() => {
         if (!mhListGridContainerRef.current) return;
-
-        const updateWidth = () => {
-            setMhListGridWidth(mhListGridContainerRef.current.clientWidth);
-        };
-
+        const updateWidth = () => setMhListGridWidth(mhListGridContainerRef.current.clientWidth);
         updateWidth();
-
         const observer = new ResizeObserver(updateWidth);
         observer.observe(mhListGridContainerRef.current);
-
-        return () => {
-            observer.disconnect();
-        };
+        return () => observer.disconnect();
     }, []);
 
     const handleExportCsv = () => {
@@ -520,29 +515,34 @@ const CreateMHRequestList = () => {
                         </div>
                     </div>
 
+                    {/* Freeze Toolbar */}
+                    <div className="mb-3">
+                        <FreezeToolbar
+                            columns={freezeColumnList}
+                            frozenKeys={frozenKeys}
+                            onApply={setFrozenKeys}
+                            frozenRowCount={frozenRowCount}
+                            setFrozenRowCount={setFrozenRowCount}
+                            maxRows={Math.min(gridRows.length, 10)}
+                        />
+                    </div>
+
                     <div
                         ref={mhListGridContainerRef}
-                        className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
+                        className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white mx-4 mb-4"
+                        style={{ height: '600px' }}
                     >
-                        <div className="h-full">
-                            <DataGrid
-                                columns={autoFitColumns}
-                                rows={gridRows}
-                                rowKeyGetter={(row) => row._id || row.mhRequestId}
-                                className="rdg-light mh-request-grid"
-                                style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={52}
-                                headerRowHeight={48}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
-                            />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
-                        </div>
+                        <FrozenRowsDataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id || row.mhRequestId}
+                            className="rdg-light mh-request-grid"
+                            rowHeight={52}
+                            headerRowHeight={48}
+                            frozenRowCount={frozenRowCount}
+                            defaultColumnOptions={{ resizable: true }}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

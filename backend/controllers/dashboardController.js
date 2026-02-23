@@ -47,6 +47,13 @@ const getStats = async (req, res) => {
             return acc;
         }, {});
 
+        // Department breakdown
+        const deptBreakdown = allRequests.reduce((acc, req) => {
+            const dept = req.departmentName || 'Other';
+            acc[dept] = (acc[dept] || 0) + 1;
+            return acc;
+        }, {});
+
         // Recent activity (last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -110,25 +117,32 @@ const getStats = async (req, res) => {
             }
         };
 
+        const workflowV2 = {
+            mh_requests: stageMetrics.mhRequests.completedList.length + stageMetrics.mhRequests.pendingList.length,
+            approval_stage: stageMetrics.approval.completedList.length,
+            vendor_selection: stageMetrics.vendorSelection.completedList.length,
+            design_release: stageMetrics.designRelease.completedList.length,
+            pr_po_release: stageMetrics.prPoRelease.completedList.length,
+            sample_receipt: stageMetrics.sampleReceipt.completedList.length,
+            bulk_lot_clearance: stageMetrics.bulkLot.completedList.length,
+            handover_signoff: stageMetrics.handover.completedList.length,
+            asset_implementation: stageMetrics.assetImplementation.completedList.length
+        };
+
         res.json({
             kpiCards: {
-                totalRequests,
+                totalRequests: allRequests.length,
                 accepted,
                 rejected,
-                implemented
+                implemented: allRequests.filter(r => ['Implementation', 'Production'].includes(r.progressStatus)).length
             },
-            productionWorkflow: {
-                requestStage,
-                designStage,
-                designApprovedStage,
-                implementationStage,
-                productionStage
-            },
+            productionWorkflow: workflowV2,
             additionalStats: {
                 totalActiveRequests,
                 completionRate,
                 productBreakdown,
                 typeBreakdown,
+                deptBreakdown,
                 recentRequests,
                 avgProcessingTime
             },
