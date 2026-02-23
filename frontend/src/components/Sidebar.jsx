@@ -140,15 +140,15 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                 navigate('/vendor-master');
                                             }}
                                             className={`group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-xs ${isGroupActive
-                                                    ? 'bg-tvs-blue/5 text-tvs-blue'
-                                                    : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
+                                                ? 'bg-tvs-blue/5 text-tvs-blue'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isGroupActive
-                                                            ? 'bg-tvs-blue text-white'
-                                                            : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:text-tvs-blue'
+                                                        ? 'bg-tvs-blue text-white'
+                                                        : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:text-tvs-blue'
                                                         }`}
                                                 >
                                                     <item.icon size={18} />
@@ -164,8 +164,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                 <ChevronDown
                                                     size={14}
                                                     className={`transition-transform duration-200 ${openGroups[item.groupKey]
-                                                            ? 'rotate-180 text-tvs-blue'
-                                                            : 'text-gray-300'
+                                                        ? 'rotate-180 text-tvs-blue'
+                                                        : 'text-gray-300'
                                                         }`}
                                                 />
                                             )}
@@ -211,8 +211,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                     {!item.isSubItem ? (
                                                         <div
                                                             className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isActive
-                                                                    ? 'bg-tvs-blue text-white scale-100'
-                                                                    : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'
+                                                                ? 'bg-tvs-blue text-white scale-100'
+                                                                : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'
                                                                 }`}
                                                         >
                                                             <item.icon size={18} />
@@ -220,8 +220,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                     ) : (
                                                         <div
                                                             className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${isActive
-                                                                    ? 'bg-tvs-blue/10 text-tvs-blue'
-                                                                    : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'
+                                                                ? 'bg-tvs-blue/10 text-tvs-blue'
+                                                                : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'
                                                                 }`}
                                                         >
                                                             <item.icon size={14} />
@@ -230,8 +230,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                     {isSidebarOpen && (
                                                         <span
                                                             className={`${item.isSubItem
-                                                                    ? 'text-xs font-bold'
-                                                                    : 'font-inter'
+                                                                ? 'text-xs font-bold'
+                                                                : 'font-inter'
                                                                 }`}
                                                         >
                                                             {item.name}
@@ -275,14 +275,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                 <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
                                     <Shield size={16} className="text-tvs-blue" />
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-gray-700">
-                                        System Secure
-                                    </span>
-                                    <span className="text-[10px] text-gray-400 font-medium">
-                                        Access Level: High
-                                    </span>
-                                </div>
+
                             </div>
                         ) : (
                             <Shield size={20} className="text-tvs-blue opacity-50" />
