@@ -78,6 +78,13 @@ const getStats = async (req, res) => {
         const mhTrackers = await MHDevelopmentTracker.find({});
         const assetManagementRecords = await AssetManagement.find({});
 
+        // Location-wise asset breakdown
+        const locationBreakdown = assetManagementRecords.reduce((acc, a) => {
+            const loc = a.plantLocation || 'Unknown';
+            acc[loc] = (acc[loc] || 0) + 1;
+            return acc;
+        }, {});
+
         const stageMetrics = {
             mhRequests: {
                 pendingList: allRequests.filter(r => r.status === 'Active').map(r => ({ id: r.mhRequestId, name: r.materialHandlingEquipment || r.handlingPartName || r.productModel })),
@@ -137,6 +144,7 @@ const getStats = async (req, res) => {
                 implemented: allRequests.filter(r => ['Implementation', 'Production'].includes(r.progressStatus)).length
             },
             productionWorkflow: workflowV2,
+            locationBreakdown,
             additionalStats: {
                 totalActiveRequests,
                 completionRate,

@@ -50,6 +50,7 @@ const Dashboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [pptLoading, setPptLoading] = useState(false);
     const [selectedWorkflowStage, setSelectedWorkflowStage] = useState(null);
+    const [topVendors, setTopVendors] = useState([]);
 
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
 
@@ -190,14 +191,22 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [statsRes, activityRes] = await Promise.all([
+            const [statsRes, activityRes, vendorRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/dashboard/stats`),
-                axios.get(`${API_BASE_URL}/api/dashboard/recent-activity?limit=5`)
+                axios.get(`${API_BASE_URL}/api/dashboard/recent-activity?limit=5`),
+                axios.get(`${API_BASE_URL}/api/vendor-scoring`).catch(() => ({ data: { data: [] } }))
             ]);
 
             setStats(statsRes.data);
             setRecentActivity(activityRes.data);
             setError(null);
+
+            // Derive top 3 vendors by qcdScore
+            const vendorList = vendorRes?.data?.data || [];
+            const top3 = [...vendorList]
+                .sort((a, b) => (b.qcdScore || 0) - (a.qcdScore || 0))
+                .slice(0, 3);
+            setTopVendors(top3);
 
             // Fetch trends separately (will use default date range)
             await fetchTrends();
@@ -549,16 +558,127 @@ const Dashboard = () => {
             animate="visible"
             className="space-y-8 pb-12"
         >
-            <div className="flex justify-end">
-                <button
-                    onClick={handleGeneratePPT}
-                    className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] bg-tvs-blue text-white shadow-xl shadow-tvs-blue/30 hover:bg-tvs-blue/90 hover:scale-[1.02] active:scale-[0.98] font-black transition-all group/btn disabled:opacity-60 disabled:cursor-not-allowed"
-                    disabled={pptLoading || !stats}
-                >
-                    <FileText size={20} className={`${pptLoading ? 'animate-spin' : 'group-hover/btn:scale-110 transition-transform duration-700'}`} />
-                    <span className="uppercase tracking-[2px] text-xs">Generate PPT</span>
-                </button>
-            </div>
+            {/* ── Dashboard Hero Banner ── */}
+            <motion.div
+                variants={itemVariants}
+                className="relative overflow-hidden rounded-2xl border border-white/40 shadow-xl"
+                style={{
+                    background: 'linear-gradient(135deg, #1a2a5e 0%, #0f3d8c 45%, #1565c0 100%)'
+                }}
+            >
+                {/* Decorative blobs */}
+                <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10"
+                    style={{ background: 'radial-gradient(circle, #60a5fa 0%, transparent 70%)' }} />
+                <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full opacity-10"
+                    style={{ background: 'radial-gradient(circle, #818cf8 0%, transparent 70%)' }} />
+                {/* Animated grid lines */}
+                <div className="absolute inset-0 opacity-[0.04]"
+                    style={{
+                        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 39px, #fff 39px, #fff 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, #fff 39px, #fff 40px)'
+                    }} />
+
+                <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6 px-7 py-6">
+                    {/* Left: greeting + quick stats */}
+                    <div className="flex flex-col gap-4 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {/* Live badge */}
+                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+                                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                Live Dashboard
+                            </span>
+                            <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-semibold text-white/60 backdrop-blur-sm">
+                                {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">
+                                MH Request Overview
+                            </h1>
+                            <p className="text-xs text-white/50 mt-1 font-medium">
+                                Material Handling · Performance Tracker
+                            </p>
+                        </div>
+
+                        {/* Location-wise Assets Generated */}
+                        <div className="w-full">
+                            <p className="text-[9px] font-black uppercase tracking-[3px] text-white/40 mb-2.5 flex items-center gap-2">
+                                <span className="w-3 h-px bg-white/20" />
+                                Assets by Plant Location
+                                <span className="flex-1 h-px bg-white/10" />
+                            </p>
+                            {stats?.locationBreakdown && Object.keys(stats.locationBreakdown).length > 0 ? (() => {
+                                const entries = Object.entries(stats.locationBreakdown)
+                                    .sort((a, b) => b[1] - a[1]);
+                                const maxVal = Math.max(...entries.map(([, v]) => v), 1);
+                                const barColors = ['#60a5fa', '#34d399', '#f59e0b', '#a78bfa', '#f472b6', '#22d3ee'];
+                                return (
+                                    <div className="flex flex-col gap-2">
+                                        {entries.map(([loc, count], i) => {
+                                            const pct = Math.max((count / maxVal) * 100, 6);
+                                            const color = barColors[i % barColors.length];
+                                            return (
+                                                <div key={loc} className="flex items-center gap-2.5 group/locrow">
+                                                    {/* Color dot */}
+                                                    <span
+                                                        className="w-2 h-2 rounded-full flex-shrink-0"
+                                                        style={{ background: color, boxShadow: `0 0 5px ${color}99` }}
+                                                    />
+                                                    {/* Location name */}
+                                                    <span
+                                                        className="text-[11px] font-semibold text-white/80 truncate w-24 group-hover/locrow:text-white transition-colors"
+                                                        title={loc}
+                                                    >
+                                                        {loc}
+                                                    </span>
+                                                    {/* Bar */}
+                                                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-700"
+                                                            style={{ width: `${pct}%`, background: color, boxShadow: `0 0 6px ${color}77` }}
+                                                        />
+                                                    </div>
+                                                    {/* Count */}
+                                                    <span className="text-[11px] font-black text-white/70 w-5 text-right flex-shrink-0">
+                                                        {count}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })() : (
+                                <p className="text-[10px] text-white/30 italic">No asset location data available</p>
+                            )}
+                        </div>{/* ← closes location chart div */}
+                    </div>{/* ← closes left column */}
+
+                    {/* Right: Generate PPT button */}
+                    <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                        {/* Pulsing glow ring */}
+                        <div className="relative">
+                            <div className="absolute inset-0 rounded-2xl bg-white/20 animate-ping opacity-30 scale-110 pointer-events-none" />
+                            <button
+                                onClick={handleGeneratePPT}
+                                disabled={pptLoading || !stats}
+                                className="relative flex items-center gap-3 px-7 py-4 rounded-2xl bg-white text-tvs-blue font-black shadow-2xl hover:bg-blue-50 hover:scale-[1.03] active:scale-[0.97] transition-all group/pptbtn disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <FileText
+                                    size={20}
+                                    className={pptLoading ? 'animate-spin' : 'group-hover/pptbtn:rotate-[-8deg] transition-transform duration-300'}
+                                />
+                                <div className="flex flex-col text-left leading-none">
+                                    <span className="uppercase tracking-[2px] text-[10px] opacity-60 font-bold">Export as</span>
+                                    <span className="text-sm font-black">Generate PPT</span>
+                                </div>
+                            </button>
+                        </div>
+                        <span className="text-[9px] text-white/30 font-medium tracking-wider uppercase">
+                            PowerPoint Report
+                        </span>
+                    </div>
+                </div>
+            </motion.div>
 
             <motion.section
                 variants={itemVariants}
