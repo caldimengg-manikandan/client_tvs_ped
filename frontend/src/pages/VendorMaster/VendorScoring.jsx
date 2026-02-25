@@ -754,7 +754,7 @@ const VendorScoring = () => {
                 </div>
 
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
-                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px] shadow-sm">
                         <div className="h-full w-full absolute inset-0">
                             <FrozenRowsDataGrid
                                 columns={autoFitColumns}
@@ -762,7 +762,7 @@ const VendorScoring = () => {
                                 rowKeyGetter={(row) => row._id || row.vendorCode}
                                 className="rdg-light vendor-scoring-grid"
                                 style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={44}
+                                rowHeight={48}
                                 headerRowHeight={52}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
