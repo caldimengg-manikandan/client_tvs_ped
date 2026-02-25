@@ -210,6 +210,72 @@ body,
   color: #ffffff;
 }
 
+/* Vendor Master Grid */
+.vendor-master-grid {
+  --rdg-header-background-color: #253C80;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f8fafc;
+}
+
+.vendor-master-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.vendor-master-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  background-color: #253C80 !important;
+  color: #ffffff;
+}
+
+/* Vendor Loading Grid */
+.vendor-loading-grid {
+  --rdg-header-background-color: #253C80;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f8fafc;
+}
+
+.vendor-loading-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.vendor-loading-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  background-color: #253C80 !important;
+  color: #ffffff;
+}
+
+/* Vendor Scoring Grid */
+.vendor-scoring-grid {
+  --rdg-header-background-color: #253C80;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f8fafc;
+}
+
+.vendor-scoring-grid .rdg-row .rdg-cell {
+  border-inline: none !important;
+  padding-block: 12px;
+  padding-inline: 16px;
+}
+
+.vendor-scoring-grid .rdg-header-row .rdg-cell {
+  padding-block: 14px;
+  font-weight: 700;
+  border-inline: none;
+  border-bottom: 2px solid #e2e8f0;
+  background-color: #253C80 !important;
+  color: #ffffff;
+}
+
 
 /* ============================================================================
    AG GRID PREMIUM STYLING (Standardized Application-Wide)
@@ -331,4 +397,96 @@ body,
 .ag-cell-bold {
   font-weight: 700 !important;
   color: #0f172a !important;
+}
+
+/* ============================================================================
+   ANT DESIGN COMPONENT OVERRIDES (PREMIUM)
+   ============================================================================ */
+
+/* DatePicker Input Styling */
+.ant-picker {
+  @apply !rounded-xl !border-gray-100 !transition-all !duration-300;
+  background: transparent !important;
+}
+
+.ant-picker:hover,
+.ant-picker-focused {
+  @apply !border-indigo-400 !bg-white !shadow-lg !shadow-indigo-100/50;
+  transform: translateY(-1px);
+}
+
+.ant-picker-input>input {
+  @apply !text-xs !font-bold !tracking-tight !text-gray-700;
+}
+
+.ant-picker-suffix {
+  @apply !text-indigo-400 !opacity-60 !transition-opacity;
+}
+
+.ant-picker:hover .ant-picker-suffix {
+  @apply !opacity-100;
+}
+
+/* Calendar Dropdown UI */
+.ant-picker-dropdown {
+  @apply !z-[3000];
+}
+
+.ant-picker-panel-container {
+  @apply !rounded-3xl !border-none !shadow-2xl !overflow-hidden !bg-white/95 !backdrop-blur-xl;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ant-picker-header {
+  @apply !border-b !border-gray-50 !px-4 !py-3 !bg-gray-50/30;
+}
+
+.ant-picker-header button {
+  @apply !font-bold !text-gray-400 !transition-colors;
+}
+
+.ant-picker-header button:hover {
+  @apply !text-indigo-600;
+}
+
+.ant-picker-header-view {
+  @apply !font-outfit !font-black !text-sm !text-gray-800 !tracking-tight;
+}
+
+.ant-picker-content th {
+  @apply !font-black !text-[10px] !text-gray-400 !uppercase !tracking-widest !py-3;
+}
+
+.ant-picker-cell {
+  @apply !p-1;
+}
+
+.ant-picker-cell-inner {
+  @apply !rounded-xl !text-xs !font-bold !transition-all !duration-200 !flex !items-center !justify-center;
+  min-width: 32px !important;
+  height: 32px !important;
+}
+
+.ant-picker-cell:hover .ant-picker-cell-inner {
+  @apply !bg-indigo-50 !text-indigo-600 !scale-110;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  @apply !border-indigo-500;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  @apply !bg-gradient-to-br !from-indigo-500 !to-indigo-700 !text-white !shadow-lg !shadow-indigo-200 !scale-105;
+}
+
+.ant-picker-footer {
+  @apply !border-t !border-gray-50 !bg-gray-50/20 !px-4 !py-2;
+}
+
+.ant-picker-today-btn {
+  @apply !text-xs !font-black !uppercase !tracking-tighter !text-indigo-600 !transition-colors;
+}
+
+.ant-picker-today-btn:hover {
+  @apply !text-indigo-800;
 }
