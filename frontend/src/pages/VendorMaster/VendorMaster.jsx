@@ -221,6 +221,12 @@ const VendorMaster = () => {
         );
     };
 
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -282,9 +288,9 @@ const VendorMaster = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-white truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -292,9 +298,9 @@ const VendorMaster = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
-                    <FilterIcon size={10} />
+                    <FilterIcon size={11} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
@@ -357,9 +363,10 @@ const VendorMaster = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'S.No',
+            name: 'S.NO',
             width: 80,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -429,6 +436,7 @@ const VendorMaster = () => {
             name: 'ACTIONS',
             width: 200,
             sortable: false,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -529,38 +537,40 @@ const VendorMaster = () => {
                         />
                     </div>
                 </div>
-            <div className="px-6 py-4">
-                <FreezeToolbar
-                    columns={freezeColumnList}
-                    frozenKeys={frozenKeys}
-                    onApply={setFrozenKeys}
-                    frozenRowCount={frozenRowCount}
-                    setFrozenRowCount={setFrozenRowCount}
-                    maxRows={Math.min(gridRows.length, 50)}
-                />
-            </div>
-
-            <div
-                ref={gridContainerRef}
-                className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative mx-4 mb-4"
-            >
-                <div className="h-full">
-                    <FrozenRowsDataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={(row) => row._id || row.vendorCode}
-                        className="rdg-light vendor-master-grid"
-                        style={{ blockSize: '100%', width: '100%' }}
-                        rowHeight={52}
-                        headerRowHeight={48}
+                <div className="px-6 py-4">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
                         frozenRowCount={frozenRowCount}
-                        defaultColumnOptions={{
-                            resizable: true
-                        }}
-                        loading={loading}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
                     />
                 </div>
-            </div>
+
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div
+                        ref={gridContainerRef}
+                        className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]"
+                    >
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.vendorCode}
+                                className="rdg-light vendor-master-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loading}
+                            />
+                        </div>
+                    </div>
+                </div>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">

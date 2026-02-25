@@ -37,11 +37,31 @@ const FrozenRowsDataGrid = ({
     ...props
 }) => {
     const containerRef = useRef(null);
-    const count = Math.min(frozenRowCount, allRows.length);
+    // Split rows based on frozenRowCount (which can be a number or an object {start, end})
+    const { topSummaryRows, dataRows } = useMemo(() => {
+        let start = 1;
+        let end = 0;
 
-    // Split rows
-    const topSummaryRows = count > 0 ? allRows.slice(0, count) : undefined;
-    const dataRows = count > 0 ? allRows.slice(count) : allRows;
+        if (typeof frozenRowCount === 'number') {
+            end = Math.min(frozenRowCount, allRows.length);
+        } else if (frozenRowCount && typeof frozenRowCount === 'object') {
+            start = Math.max(1, Number(frozenRowCount.start) || 1);
+            end = Math.min(Number(frozenRowCount.end) || 0, allRows.length);
+        }
+
+        const count = end >= start ? (end - start + 1) : 0;
+
+        if (count <= 0) {
+            return { topSummaryRows: undefined, dataRows: allRows };
+        }
+
+        const frozen = allRows.slice(start - 1, end);
+        const scrollable = allRows.filter((_, idx) => (idx < start - 1 || idx >= end));
+
+        return { topSummaryRows: frozen, dataRows: scrollable };
+    }, [allRows, frozenRowCount]);
+
+    const count = topSummaryRows ? topSummaryRows.length : 0;
 
     // Wire renderSummaryCell = renderCell and handle Column Reordering
     const enrichedColumns = useMemo(() => {

@@ -380,9 +380,10 @@ const MHDevelopmentTracker = () => {
         // 1. S.no
         {
             key: 'serial',
-            name: 'S.no',
+            name: 'S.NO',
             width: 60,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -454,9 +455,19 @@ const MHDevelopmentTracker = () => {
             width: 200,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex flex-col gap-1 py-1">
+                <div className="flex items-center gap-2 py-1">
                     {row.vendorCode ? (
-                        <span className="text-xs font-bold text-tvs-blue">{row.vendorCode}</span>
+                        <>
+                            <span className="text-xs font-bold text-tvs-blue min-w-[60px]">{row.vendorCode}</span>
+                            <button
+                                type="button"
+                                onClick={() => handleVendorSelect(row._id, row.plantLocation)}
+                                className="p-1 rounded-md bg-gray-50 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 transition-all border border-gray-100"
+                                title="Change Vendor"
+                            >
+                                <Edit size={12} />
+                            </button>
+                        </>
                     ) : (
                         <Button
                             size="small"

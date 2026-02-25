@@ -9,9 +9,6 @@ import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 
-// AG Grid Modules are registered GLOBALLY in agGridConfig.js
-
-
 const { Option } = Select;
 
 const CreateMHRequestList = () => {
@@ -32,7 +29,6 @@ const CreateMHRequestList = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
 
     const mhListGridContainerRef = useRef(null);
-
 
     useEffect(() => {
         dispatch(fetchAssetRequests());
@@ -59,7 +55,6 @@ const CreateMHRequestList = () => {
             return;
         }
 
-        // Set default values from logged in user
         form.setFieldsValue({
             departmentName: user.department || 'N/A',
             location: user.location || 'N/A',
@@ -102,7 +97,6 @@ const CreateMHRequestList = () => {
         const formData = new FormData();
         Object.keys(values).forEach(key => {
             if (values[key] !== undefined && values[key] !== null) {
-                // If it's an array (like productModel tags), join it or handle it
                 if (Array.isArray(values[key])) {
                     formData.append(key, values[key].join(', '));
                 } else {
@@ -129,6 +123,12 @@ const CreateMHRequestList = () => {
 
     const baseRows = requests || [];
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
+
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
 
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
@@ -191,9 +191,9 @@ const CreateMHRequestList = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs gap-1">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-white truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -201,9 +201,9 @@ const CreateMHRequestList = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
-                    <Filter size={10} />
+                    <Filter size={11} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
@@ -266,9 +266,10 @@ const CreateMHRequestList = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'Sno',
-            width: 70,
+            name: 'S.NO',
+            width: 80,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -361,6 +362,7 @@ const CreateMHRequestList = () => {
             key: 'actions',
             name: 'ACTIONS',
             width: 150,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -408,8 +410,6 @@ const CreateMHRequestList = () => {
             return { ...column, width: scaledWidth };
         });
     }, [dataGridColumns, mhListGridWidth, frozenKeys]);
-
-    const frozenRows = gridRows.slice(0, frozenRowCount);
 
     useEffect(() => {
         if (!mhListGridContainerRef.current) return;
@@ -485,29 +485,28 @@ const CreateMHRequestList = () => {
         URL.revokeObjectURL(url);
     };
 
-
     return (
-        <div className="flex flex-col h-full space-y-6 fade-in pb-12">
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             {/* Enhanced AG Grid Table Section */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                <div className="p-6" style={{ backgroundColor: '#fafafa' }}>
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="px-6 py-4 flex flex-col gap-4">
                     {/* Toolbar with Export and Create Button */}
-                    <div className="mb-4 flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm gap-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
                         <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span>Showing <span className="text-gray-900 font-bold">{requests?.length || 0}</span> active requests</span>
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                            <span>Showing <span className="text-emerald-700 font-bold">{requests?.length || 0}</span> active requests</span>
                         </div>
                         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
                             <button
                                 onClick={handleExportCsv}
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                             >
                                 <FileText size={16} />
                                 Template Download
                             </button>
                             <button
                                 onClick={handleCreateClick}
-                                className="flex items-center gap-3 bg-tvs-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:shadow-lg hover:bg-blue-700 transition-all"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                             >
                                 <Plus size={20} strokeWidth={3} />
                                 <span>CREATE NEW REQUEST</span>
@@ -516,38 +515,39 @@ const CreateMHRequestList = () => {
                     </div>
 
                     {/* Freeze Toolbar */}
-                    <div className="mb-3">
-                        <FreezeToolbar
-                            columns={freezeColumnList}
-                            frozenKeys={frozenKeys}
-                            onApply={setFrozenKeys}
-                            frozenRowCount={frozenRowCount}
-                            setFrozenRowCount={setFrozenRowCount}
-                            maxRows={Math.min(gridRows.length, 50)}
-                        />
-                    </div>
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
+                    />
+                </div>
 
-                    <div
-                        ref={mhListGridContainerRef}
-                        className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white mx-4 mb-4"
-                        style={{ height: '600px' }}
-                    >
-                        <FrozenRowsDataGrid
-                            columns={autoFitColumns}
-                            rows={gridRows}
-                            rowKeyGetter={(row) => row._id || row.mhRequestId}
-                            className="rdg-light mh-request-grid"
-                            rowHeight={52}
-                            headerRowHeight={48}
-                            frozenRowCount={frozenRowCount}
-                            defaultColumnOptions={{ resizable: true }}
-                            loading={loading}
-                        />
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={mhListGridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.mhRequestId}
+                                className="rdg-light mh-request-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loading}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Create MH Request Modal Overhaul */}
+            {/* Create MH Request Modal */}
             <AntModal
                 title={
                     <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-tvs-blue/5 to-transparent rounded-t-3xl border-b border-gray-100">
@@ -581,11 +581,9 @@ const CreateMHRequestList = () => {
                             productModel: ['Scooter']
                         }}
                     >
-                        {/* Hidden Fields */}
                         <Form.Item name="mailId" hidden>
                             <Input />
                         </Form.Item>
-                        {/* Section: Personnel Info */}
                         <div className="mb-10">
                             <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[3px] mb-6 flex items-center gap-3">
                                 <span>01 PERSONNEL DATA</span>
@@ -598,109 +596,155 @@ const CreateMHRequestList = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} sm={8}>
+                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">LOCATION</span>} name="location">
+                                        <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">DEPARTMENT</span>} name="departmentName">
                                         <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} sm={8}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">OFFICE LOCATION</span>} name="location">
-                                        <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
-                                    </Form.Item>
-                                </Col>
                             </Row>
                         </div>
 
-                        {/* Section: Request Details */}
                         <div className="mb-10">
                             <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[3px] mb-6 flex items-center gap-3">
-                                <span>02 REQUEST PARAMETERS</span>
+                                <span>02 PROJECT SPECIFICATIONS</span>
                                 <div className="h-[1px] flex-1 bg-gray-100"></div>
                             </h3>
-                            <Row gutter={[16, 0]}>
+                            <Row gutter={[16, 16]}>
                                 <Col xs={24} sm={12}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">REQUEST TYPE</span>} name="requestType" rules={[{ required: true }]}>
-                                        <Select className="custom-select-large h-12">
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">REQUEST TYPE</span>}
+                                        name="requestType"
+                                        rules={[{ required: true, message: 'Please select request type' }]}
+                                    >
+                                        <Select className="custom-select h-12 rounded-2xl overflow-hidden border-gray-100">
                                             <Option value="New Project">New Project</Option>
-                                            <Option value="Upgrade">Upgrade</Option>
-                                            <Option value="Refresh">Refresh</Option>
-                                            <Option value="Capacity">Capacity</Option>
-                                            <Option value="Special Improvements">Special Improvements</Option>
+                                            <Option value="Modification">Modification</Option>
+                                            <Option value="Replacement">Replacement</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} sm={12}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">PLANT LOCATION</span>} name="plantLocation" rules={[{ required: true }]}>
-                                        <Select className="custom-select-large h-12">
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">PLANT LOCATION</span>}
+                                        name="plantLocation"
+                                        rules={[{ required: true, message: 'Please select plant location' }]}
+                                    >
+                                        <Select className="custom-select h-12 rounded-2xl overflow-hidden border-gray-100">
                                             <Option value="Hosur Plant 1 (TN)">Hosur Plant 1 (TN)</Option>
                                             <Option value="Hosur Plant 2 (TN)">Hosur Plant 2 (TN)</Option>
-                                            <Option value="Hosur Plant 3 (TN)">Hosur Plant 3 (TN)</Option>
-                                            <Option value="Mysore (KA)">Mysore (KA)</Option>
-                                            <Option value="Nalagarh (HP)">Nalagarh (HP)</Option>
+                                            <Option value="Mysore Plant (KA)">Mysore Plant (KA)</Option>
+                                            <Option value="Nalagarh Plant (HP)">Nalagarh Plant (HP)</Option>
+                                            <Option value="Karawang Plant (Indonesia)">Karawang Plant (Indonesia)</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                            </Row>
-                            <Row gutter={[16, 0]}>
-                                <Col xs={24} sm={8}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">PRODUCT MODEL</span>} name="productModel" rules={[{ required: true }]}>
-                                        <Select mode="tags" className="custom-select-large min-h-[48px]" placeholder="Scooter, Motorcycle, or type new...">
+                                <Col xs={24} sm={12}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">PRODUCT MODEL</span>}
+                                        name="productModel"
+                                        rules={[{ required: true, message: 'Please select product model' }]}
+                                    >
+                                        <Select mode="tags" className="custom-select h-auto min-h-[48px] rounded-2xl overflow-hidden border-gray-100">
                                             <Option value="Scooter">Scooter</Option>
                                             <Option value="Motorcycle">Motorcycle</Option>
-                                            <Option value="Super Premium">Super Premium</Option>
+                                            <Option value="Moped">Moped</Option>
+                                            <Option value="Three Wheeler">Three Wheeler</Option>
+                                            <Option value="Electric Vehicle">Electric Vehicle</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} sm={8}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">HANDLING PART NAME</span>} name="handlingPartName" rules={[{ required: true }]}>
-                                        <Input placeholder="e.g. Engine Block, Chassis" className="h-12 rounded-2xl font-semibold border-gray-100" />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={8}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">MATERIAL HANDLING EQUIPMENT</span>} name="materialHandlingEquipment">
-                                        <Input placeholder="e.g. Conveyor, Forklift" className="h-12 rounded-2xl font-semibold border-gray-100" />
+                                <Col xs={24} sm={12}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">HANDLING PART NAME</span>}
+                                        name="handlingPartName"
+                                        rules={[{ required: true, message: 'Please enter handling part name' }]}
+                                    >
+                                        <Input placeholder="e.g. Chassis, Engine, Fuel Tank" className="h-12 rounded-2xl border-gray-100" />
                                     </Form.Item>
                                 </Col>
                             </Row>
-                            <Form.Item label={<span className="text-xs font-bold text-gray-500">PROBLEM STATEMENT / REQUIREMENT</span>} name="problemStatement" rules={[{ required: true }]}>
-                                <Input.TextArea rows={4} placeholder="Describe the current issue or material handling requirement in detail..." className="rounded-2xl p-4 font-semibold border-gray-100" />
-                            </Form.Item>
                         </div>
 
-                        {/* Section: Material Flow */}
-                        <div className="mb-6">
+                        <div className="mb-10">
                             <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[3px] mb-6 flex items-center gap-3">
-                                <span>03 MATERIAL FLOW & LOGISTICS</span>
+                                <span>03 EQUIPMENT & LOGISTICS</span>
                                 <div className="h-[1px] flex-1 bg-gray-100"></div>
                             </h3>
-                            <Row gutter={[16, 0]}>
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} md={8}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">EQUIPMENT TYPE</span>}
+                                        name="materialHandlingEquipment"
+                                        rules={[{ required: true, message: 'Please enter equipment type' }]}
+                                    >
+                                        <Input placeholder="e.g. Trolley, Pallet, Rack" className="h-12 rounded-2xl border-gray-100" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">HANDLING LOCATION</span>}
+                                        name="materialHandlingLocation"
+                                        rules={[{ required: true, message: 'Please enter handling location' }]}
+                                    >
+                                        <Input placeholder="e.g. Assembly Line A, Logistics Dock 4" className="h-12 rounded-2xl border-gray-100" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={12} md={4}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">FROM</span>}
+                                        name="from"
+                                        rules={[{ required: true, message: 'Origin required' }]}
+                                    >
+                                        <Input placeholder="Origin" className="h-12 rounded-2xl border-gray-100" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={12} md={4}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">TO</span>}
+                                        name="to"
+                                        rules={[{ required: true, message: 'Destination required' }]}
+                                    >
+                                        <Input placeholder="Destination" className="h-12 rounded-2xl border-gray-100" />
+                                    </Form.Item>
+                                </Col>
                                 <Col xs={24} sm={12}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">ZONE / SHOP FLOOR LOCATION</span>} name="materialHandlingLocation" rules={[{ required: true }]}>
-                                        <Input placeholder="e.g. Shop Floor Zone A" className="h-12 rounded-2xl font-semibold border-gray-100" />
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">VOLUME PER DAY</span>}
+                                        name="volumePerDay"
+                                        rules={[{ required: true, message: 'Please enter volume' }]}
+                                    >
+                                        <Input type="number" placeholder="Daily unit volume" className="h-12 rounded-2xl border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} sm={4}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">FROM</span>} name="from" rules={[{ required: true }]}>
-                                        <Input placeholder="Loc A" className="h-12 rounded-2xl font-bold text-center border-gray-100" />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={4}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">TO</span>} name="to" rules={[{ required: true }]}>
-                                        <Input placeholder="Loc B" className="h-12 rounded-2xl font-bold text-center border-gray-100" />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={4}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">VOL/DAY</span>} name="volumePerDay" rules={[{ required: true }]}>
-                                        <Input type="number" placeholder="0" className="h-12 rounded-2xl font-black text-center border-gray-100" />
+                                <Col xs={24} sm={12}>
+                                    <Form.Item
+                                        label={<span className="text-xs font-bold text-gray-500 italic">PROBLEM STATEMENT</span>}
+                                        name="problemStatement"
+                                        rules={[{ required: true, message: 'Please describe the problem' }]}
+                                    >
+                                        <Input.TextArea rows={1} placeholder="Briefly describe the requirement or problem" className="rounded-2xl border-gray-100 py-3" />
                                     </Form.Item>
                                 </Col>
                             </Row>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 bg-gray-50 -mx-6 -mb-6 p-8 rounded-b-3xl">
-                            <Button onClick={() => setIsModalOpen(false)} className="h-14 px-10 rounded-2xl font-bold border-gray-200 hover:bg-white text-gray-600 w-full sm:w-auto">
-                                Cancel
+                        <div className="flex justify-end gap-3 mt-10">
+                            <Button
+                                onClick={() => setIsModalOpen(false)}
+                                className="h-12 px-8 rounded-2xl border-gray-200 font-bold text-gray-400 hover:text-gray-600 transition-all"
+                            >
+                                CANCEL
                             </Button>
-                            <Button type="primary" htmlType="submit" loading={loading} className="h-14 px-12 rounded-2xl font-black bg-tvs-blue hover:bg-blue-700 border-none shadow-xl shadow-tvs-blue/30 scale-100 hover:scale-[1.02] transition-all w-full sm:w-auto">
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={loading}
+                                className="h-12 px-10 rounded-2xl bg-tvs-blue hover:bg-blue-700 font-black tracking-widest shadow-lg shadow-blue-100 transition-all"
+                            >
                                 SUBMIT MH REQUEST
                             </Button>
                         </div>
@@ -708,135 +752,72 @@ const CreateMHRequestList = () => {
                 </div>
             </AntModal>
 
-            {selectedRequest && (
-                <AntModal
-                    title={
-                        <div className="flex items-center justify-between">
+            {/* View Request Modal */}
+            <AntModal
+                title={
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        <Eye size={20} className="text-tvs-blue" />
+                        <span className="text-lg font-bold">Request Details - {selectedRequest?.mhRequestId}</span>
+                    </div>
+                }
+                open={isViewModalOpen}
+                onCancel={() => setIsViewModalOpen(false)}
+                footer={null}
+                width={700}
+                centered
+            >
+                {selectedRequest && (
+                    <div className="py-4 space-y-6">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                             <div>
-                                <div className="text-xs font-semibold text-gray-400">MH Request Details</div>
-                                <div className="text-lg font-bold text-gray-900">
-                                    {selectedRequest.mhRequestId || 'MH Request'}
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    open={isViewModalOpen}
-                    onCancel={() => setIsViewModalOpen(false)}
-                    footer={[
-                        <Button key="close" onClick={() => setIsViewModalOpen(false)}>
-                            Close
-                        </Button>,
-                        <Button
-                            key="edit"
-                            type="primary"
-                            onClick={() => {
-                                setIsViewModalOpen(false);
-                                handleEditRequest(selectedRequest);
-                            }}
-                        >
-                            Edit
-                        </Button>
-                    ]}
-                    width="95%"
-                    style={{ maxWidth: '720px' }}
-                    centered
-                >
-                    <div className="space-y-6 text-sm">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Department</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.departmentName || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                                <Tag color={selectedRequest.status === 'Accepted' ? 'green' : selectedRequest.status === 'Rejected' ? 'red' : 'blue'} className="rounded-md font-bold">
+                                    {selectedRequest.status?.toUpperCase() || 'PENDING'}
+                                </Tag>
                             </div>
                             <div>
-                                <div className="text-[11px] font-semibold text-gray-400">User Name</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.userName || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Progress</p>
+                                <Tag color="gold" className="rounded-md font-bold">
+                                    {selectedRequest.progressStatus?.toUpperCase() || 'NEW'}
+                                </Tag>
                             </div>
                             <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Request Type</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.requestType || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Department</p>
+                                <p className="text-sm font-bold text-gray-800">{selectedRequest.departmentName}</p>
                             </div>
                             <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Plant Location</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.plantLocation || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Plant</p>
+                                <p className="text-sm font-bold text-gray-800">{selectedRequest.plantLocation}</p>
                             </div>
                             <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Product Model</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.productModel || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Product</p>
+                                <p className="text-sm font-bold text-gray-800">{selectedRequest.productModel}</p>
                             </div>
                             <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Handling Part Name</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.handlingPartName || '-'}
-                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Part Name</p>
+                                <p className="text-sm font-bold text-gray-800">{selectedRequest.handlingPartName}</p>
                             </div>
-                            <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Material Handling Location</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.materialHandlingLocation || '-'}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Flow</div>
-                                <div className="text-sm font-semibold text-tvs-blue">
-                                    {(selectedRequest.from || '') + ' → ' + (selectedRequest.to || '')}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-[11px] font-semibold text-gray-400">Volume/Day</div>
-                                <div className="text-sm font-black text-gray-900">
-                                    {selectedRequest.volumePerDay || '-'}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-[11px] font-semibold text-gray-400">User Location</div>
-                                <div className="text-sm font-semibold text-gray-900">
-                                    {selectedRequest.location || '-'}
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[11px] font-semibold text-gray-400 mb-1.5">Problem Statement / Requirement</div>
-                            <div className="text-sm leading-relaxed text-gray-800 whitespace-pre-line border border-gray-100 rounded-xl p-3 bg-gray-50">
-                                {selectedRequest.problemStatement || '-'}
+                            <div className="col-span-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Problem Statement</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{selectedRequest.problemStatement}</p>
                             </div>
                         </div>
                     </div>
-                </AntModal>
-            )}
-
+                )}
+            </AntModal>
 
             <style>{`
-                /* Minimalist AG Grid Styling - Matching Reference Image */
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-                
-                .custom-modal .ant-modal-content { border-radius: 40px; padding: 0; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.15); }
-                .custom-modal .ant-modal-header { padding: 0; border: none; }
-                .custom-modal .ant-modal-body { padding: 0; }
-                
-                .custom-select-large .ant-select-selector {
+                .custom-select .ant-select-selector {
+                    border-radius: 1rem !important;
                     height: 48px !important;
-                    border-radius: 16px !important;
-                    border-color: #f1f5f9 !important;
-                    font-weight: 600 !important;
                     display: flex !important;
                     align-items: center !important;
+                    border-color: #f3f4f6 !important;
                 }
-                .ant-form-item-label label {
-                    margin-bottom: 8px !important;
+                .custom-select .ant-select-selection-item {
+                    font-weight: 600 !important;
+                    color: #1f2937 !important;
                 }
-
                 .mh-request-grid.rdg-light {
                     width: 100%;
                     height: 100%;
@@ -866,7 +847,7 @@ const CreateMHRequestList = () => {
                     color: #ffffff;
                 }
             `}</style>
-        </div >
+        </div>
     );
 };
 
