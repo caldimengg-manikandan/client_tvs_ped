@@ -74,9 +74,17 @@ export const uploadDrawing = createAsyncThunk(
 
 export const fetchVendorsForSelection = createAsyncThunk(
     'mhDevelopmentTracker/fetchVendors',
-    async (location, { rejectWithValue }) => {
+    async ({ location, overrideLocation = false }, { rejectWithValue }) => {
         try {
-            const url = location ? `${API_URL}/vendors?location=${encodeURIComponent(location)}` : `${API_URL}/vendors`;
+            let url = `${API_URL}/vendors`;
+            const params = new URLSearchParams();
+            if (location) params.append('location', location);
+            if (overrideLocation) params.append('overrideLocation', 'true');
+
+            if (params.toString()) {
+                url += `?${params.toString()}`;
+            }
+
             const response = await api.get(url);
             return response.data.data;
         } catch (error) {

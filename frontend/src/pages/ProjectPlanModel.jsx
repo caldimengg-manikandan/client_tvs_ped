@@ -442,7 +442,8 @@ const ProjectPlanModel = () => {
                     setViewTrackerId(null);
                 }}
                 footer={null}
-                width={900}
+                width="95%"
+                style={{ maxWidth: '900px' }}
                 title={
                     <div className="flex flex-col">
                         <span className="text-lg font-bold">

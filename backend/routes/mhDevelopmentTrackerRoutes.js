@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { protect } = require('../middleware/authMiddleware');
 const {
     getAllTrackers,
     getTrackerById,
@@ -12,6 +13,9 @@ const {
     getProjectsByVendor,
     upload
 } = require('../controllers/mhDevelopmentTrackerController');
+
+// Apply protection to all routes
+router.use(protect);
 
 // Tracker CRUD routes
 router.get('/', getAllTrackers);

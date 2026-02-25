@@ -48,7 +48,7 @@ const Layout = () => {
 
                 <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={handleToggleSidebar} />
 
-                <main className={`flex-1 overflow-x-hidden mt-20 relative z-10 custom-scrollbar flex flex-col ${['/mh-development-tracker', '/project-plan-model'].includes(location.pathname) ? 'p-4 md:p-6 lg:p-6' : 'p-8'}`}>
+                <main className={`flex-1 overflow-x-hidden mt-20 relative z-10 custom-scrollbar flex flex-col ${['/mh-development-tracker', '/project-plan-model'].includes(location.pathname) ? 'p-4 md:p-6 lg:p-6' : 'p-4 sm:p-6 lg:p-8'}`}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={location.pathname}

@@ -22,7 +22,7 @@ const FreezeToolbar = ({
     onApply,
     frozenRowCount = 0,
     setFrozenRowCount,
-    maxRows = 10,
+    maxRows = 50,
 }) => {
     /* ── Column freeze state ── */
     const [colOpen, setColOpen] = useState(false);
@@ -62,7 +62,7 @@ const FreezeToolbar = ({
     /* ── Row helpers ── */
     const clampRow = (v) => Math.max(0, Math.min(maxRows, v));
     const handleRowApply = () => {
-        setFrozenRowCount(rowDraft);
+        setFrozenRowCount(Number(rowDraft) || 0);
         setRowOpen(false);
     };
     const handleRowClear = () => {
@@ -210,42 +210,44 @@ const FreezeToolbar = ({
                             </button>
                         </div>
 
-                        {/* Row stepper */}
+                        {/* Row input focus */}
                         <div className="px-6 py-6">
-                            <p className="text-[11px] text-gray-500 font-semibold mb-4 uppercase tracking-wide">
+                            <p className="text-[11px] text-gray-500 font-bold mb-5 uppercase tracking-wider text-center">
                                 Number of rows to freeze from top
                             </p>
-                            <div className="flex items-center justify-center gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setRowDraft(v => clampRow(v - 1))}
-                                    disabled={rowDraft === 0}
-                                    className="w-9 h-9 rounded-lg border-2 border-[#c8d6e8] flex items-center justify-center text-[#1a3c6e] font-black text-lg hover:bg-[#f0f5fb] hover:border-[#1a3c6e] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                                >
-                                    −
-                                </button>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-3xl font-black text-[#1a3c6e] leading-none">{rowDraft}</span>
-                                    <span className="text-[10px] text-gray-400 mt-1">rows frozen</span>
+                            
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="relative group">
+                                    <input
+                                        type="number"
+                                        value={rowDraft || ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                            if (val === '') {
+                                                setRowDraft('');
+                                            } else if (!isNaN(val)) {
+                                                setRowDraft(clampRow(val));
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            if (rowDraft === '') setRowDraft(0);
+                                        }}
+                                        className="w-32 h-14 text-center text-3xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-xl outline-none focus:border-[#1a3c6e] focus:ring-4 focus:ring-[#1a3c6e]/5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
+                                        placeholder="0"
+                                    />
+                                    <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-[#cdd9e8] pointer-events-none transition-all"></div>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setRowDraft(v => clampRow(v + 1))}
-                                    disabled={rowDraft >= maxRows}
-                                    className="w-9 h-9 rounded-lg border-2 border-[#c8d6e8] flex items-center justify-center text-[#1a3c6e] font-black text-lg hover:bg-[#f0f5fb] hover:border-[#1a3c6e] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                                >
-                                    +
-                                </button>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">rows frozen</span>
                             </div>
 
                             {/* Quick-select pills */}
-                            <div className="flex items-center justify-center gap-2 mt-5">
-                                {[0, 1, 2, 3, 5].filter(n => n <= maxRows).map(n => (
+                            <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+                                {[0, 5, 10, 20, 50].filter(n => n <= maxRows).map(n => (
                                     <button
                                         key={n}
                                         type="button"
                                         onClick={() => setRowDraft(n)}
-                                        className={`text-[11px] font-bold px-2.5 py-1 rounded-md border transition-all
+                                        className={`text-[11px] font-bold px-3 py-1 rounded-md border transition-all
                                             ${rowDraft === n
                                                 ? 'bg-[#1a3c6e] text-white border-[#1a3c6e]'
                                                 : 'bg-white text-gray-500 border-gray-200 hover:border-[#1a3c6e] hover:text-[#1a3c6e]'

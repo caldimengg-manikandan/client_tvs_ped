@@ -50,6 +50,12 @@ const vendorSchema = new mongoose.Schema({
         default: 10,
         min: 1
     },
+    status: {
+        type: String,
+        enum: ['ACTIVE', 'INACTIVE'],
+        default: 'ACTIVE',
+        uppercase: true
+    },
     remarks: {
         type: String,
         trim: true,

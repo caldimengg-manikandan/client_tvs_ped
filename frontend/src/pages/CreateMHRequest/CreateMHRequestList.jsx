@@ -492,12 +492,12 @@ const CreateMHRequestList = () => {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 <div className="p-6" style={{ backgroundColor: '#fafafa' }}>
                     {/* Toolbar with Export and Create Button */}
-                    <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                    <div className="mb-4 flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm gap-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 w-full sm:w-auto">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                             <span>Showing <span className="text-gray-900 font-bold">{requests?.length || 0}</span> active requests</span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
                             <button
                                 onClick={handleExportCsv}
                                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm"
@@ -523,7 +523,7 @@ const CreateMHRequestList = () => {
                             onApply={setFrozenKeys}
                             frozenRowCount={frozenRowCount}
                             setFrozenRowCount={setFrozenRowCount}
-                            maxRows={Math.min(gridRows.length, 10)}
+                            maxRows={Math.min(gridRows.length, 50)}
                         />
                     </div>
 
@@ -562,7 +562,8 @@ const CreateMHRequestList = () => {
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
                 footer={null}
-                width={1000}
+                width="95%"
+                style={{ maxWidth: '1000px' }}
                 centered
                 destroyOnClose
                 className="custom-modal"
@@ -590,18 +591,18 @@ const CreateMHRequestList = () => {
                                 <span>01 PERSONNEL DATA</span>
                                 <div className="h-[1px] flex-1 bg-gray-100"></div>
                             </h3>
-                            <Row gutter={24}>
-                                <Col span={8}>
+                            <Row gutter={[16, 0]}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">REQUESTER NAME</span>} name="userName">
                                         <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">DEPARTMENT</span>} name="departmentName">
                                         <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">OFFICE LOCATION</span>} name="location">
                                         <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
                                     </Form.Item>
@@ -615,8 +616,8 @@ const CreateMHRequestList = () => {
                                 <span>02 REQUEST PARAMETERS</span>
                                 <div className="h-[1px] flex-1 bg-gray-100"></div>
                             </h3>
-                            <Row gutter={24}>
-                                <Col span={12}>
+                            <Row gutter={[16, 0]}>
+                                <Col xs={24} sm={12}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">REQUEST TYPE</span>} name="requestType" rules={[{ required: true }]}>
                                         <Select className="custom-select-large h-12">
                                             <Option value="New Project">New Project</Option>
@@ -627,7 +628,7 @@ const CreateMHRequestList = () => {
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
+                                <Col xs={24} sm={12}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">PLANT LOCATION</span>} name="plantLocation" rules={[{ required: true }]}>
                                         <Select className="custom-select-large h-12">
                                             <Option value="Hosur Plant 1 (TN)">Hosur Plant 1 (TN)</Option>
@@ -639,8 +640,8 @@ const CreateMHRequestList = () => {
                                     </Form.Item>
                                 </Col>
                             </Row>
-                            <Row gutter={24}>
-                                <Col span={8}>
+                            <Row gutter={[16, 0]}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">PRODUCT MODEL</span>} name="productModel" rules={[{ required: true }]}>
                                         <Select mode="tags" className="custom-select-large min-h-[48px]" placeholder="Scooter, Motorcycle, or type new...">
                                             <Option value="Scooter">Scooter</Option>
@@ -649,12 +650,12 @@ const CreateMHRequestList = () => {
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">HANDLING PART NAME</span>} name="handlingPartName" rules={[{ required: true }]}>
                                         <Input placeholder="e.g. Engine Block, Chassis" className="h-12 rounded-2xl font-semibold border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={8}>
+                                <Col xs={24} sm={8}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">MATERIAL HANDLING EQUIPMENT</span>} name="materialHandlingEquipment">
                                         <Input placeholder="e.g. Conveyor, Forklift" className="h-12 rounded-2xl font-semibold border-gray-100" />
                                     </Form.Item>
@@ -671,23 +672,23 @@ const CreateMHRequestList = () => {
                                 <span>03 MATERIAL FLOW & LOGISTICS</span>
                                 <div className="h-[1px] flex-1 bg-gray-100"></div>
                             </h3>
-                            <Row gutter={24}>
-                                <Col span={12}>
+                            <Row gutter={[16, 0]}>
+                                <Col xs={24} sm={12}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">ZONE / SHOP FLOOR LOCATION</span>} name="materialHandlingLocation" rules={[{ required: true }]}>
                                         <Input placeholder="e.g. Shop Floor Zone A" className="h-12 rounded-2xl font-semibold border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={4}>
+                                <Col xs={24} sm={4}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">FROM</span>} name="from" rules={[{ required: true }]}>
                                         <Input placeholder="Loc A" className="h-12 rounded-2xl font-bold text-center border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={4}>
+                                <Col xs={24} sm={4}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">TO</span>} name="to" rules={[{ required: true }]}>
                                         <Input placeholder="Loc B" className="h-12 rounded-2xl font-bold text-center border-gray-100" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={4}>
+                                <Col xs={24} sm={4}>
                                     <Form.Item label={<span className="text-xs font-bold text-gray-500">VOL/DAY</span>} name="volumePerDay" rules={[{ required: true }]}>
                                         <Input type="number" placeholder="0" className="h-12 rounded-2xl font-black text-center border-gray-100" />
                                     </Form.Item>
@@ -695,11 +696,11 @@ const CreateMHRequestList = () => {
                             </Row>
                         </div>
 
-                        <div className="flex justify-end gap-4 mt-12 bg-gray-50 -mx-6 -mb-6 p-8 rounded-b-3xl">
-                            <Button onClick={() => setIsModalOpen(false)} className="h-14 px-10 rounded-2xl font-bold border-gray-200 hover:bg-white text-gray-600">
+                        <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 bg-gray-50 -mx-6 -mb-6 p-8 rounded-b-3xl">
+                            <Button onClick={() => setIsModalOpen(false)} className="h-14 px-10 rounded-2xl font-bold border-gray-200 hover:bg-white text-gray-600 w-full sm:w-auto">
                                 Cancel
                             </Button>
-                            <Button type="primary" htmlType="submit" loading={loading} className="h-14 px-12 rounded-2xl font-black bg-tvs-blue hover:bg-blue-700 border-none shadow-xl shadow-tvs-blue/30 scale-100 hover:scale-[1.02] transition-all">
+                            <Button type="primary" htmlType="submit" loading={loading} className="h-14 px-12 rounded-2xl font-black bg-tvs-blue hover:bg-blue-700 border-none shadow-xl shadow-tvs-blue/30 scale-100 hover:scale-[1.02] transition-all w-full sm:w-auto">
                                 SUBMIT MH REQUEST
                             </Button>
                         </div>
@@ -736,11 +737,12 @@ const CreateMHRequestList = () => {
                             Edit
                         </Button>
                     ]}
-                    width={720}
+                    width="95%"
+                    style={{ maxWidth: '720px' }}
                     centered
                 >
                     <div className="space-y-6 text-sm">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <div className="text-[11px] font-semibold text-gray-400">Department</div>
                                 <div className="text-sm font-semibold text-gray-900">

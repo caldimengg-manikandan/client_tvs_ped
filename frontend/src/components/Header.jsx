@@ -261,7 +261,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 open={isActivityModalOpen}
                 onCancel={() => setIsActivityModalOpen(false)}
                 footer={null}
-                width={650}
+                width="95%"
+                style={{ maxWidth: '650px' }}
                 centered
                 className="custom-modal"
             >

@@ -7,6 +7,8 @@ import { fetchVendors, deleteVendor } from '../../redux/slices/vendorSlice';
 import { Modal } from 'antd';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import * as XLSX from 'xlsx';
 import { createActionColumn } from '../../config/agGridConfig';
 
@@ -19,6 +21,7 @@ const VendorMaster = () => {
 
     const { items: vendors, loading, error } = useSelector((state) => state.vendors);
 
+    const [editingVendor, setEditingVendor] = useState(null);
     const [viewingVendor, setViewingVendor] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [isImportModalVisible, setIsImportModalVisible] = useState(false);
@@ -27,6 +30,8 @@ const VendorMaster = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
@@ -347,7 +352,7 @@ const VendorMaster = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(filteredVendors);
+    const gridRows = applyColumnFilters(filteredVendors).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const dataGridColumns = [
         {
@@ -355,8 +360,8 @@ const VendorMaster = () => {
             name: 'S.No',
             width: 80,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -452,40 +457,49 @@ const VendorMaster = () => {
         }
     ];
 
-    const autoFitColumns = useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial' && col.key !== 'actions')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+    const autoFitColumns = React.useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+
+        if (!gridWidth) return withFreeze;
+
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => {
             return sum + (column.width || 0);
         }, 0);
 
-        if (!totalDefinedWidth) return dataGridColumns;
+        if (!totalDefinedWidth) return withFreeze;
 
-        const scale = gridWidth / totalDefinedWidth;
+        const scale = Math.max(gridWidth / totalDefinedWidth, 1);
 
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
 
             return {
                 ...column,
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 {/* Toolbar with Export */}
-                <div className="px-6 pt-4 pb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                             <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredVendors?.length || 0}</span> vendors</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleDownloadTemplate}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
@@ -515,30 +529,38 @@ const VendorMaster = () => {
                         />
                     </div>
                 </div>
+            <div className="px-6 py-4">
+                <FreezeToolbar
+                    columns={freezeColumnList}
+                    frozenKeys={frozenKeys}
+                    onApply={setFrozenKeys}
+                    frozenRowCount={frozenRowCount}
+                    setFrozenRowCount={setFrozenRowCount}
+                    maxRows={Math.min(gridRows.length, 50)}
+                />
+            </div>
 
-                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
-                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
-                        <div className="h-full w-full absolute inset-0">
-                            <DataGrid
-                                columns={autoFitColumns}
-                                rows={gridRows}
-                                rowKeyGetter={(row) => row._id}
-                                className="rdg-light mh-development-grid"
-                                style={{ blockSize: '100%' }}
-                                rowHeight={60}
-                                headerRowHeight={52}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
-                            />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
+            <div
+                ref={gridContainerRef}
+                className="w-full h-[620px] border border-gray-200 rounded-xl overflow-hidden bg-white relative mx-4 mb-4"
+            >
+                <div className="h-full">
+                    <FrozenRowsDataGrid
+                        columns={autoFitColumns}
+                        rows={gridRows}
+                        rowKeyGetter={(row) => row._id || row.vendorCode}
+                        className="rdg-light vendor-master-grid"
+                        style={{ blockSize: '100%', width: '100%' }}
+                        rowHeight={52}
+                        headerRowHeight={48}
+                        frozenRowCount={frozenRowCount}
+                        defaultColumnOptions={{
+                            resizable: true
+                        }}
+                        loading={loading}
+                    />
                 </div>
+            </div>
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">
@@ -578,7 +600,8 @@ const VendorMaster = () => {
                 onOk={handleConfirmImport}
                 okText="Confirm Import"
                 cancelText="Cancel"
-                width={1000}
+                width="95%"
+                style={{ maxWidth: '1000px' }}
                 centered
                 okButtonProps={{
                     className: 'bg-emerald-600 hover:bg-emerald-700'
@@ -637,7 +660,8 @@ const VendorMaster = () => {
                     setViewingVendor(null);
                 }}
                 footer={null}
-                width={800}
+                width="95%"
+                style={{ maxWidth: '800px' }}
                 centered
             >
                 {viewingVendor && (

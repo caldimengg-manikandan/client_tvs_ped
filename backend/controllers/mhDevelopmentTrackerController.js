@@ -362,18 +362,29 @@ const { sendVendorAllocationEmail } = require('./emailController');
 // Get vendors for selection (from Vendor Scoring)
 const getVendorsForSelection = async (req, res) => {
     try {
-        const { location } = req.query;
+        const { location, overrideLocation } = req.query;
+        const isAdmin = req.user && req.user.role === 'Admin';
 
-        let query = {};
-        if (location) {
-            query.vendorLocation = { $regex: new RegExp(`^${location}$`, 'i') };
+        let query = { status: { $ne: 'INACTIVE' } }; // Only non-INACTIVE vendors by default
+
+        // Logic for location filtering
+        // If location is provided AND (it's not an admin OR admin didn't explicitly override)
+        if (location && (!isAdmin || overrideLocation !== 'true')) {
+            // Fuzzy match: Get the first word of the plant location (e.g., "Hosur" from "Hosur Plant 1")
+            // and search for vendors that match that word.
+            const firstWord = location.split(/[\s,-]/)[0];
+            if (firstWord) {
+                query.vendorLocation = { $regex: new RegExp(firstWord, 'i') };
+            } else {
+                query.vendorLocation = { $regex: new RegExp(`^${location}$`, 'i') };
+            }
         }
 
         let vendors = await Vendor.find(query);
 
-        if ((!vendors || vendors.length === 0) && location) {
-            vendors = await Vendor.find({});
-        }
+        // If no vendors matched and it's an admin (and they didn't override yet),
+        // we could optionally not fall back here, but let the frontend handle it.
+        // The requirement says "Only vendors matching the selected plant location should be visible".
 
         // Get all active projects to calculate current load
         const allActiveProjects = await MHDevelopmentTracker.find({

@@ -15,6 +15,8 @@ import {
 import { fetchAssetRequests } from '../../redux/slices/assetRequestSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import VendorSelectionPopup from './VendorSelectionPopup';
 import ProjectPlanModal from './ProjectPlanModal';
 
@@ -108,11 +110,8 @@ const MHDevelopmentTracker = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const gridContainerRef = useRef(null);
 
-    // Freeze column state
-    const [freezePopupVisible, setFreezePopupVisible] = useState(false);
-    const freezePopupRef = useRef(null);
-    const [pendingFrozen, setPendingFrozen] = useState(new Set());
-    const [frozenColumns, setFrozenColumns] = useState(new Set());
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
 
     useEffect(() => {
         dispatch(fetchTrackers());
@@ -384,9 +383,8 @@ const MHDevelopmentTracker = () => {
             name: 'S.no',
             width: 60,
             frozen: true,
-            renderHeaderCell: PlainHeaderCell,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         // 2. Department Name
@@ -465,6 +463,8 @@ const MHDevelopmentTracker = () => {
                             type="primary"
                             className="bg-tvs-blue text-[10px] h-6"
                             onClick={() => handleVendorSelect(row._id, row.plantLocation)}
+                            disabled={!row.plantLocation}
+                            title={!row.plantLocation ? 'Please set Plant Location first' : ''}
                         >
                             Select Vendor
                         </Button>
@@ -620,36 +620,33 @@ const MHDevelopmentTracker = () => {
         columnFilters,
         activeFilterKey,
         filterSearchText,
-        frozenColumns,
         mhRequests,
         requestsLoading,
     ]);
 
-    // react-data-grid requires frozen columns to be CONTIGUOUS at the START of the array.
-    // So we reorder: [serial] → [user-frozen cols] → [remaining cols], each with frozen: true/false.
+    const gridRows = applyColumnFilters(filteredTrackers).map((row, i) => ({ ...row, _serialNo: i + 1 }));
+
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial' && col.key !== 'actions' && col.key !== 'vendorSelection' && col.key !== 'projectPlan')
+        .map(col => ({ key: col.key, name: col.name }));
+
     const autoFitColumns = useMemo(() => {
-        const serial = dataGridColumns.find(c => c.key === 'serial');
-        const frozen = dataGridColumns.filter(c => c.key !== 'serial' && frozenColumns.has(c.key));
-        const rest = dataGridColumns.filter(c => c.key !== 'serial' && !frozenColumns.has(c.key));
-        return [
-            { ...serial, frozen: true },
-            ...frozen.map(c => ({ ...c, frozen: true })),
-            ...rest.map(c => ({ ...c, frozen: false })),
-        ];
-    }, [dataGridColumns, frozenColumns]);
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+        if (!gridWidth) return withFreeze;
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => sum + (column.width || 0), 0);
+        if (!totalDefinedWidth) return withFreeze;
+        const scale = Math.max(gridWidth / totalDefinedWidth, 1);
+        return withFreeze.map((column) => {
+            if (!column.width) return column;
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
+            return { ...column, width: scaledWidth };
+        });
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
-    // Freeze popup - column options (exclude serial)
-    const freezableColumns = dataGridColumns.filter(c => c.key !== 'serial');
 
-    const handleFreezeButtonClick = () => {
-        setPendingFrozen(new Set(frozenColumns));
-        setFreezePopupVisible(true);
-    };
-
-    const handleFreezeApply = () => {
-        setFrozenColumns(new Set(pendingFrozen));
-        setFreezePopupVisible(false);
-    };
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -660,102 +657,27 @@ const MHDevelopmentTracker = () => {
         return () => observer.disconnect();
     }, []);
 
-    const gridRows = applyColumnFilters(filteredTrackers);
+    // const gridRows = applyColumnFilters(filteredTrackers); // This line was commented out as it was duplicated and the one above includes _serialNo
 
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 {/* Table toolbar */}
-                <div className="px-6 pt-4 pb-2 flex items-center gap-3">
-                    {/* Freeze Column Button + Popup */}
-                    <div className="relative" ref={freezePopupRef}>
-                        <button
-                            onClick={handleFreezeButtonClick}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${frozenColumns.size > 0
-                                ? 'bg-tvs-blue text-white border-tvs-blue shadow-sm'
-                                : 'bg-white text-gray-600 border-gray-300 hover:border-tvs-blue hover:text-tvs-blue'
-                                }`}
-                        >
-                            <Pin size={13} />
-                            Freeze Columns
-                            {frozenColumns.size > 0 && (
-                                <span className="ml-1 bg-white/30 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold">
-                                    {frozenColumns.size}
-                                </span>
-                            )}
-                        </button>
-
-                        {freezePopupVisible && (
-                            <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Pin size={13} className="text-tvs-blue" />
-                                        <span className="text-xs font-bold text-gray-700">Freeze Columns</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setFreezePopupVisible(false)}
-                                        className="text-gray-400 hover:text-gray-600 text-xs"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {/* Always-frozen note */}
-                                <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg mb-2">
-                                    <input type="checkbox" checked readOnly className="w-3 h-3 accent-tvs-blue" />
-                                    <span className="text-[11px] text-gray-400 italic">S.no (always frozen)</span>
-                                </div>
-
-                                {/* Scrollable column list */}
-                                <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-                                    {freezableColumns.map(col => (
-                                        <label
-                                            key={col.key}
-                                            className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer group"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={pendingFrozen.has(col.key)}
-                                                onChange={() => {
-                                                    setPendingFrozen(prev => {
-                                                        const next = new Set(prev);
-                                                        next.has(col.key) ? next.delete(col.key) : next.add(col.key);
-                                                        return next;
-                                                    });
-                                                }}
-                                                className="w-3.5 h-3.5 accent-tvs-blue flex-shrink-0"
-                                            />
-                                            <span className="text-[11px] text-gray-700 font-medium group-hover:text-tvs-blue transition-colors truncate">
-                                                {col.name}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
-
-                                {/* Footer actions */}
-                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                                    <button
-                                        onClick={() => setPendingFrozen(new Set())}
-                                        className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-500 hover:bg-gray-50 transition-all"
-                                    >
-                                        Clear All
-                                    </button>
-                                    <button
-                                        onClick={handleFreezeApply}
-                                        className="flex-1 px-3 py-1.5 rounded-lg bg-tvs-blue text-white text-[11px] font-semibold hover:bg-blue-700 transition-all shadow-sm"
-                                    >
-                                        Apply
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                <div className="px-6 pt-4 pb-2">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
+                    />
                 </div>
 
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
                     <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
                         <div className="h-full w-full absolute inset-0">
-                            <DataGrid
+                            <FrozenRowsDataGrid
                                 columns={autoFitColumns}
                                 rows={gridRows}
                                 rowKeyGetter={(row) => row._id || row.assetRequestId}
@@ -763,13 +685,10 @@ const MHDevelopmentTracker = () => {
                                 style={{ blockSize: '100%' }}
                                 rowHeight={44}
                                 headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{ resizable: true, minWidth: 100 }}
+                                loading={loading}
                             />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -789,12 +708,13 @@ const MHDevelopmentTracker = () => {
                 onOk={handleModalOk}
                 onCancel={() => setIsModalVisible(false)}
                 okText="Update"
-                width={800}
+                width="95%"
+                style={{ maxWidth: '800px' }}
                 centered
                 className="custom-modal"
             >
                 <Form form={form} layout="vertical" className="mt-6">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Form.Item name="departmentName" label={<span className="text-xs font-bold uppercase text-gray-500">Department Name</span>} rules={[{ required: true }]}>
                             <Input size="large" placeholder="E.g. Production" />
                         </Form.Item>

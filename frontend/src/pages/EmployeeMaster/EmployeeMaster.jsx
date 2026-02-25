@@ -595,14 +595,14 @@ const EmployeeMaster = () => {
             {/* AG Grid Table */}
             <div className="px-8 py-6">
                 {/* Toolbar with Export */}
-                <div className="mb-5 flex items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                <div className="mb-5 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                             <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredEmployees?.length || 0}</span> employees</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleDownloadTemplate}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
@@ -642,7 +642,7 @@ const EmployeeMaster = () => {
                         onApply={setFrozenKeys}
                         frozenRowCount={frozenRowCount}
                         setFrozenRowCount={setFrozenRowCount}
-                        maxRows={Math.min(gridRows.length, 10)}
+                        maxRows={Math.min(gridRows.length, 50)}
                     />
                 </div>
 
@@ -718,7 +718,8 @@ const EmployeeMaster = () => {
                 onOk={handleConfirmImport}
                 okText="Confirm Import"
                 cancelText="Cancel"
-                width={1000}
+                width="95%"
+                style={{ maxWidth: '1000px' }}
                 centered
                 okButtonProps={{
                     className: 'bg-emerald-600 hover:bg-emerald-700'
@@ -784,7 +785,8 @@ const EmployeeMaster = () => {
                     setViewingEmployee(null);
                 }}
                 footer={null}
-                width={800}
+                width="95%"
+                style={{ maxWidth: '800px' }}
                 centered
             >
                 {viewingEmployee && (

@@ -7,6 +7,8 @@ import { fetchVendors } from '../../redux/slices/vendorSlice';
 import { Modal, Select, InputNumber, Form, DatePicker } from 'antd';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import * as XLSX from 'xlsx';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -56,6 +58,8 @@ const VendorScoring = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
@@ -475,7 +479,7 @@ const VendorScoring = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(scores || []);
+    const gridRows = applyColumnFilters(scores || []).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const dataGridColumns = [
         {
@@ -483,8 +487,8 @@ const VendorScoring = () => {
             name: 'S.No',
             width: 80,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -591,27 +595,36 @@ const VendorScoring = () => {
         }
     ];
 
-    const autoFitColumns = useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial' && col.key !== 'actions')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+    const autoFitColumns = React.useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+
+        if (!gridWidth) return withFreeze;
+
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => {
             return sum + (column.width || 0);
         }, 0);
 
-        if (!totalDefinedWidth) return dataGridColumns;
+        if (!totalDefinedWidth) return withFreeze;
 
-        const scale = gridWidth / totalDefinedWidth;
+        const scale = Math.max(gridWidth / totalDefinedWidth, 1);
 
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
 
             return {
                 ...column,
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
 
 
@@ -690,14 +703,14 @@ const VendorScoring = () => {
                 style={{ display: 'none' }}
             />
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div className="px-6 pt-4 pb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                             <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{scores?.length || 0}</span> scores</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleAddClick}
                             className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
@@ -721,10 +734,21 @@ const VendorScoring = () => {
                     </div>
                 </div>
 
+                <div className="px-6 py-4">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
+                    />
+                </div>
+
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
                     <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
                         <div className="h-full w-full absolute inset-0">
-                            <DataGrid
+                            <FrozenRowsDataGrid
                                 columns={autoFitColumns}
                                 rows={gridRows}
                                 rowKeyGetter={(row) => row._id}
@@ -732,15 +756,12 @@ const VendorScoring = () => {
                                 style={{ blockSize: '100%' }}
                                 rowHeight={60}
                                 headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
                                     resizable: true
                                 }}
+                                loading={loading}
                             />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -772,7 +793,8 @@ const VendorScoring = () => {
                 onCancel={() => setIsModalVisible(false)}
                 okText={editingScore ? "Update Score" : "Create Score"}
                 cancelText="Cancel"
-                width={800}
+                width="95%"
+                style={{ maxWidth: '800px' }}
                 centered
                 okButtonProps={{ className: 'bg-tvs-blue hover:bg-tvs-blue/90' }}
             >
@@ -806,7 +828,7 @@ const VendorScoring = () => {
                     )}
 
                     {/* Auto-filled Vendor Details (Read-only) */}
-                    <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <Form.Item
                             name="vendorCode"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Vendor Code</span>}
@@ -837,7 +859,7 @@ const VendorScoring = () => {
                     </div>
 
                     {/* Scoring Period */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <Form.Item
                             name="scoringMonth"
                             label={<span className="text-xs font-bold text-gray-600 uppercase">Scoring Month</span>}
@@ -871,7 +893,7 @@ const VendorScoring = () => {
                             <Star size={16} className="text-yellow-500" />
                             PERFORMANCE METRICS (1-5 SCALE)
                         </h3>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <Form.Item
                                 name="qsrScore"
                                 label={<span className="text-xs font-bold text-gray-500 uppercase">QSR (40%)</span>}
@@ -941,7 +963,8 @@ const VendorScoring = () => {
                 open={isPerformanceModalVisible}
                 onCancel={() => setIsPerformanceModalVisible(false)}
                 footer={null}
-                width={1200}
+                width="95%"
+                style={{ maxWidth: '1200px' }}
                 centered
                 className="performance-modal"
             >
@@ -1030,7 +1053,7 @@ const VendorScoring = () => {
                         )}
 
                         {/* Score Breakdown */}
-                        <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
                                 <div className="text-xs font-bold text-gray-500 uppercase mb-3">QSR Score (40%)</div>
                                 <div className="flex items-end justify-between">

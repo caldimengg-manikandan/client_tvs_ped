@@ -5,20 +5,40 @@ import 'react-data-grid/lib/styles.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckCircle, MapPin, Star, Users, Zap, Award, Target, Info } from 'lucide-react';
 import { fetchVendorsForSelection, allocateVendor } from '../../redux/slices/mhDevelopmentTrackerSlice';
+import { useAuth } from '../../context/AuthContext';
 
 const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) => {
     const dispatch = useDispatch();
+    const { user } = useAuth();
     const { vendors, loading } = useSelector(state => state.mhDevelopmentTracker);
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [suggestedVendorId, setSuggestedVendorId] = useState(null);
+    const [overrideLocation, setOverrideLocation] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const isAdmin = user?.role === 'Admin';
+
+    const filteredVendors = useMemo(() => {
+        if (!vendors) return [];
+        if (!searchTerm) return vendors;
+        const lowSearch = searchTerm.toLowerCase();
+        return vendors.filter(v => 
+            v.vendorName?.toLowerCase().includes(lowSearch) || 
+            v.vendorCode?.toLowerCase().includes(lowSearch)
+        );
+    }, [vendors, searchTerm]);
 
     useEffect(() => {
         if (visible) {
-            dispatch(fetchVendorsForSelection(plantLocation));
+            dispatch(fetchVendorsForSelection({ 
+                location: plantLocation, 
+                overrideLocation 
+            }));
             setSelectedVendor(null);
             setSuggestedVendorId(null);
+            setSearchTerm('');
         }
-    }, [visible, plantLocation, dispatch]);
+    }, [visible, plantLocation, overrideLocation, dispatch]);
 
     const highestQcdScore = useMemo(() => {
         if (!vendors || vendors.length === 0) return '0.00';
@@ -175,8 +195,16 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                         <div>
                             <span className="text-xl font-black text-gray-900 font-outfit uppercase tracking-tight">Vendor Decision Matrix</span>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <Tag color="blue" className="text-[9px] font-bold uppercase m-0 border-none">{plantLocation}</Tag>
+                                <Tag color="blue" className="text-[9px] font-bold uppercase m-0 border-none">{overrideLocation ? 'ALL LOCATIONS' : plantLocation}</Tag>
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Select vendor for automated allocation</span>
+                                {isAdmin && (
+                                    <button 
+                                        onClick={() => setOverrideLocation(!overrideLocation)}
+                                        className="text-[9px] font-bold text-tvs-blue hover:underline uppercase ml-2"
+                                    >
+                                        {overrideLocation ? 'Filter by Location' : 'Show All Vendors'}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -185,20 +213,21 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
             open={visible}
             onCancel={onCancel}
             footer={
-                <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-b-2xl border-t">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-50/50 rounded-b-2xl border-t gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
                         <div className="flex flex-col text-left">
                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selected Entity</span>
-                            <span className="text-sm font-bold text-gray-800">{selectedVendor ? selectedVendor.vendorName : 'None Selected'}</span>
+                            <span className="text-sm font-bold text-gray-800 truncate max-w-[150px] sm:max-w-none">{selectedVendor ? selectedVendor.vendorName : 'None Selected'}</span>
                         </div>
                     </div>
-                    <Space size="middle">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <Button
                             onClick={handleSystemSuggestion}
                             icon={<Zap size={16} />}
-                            className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 font-bold rounded-xl h-10 flex items-center gap-2"
+                            className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 font-bold rounded-xl h-10 flex items-center gap-2 text-xs"
                         >
-                            System Suggestion
+                            <span className="hidden xs:inline">System Suggestion</span>
+                            <span className="xs:hidden">Suggest</span>
                         </Button>
                         <Button
                             type="primary"
@@ -206,14 +235,15 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                             disabled={!selectedVendor}
                             loading={loading}
                             icon={<CheckCircle size={16} />}
-                            className="bg-tvs-blue hover:bg-tvs-blue/90 font-black rounded-xl h-10 flex items-center gap-2 px-8 shadow-lg shadow-tvs-blue/20"
+                            className="bg-tvs-blue hover:bg-tvs-blue/90 font-black rounded-xl h-10 flex items-center gap-2 px-4 sm:px-8 shadow-lg shadow-tvs-blue/20 text-xs"
                         >
-                            Allocate & Notify
+                            Allocate
                         </Button>
-                    </Space>
+                    </div>
                 </div>
             }
-            width={1000}
+            width="95%"
+            style={{ maxWidth: '1000px', top: 20 }}
             centered
             className="vendor-selection-modal"
         >
@@ -244,17 +274,35 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                     </div>
                 </div>
 
-                {vendors.length === 0 && !loading ? (
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1 max-w-md relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <Target size={16} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search by vendor name or code..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-tvs-blue/20 focus:border-tvs-blue bg-white shadow-sm transition-all"
+                        />
+                    </div>
+                </div>
+
+                {filteredVendors.length === 0 && !loading ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100">
                         <Users size={64} className="text-gray-200 mb-4" />
                         <span className="text-xl font-black text-gray-400">No Vendors Found</span>
-                        <p className="text-gray-400 text-sm mt-2 max-w-xs text-center border-t pt-4 border-gray-100">There are no registered vendors for the location: <span className="font-black text-tvs-blue">{plantLocation}</span></p>
+                        <p className="text-gray-400 text-sm mt-2 max-w-xs text-center border-t pt-4 border-gray-100">
+                            {searchTerm ? `No results for "${searchTerm}"` : `There are no registered vendors for the location: `}
+                            {!searchTerm && <span className="font-black text-tvs-blue">{overrideLocation ? 'Any' : plantLocation}</span>}
+                        </p>
                     </div>
                 ) : (
                     <div className="w-full h-[400px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl shadow-gray-200/50">
                         <DataGrid
                             columns={columns}
-                            rows={vendors}
+                            rows={filteredVendors}
                             rowKeyGetter={(row) => row._id}
                             className="rdg-light vendor-selection-grid"
                             style={{ blockSize: '100%' }}
