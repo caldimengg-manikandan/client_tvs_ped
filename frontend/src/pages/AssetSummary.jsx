@@ -56,6 +56,12 @@ const AssetSummary = () => {
 
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -116,9 +122,9 @@ const AssetSummary = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs gap-1 text-white">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -126,9 +132,9 @@ const AssetSummary = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
-                    <Filter size={10} />
+                    <Filter size={11} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
@@ -189,9 +195,10 @@ const AssetSummary = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'Sno',
-            width: 70,
+            name: 'S.NO',
+            width: 80,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -319,73 +326,45 @@ const AssetSummary = () => {
     }, []);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-            <div className="px-6 py-4 border-b border-gray-100">
-                <FreezeToolbar
-                    columns={freezeColumnList}
-                    frozenKeys={frozenKeys}
-                    onApply={setFrozenKeys}
-                    frozenRowCount={frozenRowCount}
-                    setFrozenRowCount={setFrozenRowCount}
-                    maxRows={Math.min(gridRows.length, 50)}
-                />
-            </div>
-            <div
-                ref={gridContainerRef}
-                className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
-            >
-                <div className="h-full">
-                    <FrozenRowsDataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={(row) => row._id || row.mhRequestId || row.allocationAssetId}
-                        className="rdg-light asset-summary-grid"
-                        style={{ blockSize: '100%', width: '100%' }}
-                        rowHeight={52}
-                        headerRowHeight={48}
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="px-6 py-4">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
                         frozenRowCount={frozenRowCount}
-                        defaultColumnOptions={{
-                            resizable: true
-                        }}
-                        loading={loading}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
                     />
-                    {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                </div>
+
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.mhRequestId || row.allocationAssetId}
+                                className="rdg-light asset-summary-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loading}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
-            <style>{`
-                .asset-summary-grid.rdg-light {
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                }
-                .asset-summary-grid .rdg-row .rdg-cell {
-                    border-inline: none;
-                    padding-block: 12px;
-                    padding-inline: 16px;
-                    font-size: 13px;
-                }
-                .asset-summary-grid .rdg-row:not(.rdg-row-selected) .rdg-cell {
-                    border-bottom: 1px solid #f1f5f9;
-                }
-                .asset-summary-grid .rdg-row:hover .rdg-cell {
-                    background-color: #f8fafc;
-                }
-                .asset-summary-grid .rdg-header-row .rdg-cell {
-                    padding-block: 14px;
-                    padding-inline: 16px;
-                    font-weight: 700;
-                    border-inline: none;
-                    border-bottom: 2px solid #e2e8f0;
-                    position: relative;
-                    font-size: 12px;
-                    background-color: #253C80;
-                    color: #ffffff;
-                }
-            `}</style>
         </div>
     );
 };

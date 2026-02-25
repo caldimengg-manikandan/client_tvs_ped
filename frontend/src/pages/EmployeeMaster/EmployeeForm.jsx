@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Switch } from 'antd';
-import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings } from 'lucide-react';
+import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings, TrendingUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEmployee, updateEmployee, fetchEmployeeById, fetchUserByEmployeeId, checkIdAvailability } from '../../redux/slices/employeeSlice';
@@ -22,6 +22,7 @@ const permissionList = [
     { id: 'assetSummary', label: 'Asset Summary', icon: <BarChart3 size={20} />, description: 'View asset analytics' },
     { id: 'employeeMaster', label: 'Employee Master', icon: <Users size={20} />, description: 'Manage employees' },
     { id: 'vendorMaster', label: 'Vendor Master', icon: <Truck size={20} />, description: 'Manage vendors' },
+    { id: 'mhDevelopmentTracker', label: 'MH Dev Tracker', icon: <TrendingUp size={20} />, description: 'Track MH development progress' },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} />, description: 'System configuration' }
 ];
 
@@ -52,6 +53,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
         assetSummary: false,
         employeeMaster: false,
         vendorMaster: false,
+        mhDevelopmentTracker: false,
         settings: false
     });
 

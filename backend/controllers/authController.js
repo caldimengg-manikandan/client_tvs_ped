@@ -62,7 +62,7 @@ const loginUser = asyncHandler(async (req, res) => {
             previousLoginAt: user.previousLoginAt
         });
 
-        closePreviousSessionsPromise.catch(() => {});
+        closePreviousSessionsPromise.catch(() => { });
     } else {
         res.status(401);
         throw new Error('Invalid credentials');
@@ -207,6 +207,7 @@ const seedDatabase = asyncHandler(async (req, res) => {
             reports: true,
             employeeMaster: true,
             vendorMaster: true,
+            mhDevelopmentTracker: true,
             settings: true
         },
         status: 'Active'
@@ -230,6 +231,7 @@ const seedDatabase = asyncHandler(async (req, res) => {
             reports: true,
             employeeMaster: true,
             vendorMaster: true,
+            mhDevelopmentTracker: true,
             settings: true
         },
         status: 'Active'

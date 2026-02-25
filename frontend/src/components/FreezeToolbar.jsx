@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Columns3, Rows3 } from 'lucide-react';
+import { Columns3, Rows3, ArrowRight } from 'lucide-react';
 
 /**
  * FreezeToolbar
@@ -12,9 +12,9 @@ import { Columns3, Rows3 } from 'lucide-react';
  *   columns            — array of { key, name } for all grid columns (excluding 'serial')
  *   frozenKeys         — Set of column keys currently frozen
  *   onApply(newSet)    — called when user clicks Apply on column panel
- *   frozenRowCount     — number of rows currently frozen
+ *   frozenRowCount     — number of rows currently frozen (can be number or {start, end})
  *   setFrozenRowCount  — setter for frozenRowCount
- *   maxRows            — maximum rows that can be frozen (default 10)
+ *   maxRows            — maximum rows that can be frozen (default 50)
  */
 const FreezeToolbar = ({
     columns = [],
@@ -31,7 +31,6 @@ const FreezeToolbar = ({
 
     /* ── Row freeze state ── */
     const [rowOpen, setRowOpen] = useState(false);
-    const [rowDraft, setRowDraft] = useState(frozenRowCount);
     const rowRef = useRef(null);
 
     /* ── Close on outside click ── */
@@ -46,7 +45,6 @@ const FreezeToolbar = ({
 
     /* ── Sync draft when panels open ── */
     useEffect(() => { if (colOpen) setDraft(new Set(frozenKeys)); }, [colOpen]);
-    useEffect(() => { if (rowOpen) setRowDraft(frozenRowCount); }, [rowOpen]);
 
     /* ── Column helpers ── */
     const toggleDraft = (key) => {
@@ -58,18 +56,6 @@ const FreezeToolbar = ({
     };
     const handleColClear = () => setDraft(new Set());
     const handleColApply = () => { onApply(draft); setColOpen(false); };
-
-    /* ── Row helpers ── */
-    const clampRow = (v) => Math.max(0, Math.min(maxRows, v));
-    const handleRowApply = () => {
-        setFrozenRowCount(Number(rowDraft) || 0);
-        setRowOpen(false);
-    };
-    const handleRowClear = () => {
-        setRowDraft(0);
-        setFrozenRowCount(0);
-        setRowOpen(false);
-    };
 
     const frozenColCount = frozenKeys.size;
 
@@ -186,91 +172,20 @@ const FreezeToolbar = ({
                 >
                     <Rows3 size={16} strokeWidth={2.2} />
                     <span>Freeze Rows</span>
-                    {frozenRowCount > 0 && (
-                        <span className="ml-1 bg-[#1a3c6e] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
-                            {frozenRowCount}
+                    {((typeof frozenRowCount === 'number' && frozenRowCount > 0) || (typeof frozenRowCount === 'object' && frozenRowCount !== null && frozenRowCount.end > 0)) && (
+                        <span className="ml-1 bg-[#1a3c6e] text-white text-[10px] font-black px-2 py-0.5 rounded-full leading-none">
+                            {typeof frozenRowCount === 'number' ? frozenRowCount : `${frozenRowCount.start}-${frozenRowCount.end}`}
                         </span>
                     )}
                 </button>
 
                 {rowOpen && (
-                    <div className="absolute left-0 top-[calc(100%+6px)] z-[999] w-64 bg-white rounded-xl shadow-2xl border border-[#cdd9e8] overflow-hidden"
-                        style={{ animation: 'fp-in 0.15s ease' }}>
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <div className="flex items-center gap-2 text-[#1a3c6e] font-bold text-sm">
-                                <Rows3 size={15} strokeWidth={2.5} />
-                                <span>Freeze Rows</span>
-                            </div>
-                            <button type="button" onClick={() => setRowOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                    <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Row input focus */}
-                        <div className="px-6 py-6">
-                            <p className="text-[11px] text-gray-500 font-bold mb-5 uppercase tracking-wider text-center">
-                                Number of rows to freeze from top
-                            </p>
-                            
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="relative group">
-                                    <input
-                                        type="number"
-                                        value={rowDraft || ''}
-                                        onChange={(e) => {
-                                            const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                                            if (val === '') {
-                                                setRowDraft('');
-                                            } else if (!isNaN(val)) {
-                                                setRowDraft(clampRow(val));
-                                            }
-                                        }}
-                                        onBlur={() => {
-                                            if (rowDraft === '') setRowDraft(0);
-                                        }}
-                                        className="w-32 h-14 text-center text-3xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-xl outline-none focus:border-[#1a3c6e] focus:ring-4 focus:ring-[#1a3c6e]/5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
-                                        placeholder="0"
-                                    />
-                                    <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-[#cdd9e8] pointer-events-none transition-all"></div>
-                                </div>
-                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">rows frozen</span>
-                            </div>
-
-                            {/* Quick-select pills */}
-                            <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
-                                {[0, 5, 10, 20, 50].filter(n => n <= maxRows).map(n => (
-                                    <button
-                                        key={n}
-                                        type="button"
-                                        onClick={() => setRowDraft(n)}
-                                        className={`text-[11px] font-bold px-3 py-1 rounded-md border transition-all
-                                            ${rowDraft === n
-                                                ? 'bg-[#1a3c6e] text-white border-[#1a3c6e]'
-                                                : 'bg-white text-gray-500 border-gray-200 hover:border-[#1a3c6e] hover:text-[#1a3c6e]'
-                                            }`}
-                                    >
-                                        {n === 0 ? 'None' : n}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-                            <button type="button" onClick={handleRowClear}
-                                className="text-[12px] font-semibold text-gray-500 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all border border-transparent hover:border-red-100">
-                                Clear
-                            </button>
-                            <button type="button" onClick={handleRowApply}
-                                className="text-[12px] font-black text-white bg-[#1a3c6e] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
-                                Apply
-                            </button>
-                        </div>
-                    </div>
+                    <FreezeRowDropdown 
+                        initialValue={frozenRowCount}
+                        maxRows={maxRows}
+                        onApply={(val) => { setFrozenRowCount(val); setRowOpen(false); }}
+                        onClose={() => setRowOpen(false)}
+                    />
                 )}
             </div>
 
@@ -280,6 +195,152 @@ const FreezeToolbar = ({
                     to   { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
+        </div>
+    );
+};
+
+const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
+    // Mode can be 'top' (Standard) or 'range' (Custom)
+    const initialMode = (typeof initialValue === 'object' && initialValue !== null) ? 'range' : 'top';
+    const [mode, setMode] = useState(initialMode);
+    
+    // Use strings for drafts to allow empty inputs while typing
+    const [topDraft, setTopDraft] = useState(String(typeof initialValue === 'number' ? initialValue : 0));
+    const [rangeStart, setRangeStart] = useState(String(typeof initialValue === 'object' && initialValue !== null ? initialValue.start : 1));
+    const [rangeEnd, setRangeEnd] = useState(String(typeof initialValue === 'object' && initialValue !== null ? initialValue.end : 1));
+
+    const handleApply = () => {
+        if (mode === 'top') {
+            const val = Math.max(0, Math.min(maxRows, parseInt(topDraft, 10) || 0));
+            onApply(val);
+        } else {
+            const sNum = parseInt(rangeStart, 10) || 1;
+            const eNum = parseInt(rangeEnd, 10) || sNum;
+            
+            const start = Math.max(1, Math.min(maxRows, sNum));
+            const end = Math.max(start, Math.min(maxRows, eNum));
+            
+            onApply({ start, end });
+        }
+    };
+
+    const handleClear = () => {
+        onApply(0);
+    };
+
+    return (
+        <div className="absolute left-0 top-[calc(100%+6px)] z-[999] w-72 bg-white rounded-xl shadow-2xl border border-[#cdd9e8] overflow-hidden"
+            style={{ animation: 'fp-in 0.15s ease' }}>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2 text-[#1a3c6e] font-bold text-sm">
+                    <Rows3 size={15} strokeWidth={2.5} />
+                    <span>Freeze Rows</span>
+                </div>
+                <button type="button" onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex p-2 bg-gray-50/50 border-b border-gray-100">
+                <button 
+                    onClick={() => setMode('top')}
+                    className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all
+                        ${mode === 'top' ? 'bg-white text-[#1a3c6e] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                    From Top
+                </button>
+                <button 
+                    onClick={() => setMode('range')}
+                    className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all
+                        ${mode === 'range' ? 'bg-white text-[#1a3c6e] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                    Specific Range
+                </button>
+            </div>
+
+            <div className="px-6 py-6 font-sans">
+                {mode === 'top' ? (
+                    <>
+                        <p className="text-[11px] text-gray-500 font-bold mb-5 uppercase tracking-wider text-center">
+                            Number of rows from top
+                        </p>
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="relative group">
+                                <input
+                                    type="number"
+                                    value={topDraft}
+                                    onChange={(e) => setTopDraft(e.target.value)}
+                                    className="w-32 h-14 text-center text-3xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-xl outline-none focus:border-[#1a3c6e] focus:ring-4 focus:ring-[#1a3c6e]/5 transition-all shadow-inner"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rows Frozen</span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+                            {[0, 5, 10, 20, 50].filter(n => n <= maxRows).map(n => (
+                                <button key={n} type="button" onClick={() => setTopDraft(String(n))}
+                                    className={`text-[11px] font-bold px-3 py-1 rounded-md border transition-all
+                                        ${topDraft === String(n) ? 'bg-[#1a3c6e] text-white border-[#1a3c6e]' : 'bg-white text-gray-500 border-gray-200 hover:border-[#1a3c6e]'}`}
+                                >
+                                    {n === 0 ? 'None' : n}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-[11px] text-gray-500 font-bold mb-5 uppercase tracking-wider text-center">
+                            Select specific row range
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="flex flex-col items-center gap-1">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">From</span>
+                                <input
+                                    type="number"
+                                    value={rangeStart}
+                                    onChange={(e) => setRangeStart(e.target.value)}
+                                    className="w-20 h-12 text-center text-xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#1a3c6e] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
+                                />
+                            </div>
+                            <div className="pt-4 text-gray-300">
+                                <ArrowRight size={16} strokeWidth={3} />
+                            </div>
+                            <div className="flex flex-col items-center gap-1">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">To</span>
+                                <input
+                                    type="number"
+                                    value={rangeEnd}
+                                    onChange={(e) => setRangeEnd(e.target.value)}
+                                    className="w-20 h-12 text-center text-xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#1a3c6e] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-6 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                             <p className="text-[10px] text-blue-700 font-medium text-center">
+                                Rows <span className="font-bold">{rangeStart} to {rangeEnd}</span> will be pinned to the top.
+                             </p>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+                <button type="button" onClick={handleClear}
+                    className="text-[12px] font-semibold text-gray-500 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all border border-transparent hover:border-red-100">
+                    Clear
+                </button>
+                <button type="button" onClick={handleApply}
+                    className="text-[12px] font-black text-white bg-[#1a3c6e] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
+                    Apply
+                </button>
+            </div>
         </div>
     );
 };

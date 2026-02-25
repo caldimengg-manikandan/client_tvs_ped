@@ -10,10 +10,10 @@ const { TextArea } = Input;
 
 const PlainHeaderCell = ({ column }) => (
     <div
-        className="h-full w-full flex items-center px-3"
-        style={{ backgroundColor: '#253C80' }}
+        className="h-full w-full flex items-center px-4"
+        style={{ backgroundColor: '#1e3a8a' }}
     >
-        <span className="font-bold text-white text-[11px] leading-tight tracking-wide whitespace-normal">
+        <span className="font-bold text-white text-[10px] leading-tight tracking-[0.05em] uppercase whitespace-normal">
             {column.name}
         </span>
     </div>
@@ -125,9 +125,9 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             frozen: true,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center justify-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'sNo']} className="m-0 w-full flex items-center justify-center">
-                        <Input disabled bordered={false} className="text-center text-xs w-full bg-transparent text-gray-500" />
+                <div className="flex items-center justify-center h-full w-full border-r border-gray-100">
+                    <Form.Item name={[row.name, 'sNo']} className="m-0 w-full">
+                        <Input disabled bordered={false} className="text-center font-bold text-[11px] w-full bg-transparent text-gray-400" />
                     </Form.Item>
                 </div>
             )
@@ -138,9 +138,9 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             width: 280,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'activity']} className="m-0 w-full flex items-center justify-center">
-                        <Input readOnly bordered={false} className="text-xs w-full bg-transparent text-gray-600" />
+                <div className="flex items-center h-full px-4 w-full border-r border-gray-100">
+                    <Form.Item name={[row.name, 'activity']} className="m-0 w-full">
+                        <Input readOnly bordered={false} className="text-[12px] font-semibold w-full bg-transparent text-gray-800 p-0" />
                     </Form.Item>
                 </div>
             )
@@ -151,9 +151,9 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             width: 150,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'responsibility']} className="m-0 w-full flex items-center justify-center">
-                        <Input readOnly bordered={false} className="text-xs w-full bg-transparent text-gray-600" />
+                <div className="flex items-center h-full px-4 w-full border-r border-gray-100">
+                    <Form.Item name={[row.name, 'responsibility']} className="m-0 w-full">
+                        <Input readOnly bordered={false} className="text-[11px] w-full bg-transparent text-gray-600 p-0 italic" />
                     </Form.Item>
                 </div>
             )
@@ -166,8 +166,10 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             renderCell: ({ row }) => {
                 const val = form.getFieldValue(['milestones', row.name, 'planStart']);
                 return (
-                    <div className="flex items-center h-full px-3 w-full text-xs text-gray-600">
-                        {val ? dayjs(val).format('DD-MMM-YYYY') : '-'}
+                    <div className="flex items-center justify-center h-full w-full border-r border-gray-100">
+                        <span className="text-[11px] font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded">
+                            {val ? dayjs(val).format('DD-MMM-YYYY') : '-'}
+                        </span>
                     </div>
                 );
             }
@@ -180,8 +182,10 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             renderCell: ({ row }) => {
                 const val = form.getFieldValue(['milestones', row.name, 'planEnd']);
                 return (
-                    <div className="flex items-center h-full px-3 w-full text-xs text-gray-600">
-                        {val ? dayjs(val).format('DD-MMM-YYYY') : '-'}
+                    <div className="flex items-center justify-center h-full w-full border-r border-gray-100">
+                        <span className="text-[11px] font-medium text-gray-500 bg-gray-50/50 px-2 py-1 rounded">
+                            {val ? dayjs(val).format('DD-MMM-YYYY') : '-'}
+                        </span>
                     </div>
                 );
             }
@@ -192,9 +196,14 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             width: 170,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'actualStart']} className="m-0 w-full flex items-center justify-center">
-                        <DatePicker bordered={false} className="text-xs w-full bg-transparent" format="DD-MMM-YYYY" />
+                <div className="flex items-center h-full w-full border-r border-gray-100 bg-blue-50/30">
+                    <Form.Item name={[row.name, 'actualStart']} className="m-0 w-full">
+                        <DatePicker 
+                            bordered={false} 
+                            className="text-[11px] font-bold w-full h-full text-center hover:bg-white/50 transition-colors" 
+                            format="DD-MMM-YYYY" 
+                            placeholder="Select Date"
+                        />
                     </Form.Item>
                 </div>
             )
@@ -205,9 +214,14 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             width: 170,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'actualEnd']} className="m-0 w-full flex items-center justify-center">
-                        <DatePicker bordered={false} className="text-xs w-full bg-transparent" format="DD-MMM-YYYY" />
+                <div className="flex items-center h-full w-full border-r border-gray-100 bg-green-50/30">
+                    <Form.Item name={[row.name, 'actualEnd']} className="m-0 w-full">
+                        <DatePicker 
+                            bordered={false} 
+                            className="text-[11px] font-bold w-full h-full text-center hover:bg-white/50 transition-colors" 
+                            format="DD-MMM-YYYY" 
+                            placeholder="Select Date"
+                        />
                     </Form.Item>
                 </div>
             )
@@ -257,8 +271,12 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center h-full px-3 w-full">
-                    <Form.Item name={[row.name, 'remarks']} className="m-0 w-full flex items-center justify-center">
-                        <Input bordered={false} className="text-xs w-full bg-transparent" />
+                    <Form.Item name={[row.name, 'remarks']} className="m-0 w-full">
+                        <Input 
+                            bordered={false} 
+                            className="text-[11px] w-full bg-transparent hover:bg-gray-50 rounded transition-colors" 
+                            placeholder="Add remarks..."
+                        />
                     </Form.Item>
                 </div>
             )
@@ -273,7 +291,7 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
                         <ClipboardList size={20} />
                     </div>
                     <div>
-                        <span className="text-xl font-bold">Initialise Actual Start</span>
+                        <span className="text-xl font-bold">Track Progress</span>
                         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">
                             {trackerInfo?.assetRequestId ? `Asset Request ID: ${trackerInfo.assetRequestId}` : 'Define actual milestones'}
                         </p>
@@ -283,8 +301,8 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             open={visible}
             onCancel={onCancel}
             onOk={handleSubmit}
-            width="95%"
-            style={{ maxWidth: '1200px' }}
+            width="90%"
+            style={{ maxWidth: '1400px', top: '20px' }}
             confirmLoading={loading}
             okText="Save Actuals"
             centered
@@ -296,7 +314,7 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
                     <Form.List name="milestones">
                         {(fields) => {
                             return (
-                                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                                <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-black/5">
                                     <DataGrid
                                         columns={columns}
                                         rows={fields}

@@ -310,6 +310,12 @@ const EmployeeMaster = () => {
         );
     };
 
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -371,9 +377,9 @@ const EmployeeMaster = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-white truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -381,7 +387,7 @@ const EmployeeMaster = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
                     <Filter size={10} />
                 </button>
@@ -446,9 +452,10 @@ const EmployeeMaster = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'S.No',
-            width: 70,
+            name: 'S.NO',
+            width: 80,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -519,8 +526,9 @@ const EmployeeMaster = () => {
         {
             key: 'actions',
             name: 'ACTIONS',
-            width: 180,
+            width: 150,
             sortable: false,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -590,52 +598,51 @@ const EmployeeMaster = () => {
     const frozenRows = gridRows.slice(0, frozenRowCount);
 
     return (
-        <div className="bg-gradient-to-br from-white to-gray-50/30 rounded-xl shadow-lg border border-gray-200/60 overflow-hidden fade-in">
-
-            {/* AG Grid Table */}
-            <div className="px-8 py-6">
-                {/* Toolbar with Export */}
-                <div className="mb-5 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredEmployees?.length || 0}</span> employees</span>
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                {/* AG Grid Table */}
+                <div className="px-6 py-4 flex flex-col gap-4">
+                    {/* Toolbar with Export */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredEmployees?.length || 0}</span> employees</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                            <button
+                                onClick={handleDownloadTemplate}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                            >
+                                <Download size={16} />
+                                Template
+                            </button>
+                            <button
+                                onClick={handleAddEmployee}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                            >
+                                <Plus size={16} />
+                                Add Employee
+                            </button>
+                            <button
+                                onClick={handleImportClick}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                            >
+                                <Upload size={16} />
+                                Import Excel
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                            />
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                        <button
-                            onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Download size={16} />
-                            Template
-                        </button>
-                        <button
-                            onClick={handleAddEmployee}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Plus size={16} />
-                            Add Employee
-                        </button>
-                        <button
-                            onClick={handleImportClick}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Upload size={16} />
-                            Import Excel
-                        </button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                        />
-                    </div>
-                </div>
 
-                {/* Freeze Toolbar */}
-                <div className="mb-3">
+                    {/* Freeze Toolbar */}
                     <FreezeToolbar
                         columns={freezeColumnList}
                         frozenKeys={frozenKeys}
@@ -646,24 +653,27 @@ const EmployeeMaster = () => {
                     />
                 </div>
 
-                <div ref={gridContainerRef} className="w-full border border-gray-200 rounded-xl overflow-hidden bg-white mx-4 mb-4"
-                    style={{ height: '620px' }}>
-                    <FrozenRowsDataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={(row) => row._id || row.employeeId}
-                        className="rdg-light employee-master-grid"
-                        rowHeight={52}
-                        headerRowHeight={48}
-                        frozenRowCount={frozenRowCount}
-                        defaultColumnOptions={{ resizable: true }}
-                        loading={loading}
-                    />
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.employeeId}
+                                className="rdg-light employee-master-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loading}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
-
-
-
             {/* Footer */}
             <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

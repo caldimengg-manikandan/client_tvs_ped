@@ -113,6 +113,12 @@ const ProjectPlanModel = () => {
         dispatch(fetchTrackers());
     };
 
+    const CustomHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const applyColumnFilters = rows => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
 
@@ -187,9 +193,9 @@ const ProjectPlanModel = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-white truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -197,8 +203,7 @@ const ProjectPlanModel = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded ${hasFilter ? 'bg-tvs-blue text-white' : 'text-gray-400 hover:bg-gray-100'
-                        }`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
                     <Filter size={10} />
                 </button>
@@ -320,6 +325,7 @@ const ProjectPlanModel = () => {
             key: 'action',
             name: 'ACTIONS',
             width: 180,
+            renderHeaderCell: CustomHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -334,9 +340,9 @@ const ProjectPlanModel = () => {
                         type="button"
                         className="px-3 py-1.5 text-xs font-semibold rounded-full border border-indigo-100 text-indigo-600 hover:bg-indigo-50 bg-white shadow-sm"
                         onClick={() => handleProjectPlan(row.trackerId)}
-                        title="Initialise Actual Start"
+                        title="Track Progress"
                     >
-                        Initialise Actual Start
+                        Track Progress
                     </button>
                 </div>
             )
@@ -399,30 +405,32 @@ const ProjectPlanModel = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent">
-            <div
-                ref={gridContainerRef}
-                className="flex-1 w-full border border-gray-200 rounded-2xl overflow-hidden bg-white relative min-h-[400px]"
-            >
-                <div className="h-full w-full absolute inset-0">
-                    <DataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={row =>
-                            `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
-                        }
-                        className="rdg-light mh-development-grid"
-                        style={{ blockSize: '100%' }}
-                        rowHeight={60}
-                        headerRowHeight={52}
-                        defaultColumnOptions={{
-                            resizable: true
-                        }}
-                    />
-                    {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                        </div>
-                    )}
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div
+                    ref={gridContainerRef}
+                    className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]"
+                >
+                    <div className="h-full w-full absolute inset-0">
+                        <DataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={row =>
+                                `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
+                            }
+                            className="rdg-light project-plan-grid"
+                            style={{ blockSize: '100%' }}
+                            rowHeight={44}
+                            headerRowHeight={52}
+                            defaultColumnOptions={{
+                                resizable: true
+                            }}
+                        />
+                        {loading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -536,6 +544,37 @@ const ProjectPlanModel = () => {
                     )}
                 </div>
             </Modal>
+            <style>{`
+                .project-plan-grid.rdg-light {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+                .project-plan-grid .rdg-row .rdg-cell {
+                    border-inline: none;
+                    padding-block: 12px;
+                    padding-inline: 16px;
+                    font-size: 13px;
+                }
+                .project-plan-grid .rdg-row:not(.rdg-row-selected) .rdg-cell {
+                    border-bottom: 1px solid #f1f5f9;
+                }
+                .project-plan-grid .rdg-row:hover .rdg-cell {
+                    background-color: #f8fafc;
+                }
+                .project-plan-grid .rdg-header-row .rdg-cell {
+                    padding-block: 14px;
+                    padding-inline: 16px;
+                    font-weight: 700;
+                    border-inline: none;
+                    border-bottom: 2px solid #e2e8f0;
+                    position: relative;
+                    font-size: 11px;
+                    background-color: #253C80;
+                    color: #ffffff;
+                    text-transform: uppercase;
+                }
+            `}</style>
         </div>
     );
 };

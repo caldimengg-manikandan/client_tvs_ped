@@ -131,12 +131,19 @@ const Dashboard = () => {
         });
     };
 
+    const CustomHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const dataGridColumns = React.useMemo(() => [
         {
             key: 'serial',
             name: 'S.NO',
             width: 80,
             frozen: true,
+            renderHeaderCell: CustomHeaderCell,
             renderCell: ({ rowIdx }) => (
                 <span className="font-bold text-gray-700">{rowIdx + 1}</span>
             )
@@ -144,27 +151,32 @@ const Dashboard = () => {
         {
             key: 'mhRequestId',
             name: 'MH ID',
-            width: 150
+            width: 150,
+            renderHeaderCell: CustomHeaderCell
         },
         {
             key: 'departmentName',
             name: 'DEPARTMENT',
-            width: 180
+            width: 180,
+            renderHeaderCell: CustomHeaderCell
         },
         {
             key: 'userName',
             name: 'USER',
-            width: 160
+            width: 160,
+            renderHeaderCell: CustomHeaderCell
         },
         {
             key: 'handlingPartName',
             name: 'PART NAME',
-            width: 200
+            width: 200,
+            renderHeaderCell: CustomHeaderCell
         },
         {
             key: 'status',
             name: 'STATUS',
             width: 150,
+            renderHeaderCell: CustomHeaderCell,
             renderCell: ({ row }) => (
                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-[1px] border ${getStatusColor(row.status)}`}>
                     {row.status}
@@ -175,6 +187,7 @@ const Dashboard = () => {
             key: 'progressStatus',
             name: 'PROGRESS',
             width: 150,
+            renderHeaderCell: CustomHeaderCell,
             renderCell: ({ row }) => (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-500 border border-gray-200 inline-block leading-none">
                     {row.progressStatus || 'PENDING'}
@@ -1148,7 +1161,9 @@ const Dashboard = () => {
                         columns={dataGridColumns}
                         rows={getFilteredRequests()}
                         rowKeyGetter={(row) => row._id || row.mhRequestId}
-                        className="rdg-light"
+                        className="rdg-light dashboard-grid"
+                        rowHeight={44}
+                        headerRowHeight={52}
                     />
                     {loadingRequests && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/60">
@@ -1393,6 +1408,23 @@ const Dashboard = () => {
                     );
                 })()}
             </AnimatePresence>
+            <style>{`
+                .dashboard-grid.rdg-light {
+                    border: none;
+                }
+                .dashboard-grid .rdg-header-row .rdg-cell {
+                    background-color: #253C80;
+                    color: white;
+                    font-weight: bold;
+                    border-bottom: 2px solid #e2e8f0;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                }
+                .dashboard-grid .rdg-row .rdg-cell {
+                    border-bottom: 1px solid #f1f5f9;
+                    font-size: 13px;
+                }
+            `}</style>
         </motion.div>
     );
 };

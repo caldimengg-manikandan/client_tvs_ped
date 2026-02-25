@@ -29,6 +29,7 @@ const userSchema = mongoose.Schema({
         dashboard: { type: Boolean, default: true },
         assetRequest: { type: Boolean, default: true },
         requestTracker: { type: Boolean, default: false },
+        mhDevelopmentTracker: { type: Boolean, default: false },
         assetSummary: { type: Boolean, default: false },
         reports: { type: Boolean, default: false },
         employeeMaster: { type: Boolean, default: false },

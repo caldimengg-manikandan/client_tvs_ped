@@ -224,6 +224,12 @@ const RequestTracker = () => {
 
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-2 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -284,9 +290,9 @@ const RequestTracker = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs gap-1 text-white">
+            <div className="relative h-full w-full flex items-center justify-between px-2 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -294,7 +300,7 @@ const RequestTracker = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10'}`}
+                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-white/20 text-white border border-white/30' : 'text-white/70 hover:bg-white/10'}`}
                 >
                     <Filter size={10} />
                 </button>
@@ -357,9 +363,10 @@ const RequestTracker = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'S.No',
+            name: 'S.NO',
             width: 70,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -582,37 +589,39 @@ const RequestTracker = () => {
     }, []);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-
-            <div className="px-6 py-4">
-                <FreezeToolbar
-                    columns={freezeColumnList}
-                    frozenKeys={frozenKeys}
-                    onApply={setFrozenKeys}
-                    frozenRowCount={frozenRowCount}
-                    setFrozenRowCount={setFrozenRowCount}
-                    maxRows={Math.min(gridRows.length, 50)}
-                />
-            </div>
-
-            <div ref={gridContainerRef} className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-                <div className="h-full">
-                    <FrozenRowsDataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={(row) => row._id || row.mhRequestId}
-                        className="rdg-light request-tracker-grid"
-                        style={{ blockSize: '100%', width: '100%' }}
-                        rowHeight={52}
-                        headerRowHeight={48}
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="px-6 py-4">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
                         frozenRowCount={frozenRowCount}
-                        defaultColumnOptions={{
-                            resizable: true
-                        }}
-                        loading={loadingRequests}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
                     />
                 </div>
-            </div>
+
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.mhRequestId}
+                                className="rdg-light request-tracker-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loadingRequests}
+                            />
+                        </div>
+                    </div>
+                </div>
 
             {/* Assign Member Modal */}
             {isModalOpen && (
@@ -742,6 +751,7 @@ const RequestTracker = () => {
                     color: #ffffff;
                 }
             `}</style>
+        </div>
         </div>
     );
 };

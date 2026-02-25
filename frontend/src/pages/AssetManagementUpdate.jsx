@@ -361,6 +361,12 @@ const AssetManagementUpdate = () => {
 
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
+    const PlainHeaderCell = ({ column }) => (
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+            <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
+        </div>
+    );
+
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
@@ -421,9 +427,9 @@ const AssetManagementUpdate = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full flex items-center justify-between px-2 text-xs gap-1 text-white">
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
                 <div className="flex-1 min-w-0">
-                    <span className="font-semibold truncate">{column.name}</span>
+                    <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
                 <button
                     type="button"
@@ -431,9 +437,9 @@ const AssetManagementUpdate = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-0.5 rounded shrink-0 ${hasFilter ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
                 >
-                    <Filter size={10} />
+                    <Filter size={11} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
@@ -494,9 +500,10 @@ const AssetManagementUpdate = () => {
     const dataGridColumns = [
         {
             key: 'serial',
-            name: 'Sno',
-            width: 70,
+            name: 'S.NO',
+            width: 80,
             frozen: true,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
@@ -544,6 +551,7 @@ const AssetManagementUpdate = () => {
             key: 'signOffDocument',
             name: 'SIGN-OFF DOC',
             width: 180,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <FileRenderer data={row} fileType="signOffDocument" />
             )
@@ -552,6 +560,7 @@ const AssetManagementUpdate = () => {
             key: 'drawing',
             name: 'DRAWING',
             width: 180,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <FileRenderer data={row} fileType="drawing" />
             )
@@ -560,6 +569,7 @@ const AssetManagementUpdate = () => {
             key: 'actions',
             name: 'ACTIONS',
             width: 120,
+            renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
@@ -630,59 +640,63 @@ const AssetManagementUpdate = () => {
     }, []);
 
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
-            <div className="flex justify-between items-center p-6 border-b border-tvs-border bg-gray-50">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-bold text-gray-700">
-                            Total Assets: <span className="text-emerald-700">{assets.length}</span>
-                        </span>
-                    </div>
-                </div>
-                <div>
-                    <button
-                        onClick={openAddModal}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-tvs-blue text-white rounded-lg hover:bg-opacity-90 transition-all shadow-sm font-semibold"
-                    >
-                        <Plus size={18} />
-                        Add Asset
-                    </button>
-                </div>
-            </div>
-
-            <div className="px-6 py-4">
-                <FreezeToolbar
-                    columns={freezeColumnList}
-                    frozenKeys={frozenKeys}
-                    onApply={setFrozenKeys}
-                    frozenRowCount={frozenRowCount}
-                    setFrozenRowCount={setFrozenRowCount}
-                    maxRows={Math.min(gridRows.length, 50)}
-                />
-            </div>
-
-            <div ref={gridContainerRef} className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
-                <div className="h-full">
-                    <FrozenRowsDataGrid
-                        columns={autoFitColumns}
-                        rows={gridRows}
-                        rowKeyGetter={(row) => row._id || row.assetId}
-                        className="rdg-light asset-management-grid"
-                        style={{ blockSize: '100%', width: '100%' }}
-                        rowHeight={52}
-                        headerRowHeight={48}
-                        frozenRowCount={frozenRowCount}
-                        defaultColumnOptions={{
-                            resizable: true
-                        }}
-                        loading={loading}
-                    />
-                    {loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="px-6 py-4 flex flex-col gap-4">
+                    <div className="flex justify-between items-center bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                <span className="text-sm font-bold text-gray-700">
+                                    Total Assets: <span className="text-emerald-700">{assets.length}</span>
+                                </span>
+                            </div>
                         </div>
-                    )}
+                        <div>
+                            <button
+                                onClick={openAddModal}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                            >
+                                <Plus size={18} />
+                                Add Asset
+                            </button>
+                        </div>
+                    </div>
+
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
+                    />
+                </div>
+
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                        <div className="h-full w-full absolute inset-0">
+                            <FrozenRowsDataGrid
+                                columns={autoFitColumns}
+                                rows={gridRows}
+                                rowKeyGetter={(row) => row._id || row.assetId}
+                                className="rdg-light asset-management-grid"
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={44}
+                                headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                                loading={loading}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
