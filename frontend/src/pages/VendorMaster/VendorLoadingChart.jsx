@@ -187,12 +187,31 @@ const VendorLoadingChart = () => {
     };
 
     const handleExport = () => {
-        if (gridRef.current) {
-            gridRef.current.api.exportDataAsCsv({
-                fileName: `Vendor_Loading_${new Date().toISOString().split('T')[0]}.csv`,
-                columnKeys: ['vendorCode', 'vendorName', 'location', 'totalProjects', 'completedProjects', 'designStageProjects', 'trialStageProjects', 'bulkProjects', 'vendorCapacity', 'loadingPercentage', 'gap', 'qcdScore']
-            });
+        if (!loadingData || loadingData.length === 0) {
+            toast.error('No data to export');
+            return;
         }
+
+        const exportData = loadingData.map((row, index) => ({
+            'S.NO': index + 1,
+            'VENDOR CODE': row.vendorCode,
+            'VENDOR NAME': row.vendorName,
+            'LOCATION': row.location,
+            'COMPLETED': row.completedProjects,
+            'DESIGN': row.designStageProjects,
+            'TRIAL': row.trialStageProjects,
+            'BULK': row.bulkProjects,
+            'TOTAL': row.totalProjects,
+            'CAPACITY': row.vendorCapacity,
+            'LOADING %': row.currentLoading + '%',
+            'QCD SCORE': row.qcdScore
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vendor Loading');
+        XLSX.writeFile(wb, `Vendor_Loading_${new Date().toISOString().split('T')[0]}.xlsx`);
+        toast.success('Loading chart exported successfully');
     };
 
     const handleImport = (e) => {
@@ -660,15 +679,15 @@ const VendorLoadingChart = () => {
                 </div>
 
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
-                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
+                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px] shadow-sm">
                         <div className="h-full w-full absolute inset-0">
                             <FrozenRowsDataGrid
                                 columns={autoFitColumns}
                                 rows={gridRows}
-                                rowKeyGetter={(row) => row._id}
+                                rowKeyGetter={(row) => row._id || row.vendorCode}
                                 className="rdg-light vendor-loading-grid"
-                                style={{ blockSize: '100%' }}
-                                rowHeight={44}
+                                style={{ blockSize: '100%', width: '100%' }}
+                                rowHeight={48}
                                 headerRowHeight={52}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
