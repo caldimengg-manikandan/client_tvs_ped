@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Filter } from 'lucide-react';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -13,6 +15,8 @@ const AssetSummary = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
 
     const gridContainerRef = useRef(null);
 
@@ -50,7 +54,7 @@ const AssetSummary = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(baseRows);
+    const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
@@ -188,8 +192,8 @@ const AssetSummary = () => {
             name: 'Sno',
             width: 70,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -262,18 +266,27 @@ const AssetSummary = () => {
         }
     ];
 
-    const autoFitColumns = React.useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+    const autoFitColumns = React.useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+
+        if (!gridWidth) return withFreeze;
+
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => {
             return sum + (column.width || 0);
         }, 0);
 
-        if (!totalDefinedWidth) return dataGridColumns;
+        if (!totalDefinedWidth) return withFreeze;
 
         const scale = Math.max(gridWidth / totalDefinedWidth, 1);
 
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
             const scaledWidth = Math.max(
                 Math.floor(column.width * scale),
@@ -286,7 +299,7 @@ const AssetSummary = () => {
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -307,12 +320,22 @@ const AssetSummary = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
+            <div className="px-6 py-4 border-b border-gray-100">
+                <FreezeToolbar
+                    columns={freezeColumnList}
+                    frozenKeys={frozenKeys}
+                    onApply={setFrozenKeys}
+                    frozenRowCount={frozenRowCount}
+                    setFrozenRowCount={setFrozenRowCount}
+                    maxRows={Math.min(gridRows.length, 50)}
+                />
+            </div>
             <div
                 ref={gridContainerRef}
                 className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative"
             >
                 <div className="h-full">
-                    <DataGrid
+                    <FrozenRowsDataGrid
                         columns={autoFitColumns}
                         rows={gridRows}
                         rowKeyGetter={(row) => row._id || row.mhRequestId || row.allocationAssetId}
@@ -320,9 +343,11 @@ const AssetSummary = () => {
                         style={{ blockSize: '100%', width: '100%' }}
                         rowHeight={52}
                         headerRowHeight={48}
+                        frozenRowCount={frozenRowCount}
                         defaultColumnOptions={{
                             resizable: true
                         }}
+                        loading={loading}
                     />
                     {loading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">

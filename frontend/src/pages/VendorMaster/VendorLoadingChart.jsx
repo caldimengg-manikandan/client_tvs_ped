@@ -7,6 +7,8 @@ import { fetchVendorScores, updateVendorScore } from '../../redux/slices/vendorS
 import { Modal, Form, InputNumber } from 'antd';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import * as XLSX from 'xlsx';
 import api from '../../api/axiosConfig';
 
@@ -26,6 +28,8 @@ const VendorLoadingChart = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
     const [popupGridWidth, setPopupGridWidth] = useState(0);
     const [isQcdModalVisible, setIsQcdModalVisible] = useState(false);
     const [qcdVendor, setQcdVendor] = useState(null);
@@ -379,7 +383,7 @@ const VendorLoadingChart = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(loadingData || []);
+    const gridRows = applyColumnFilters(loadingData || []).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const handleTotalProjectsClick = async (row) => {
         setProjectModalVendor(row);
@@ -412,8 +416,8 @@ const VendorLoadingChart = () => {
             name: 'S.no',
             width: 80,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -441,98 +445,141 @@ const VendorLoadingChart = () => {
             renderHeaderCell: FilterHeaderCell
         },
         {
+            key: 'completedProjects',
+            name: 'Completed projects',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="bg-green-50 text-green-700 font-bold px-3 py-1 rounded-lg border border-green-200 text-center">
+                    {row.completedProjects}
+                </div>
+            )
+        },
+        {
+            key: 'designStageProjects',
+            name: 'Design stage projects',
+            width: 180,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-lg border border-blue-200 text-center">
+                    {row.designStageProjects}
+                </div>
+            )
+        },
+        {
+            key: 'trialStageProjects',
+            name: 'Trial stage projects',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="bg-amber-50 text-amber-700 font-bold px-3 py-1 rounded-lg border border-amber-200 text-center">
+                    {row.trialStageProjects}
+                </div>
+            )
+        },
+        {
+            key: 'bulkProjects',
+            name: 'Bulk projects',
+            width: 150,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="bg-purple-50 text-purple-700 font-bold px-3 py-1 rounded-lg border border-purple-200 text-center">
+                    {row.bulkProjects}
+                </div>
+            )
+        },
+        {
             key: 'totalProjects',
             name: 'Total projects',
-            width: 120,
+            width: 150,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
                 <button
-                    type="button"
                     onClick={() => handleTotalProjectsClick(row)}
-                    className="w-full text-center font-bold text-tvs-blue bg-blue-50/30 block rounded-full px-2 py-0.5 hover:bg-blue-100 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-tvs-blue/40"
+                    className="w-full bg-tvs-blue text-white font-black px-3 py-1 rounded-lg shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-center"
                 >
                     {row.totalProjects}
                 </button>
             )
         },
         {
-            key: 'loadingPercentage',
-            name: 'Overall loading %',
-            width: 180,
+            key: 'vendorCapacity',
+            name: 'Vendor capacity (V)',
+            width: 170,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="font-bold text-gray-700 text-center italic">
+                    {row.vendorCapacity}
+                </div>
+            )
+        },
+        {
+            key: 'currentLoading',
+            name: 'Current loading (L)',
+            width: 170,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
-                const perc = row.loadingPercentage;
-                let colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                if (perc >= 85) colorClass = 'bg-rose-100 text-rose-700 border-rose-200';
-                else if (perc >= 60) colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
+                const loadingVal = parseFloat(row.currentLoading) || 0;
+                let colorClass = 'bg-green-50 text-green-700 border-green-200';
+                if (loadingVal > 100) colorClass = 'bg-red-50 text-red-700 border-red-200 font-black animate-pulse';
+                else if (loadingVal > 80) colorClass = 'bg-amber-50 text-amber-700 border-amber-200';
 
                 return (
-                    <div className="flex items-center gap-2 h-full">
-                        <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden flex-1">
-                            <div
-                                className={`h-full transition-all duration-500 ${perc >= 85 ? 'bg-rose-500' : perc >= 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                style={{ width: `${Math.min(perc, 100)}%` }}
-                            />
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${colorClass}`}>
-                            {perc}%
-                        </span>
+                    <div className={`${colorClass} font-bold px-3 py-1 rounded-lg border text-center`}>
+                        {loadingVal}%
                     </div>
                 );
             }
         },
         {
-            key: 'qcdScore',
-            name: 'Qcd score',
-            width: 100,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => (
-                <div className="text-center font-black text-gray-500 italic">
-                    {row.qcdScore || '-'}
-                </div>
-            )
-        },
-        {
             key: 'updateQcdScore',
             name: 'Update QCD Score',
-            width: 180,
+            width: 170,
             renderHeaderCell: ActionHeaderCell,
             renderCell: ({ row }) => (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex justify-center">
                     <button
-                        type="button"
                         onClick={() => handleQcdEditClick(row)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold bg-amber-500 text-white hover:bg-amber-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+                        className="p-2 text-tvs-blue hover:bg-tvs-blue/10 rounded-lg transition-all shadow-sm border border-tvs-blue/20"
+                        title="View/Update QCD Scores"
                     >
-                        <Edit3 size={14} />
-                        Edit
+                        <Edit3 size={18} />
                     </button>
                 </div>
             )
         }
     ];
 
-    const autoFitColumns = useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial' && col.key !== 'updateQcdScore')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+    const autoFitColumns = React.useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+
+        if (!gridWidth) return withFreeze;
+
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => {
             return sum + (column.width || 0);
         }, 0);
 
-        if (!totalDefinedWidth) return dataGridColumns;
+        if (!totalDefinedWidth) return withFreeze;
 
-        const scale = gridWidth / totalDefinedWidth;
+        const scale = Math.max(gridWidth / totalDefinedWidth, 1);
 
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), 120);
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
 
             return {
                 ...column,
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -571,14 +618,14 @@ const VendorLoadingChart = () => {
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div className="px-6 pt-4 pb-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                             <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{loadingData?.length || 0}</span> vendors</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleExport}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
@@ -594,10 +641,21 @@ const VendorLoadingChart = () => {
                     </div>
                 </div>
 
+                <div className="px-6 py-4">
+                    <FreezeToolbar
+                        columns={freezeColumnList}
+                        frozenKeys={frozenKeys}
+                        onApply={setFrozenKeys}
+                        frozenRowCount={frozenRowCount}
+                        setFrozenRowCount={setFrozenRowCount}
+                        maxRows={Math.min(gridRows.length, 50)}
+                    />
+                </div>
+
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
                     <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
                         <div className="h-full w-full absolute inset-0">
-                            <DataGrid
+                            <FrozenRowsDataGrid
                                 columns={autoFitColumns}
                                 rows={gridRows}
                                 rowKeyGetter={(row) => row._id}
@@ -605,15 +663,12 @@ const VendorLoadingChart = () => {
                                 style={{ blockSize: '100%' }}
                                 rowHeight={60}
                                 headerRowHeight={52}
+                                frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
                                     resizable: true
                                 }}
+                                loading={loading}
                             />
-                            {loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -623,7 +678,8 @@ const VendorLoadingChart = () => {
                 open={isProjectModalVisible}
                 onCancel={() => setIsProjectModalVisible(false)}
                 footer={null}
-                width={720}
+                width="95%"
+                style={{ maxWidth: '720px' }}
                 centered
                 title={
                     <div className="flex items-center justify-between">
@@ -691,7 +747,8 @@ const VendorLoadingChart = () => {
                 }
                 open={isQcdModalVisible}
                 onCancel={() => setIsQcdModalVisible(false)}
-                width={900}
+                width="95%"
+                style={{ maxWidth: '900px' }}
                 centered
                 footer={null}
             >
@@ -859,7 +916,8 @@ const VendorLoadingChart = () => {
                 onCancel={() => setIsModalVisible(false)}
                 okText="UPDATE CAPACITY"
                 cancelText="CANCEL"
-                width={600}
+                width="95%"
+                style={{ maxWidth: '600px' }}
                 centered
                 okButtonProps={{ className: 'bg-amber-500 border-amber-500 font-black rounded-lg h-10' }}
                 cancelButtonProps={{ className: 'font-bold rounded-lg h-10' }}

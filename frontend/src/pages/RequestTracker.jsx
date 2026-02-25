@@ -6,6 +6,8 @@ import { fetchAssetRequests, updateAssetRequest, sendEmailNotification, upsertRe
 import { fetchEmployees } from '../redux/slices/employeeSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import FreezeToolbar from '../components/FreezeToolbar';
+import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -24,6 +26,8 @@ const RequestTracker = () => {
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
     const [gridWidth, setGridWidth] = useState(0);
+    const [frozenKeys, setFrozenKeys] = useState(new Set());
+    const [frozenRowCount, setFrozenRowCount] = useState(0);
 
     const gridContainerRef = useRef(null);
 
@@ -218,7 +222,7 @@ const RequestTracker = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(baseRows);
+    const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
@@ -356,8 +360,8 @@ const RequestTracker = () => {
             name: 'S.No',
             width: 70,
             frozen: true,
-            renderCell: ({ rowIdx }) => (
-                <span className="font-semibold text-gray-700">{rowIdx + 1}</span>
+            renderCell: ({ row }) => (
+                <span className="font-semibold text-gray-700">{row._serialNo}</span>
             )
         },
         {
@@ -440,54 +444,57 @@ const RequestTracker = () => {
                     'Accepted': 'bg-green-50 text-green-700 border-green-200',
                     'Rejected': 'bg-red-50 text-red-700 border-red-200'
                 };
+                const colorClass = statusColors[row.status] || 'bg-gray-50 text-gray-700 border-gray-200';
+
                 return (
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border inline-block ${statusColors[row.status] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
-                        {row.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${colorClass}`}>
+                            {row.status}
+                        </span>
+                    </div>
                 );
             }
         },
         {
             key: 'actions',
             name: 'ACTIONS',
-            width: 140,
+            width: 150,
             renderCell: ({ row }) => {
-                const isPending = row.status === 'Active';
-                const isAccepted = row.status === 'Accepted';
-                const isRejected = row.status === 'Rejected';
-
-                if (isPending) {
+                const status = row.status;
+                if (status === 'Active') {
                     return (
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={() => handleAccept(row._id)}
-                                className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                                title="Accept Request"
+                                className="p-1.5 rounded-lg hover:bg-green-100 transition-colors text-green-600 border border-green-100"
+                                title="Accept"
                             >
-                                <Check size={16} />
+                                <Check size={14} strokeWidth={3} />
                             </button>
                             <button
                                 onClick={() => handleReject(row._id)}
-                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-200"
-                                title="Reject Request"
+                                className="p-1.5 rounded-lg hover:bg-red-100 transition-colors text-red-600 border border-red-100"
+                                title="Reject"
                             >
-                                <X size={16} />
+                                <X size={14} strokeWidth={3} />
                             </button>
                         </div>
                     );
                 }
 
-                if (isAccepted) {
+                if (status === 'Accepted') {
                     return (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 inline-block text-center">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase tracking-wider">
+                            <Check size={10} strokeWidth={4} />
                             Approved
                         </span>
                     );
                 }
 
-                if (isRejected) {
+                if (status === 'Rejected') {
                     return (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 inline-block text-center">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase tracking-wider">
+                            <X size={10} strokeWidth={4} />
                             Rejected
                         </span>
                     );
@@ -526,18 +533,27 @@ const RequestTracker = () => {
         }
     ];
 
-    const autoFitColumns = React.useMemo(() => {
-        if (!gridWidth) return dataGridColumns;
+    const freezeColumnList = dataGridColumns
+        .filter(col => col.key !== 'serial' && col.key !== 'actions' && col.key !== 'notify')
+        .map(col => ({ key: col.key, name: col.name }));
 
-        const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
+    const autoFitColumns = React.useMemo(() => {
+        const withFreeze = dataGridColumns.map(col => ({
+            ...col,
+            frozen: col.key === 'serial' || frozenKeys.has(col.key),
+        }));
+
+        if (!gridWidth) return withFreeze;
+
+        const totalDefinedWidth = withFreeze.reduce((sum, column) => {
             return sum + (column.width || 0);
         }, 0);
 
-        if (!totalDefinedWidth) return dataGridColumns;
+        if (!totalDefinedWidth) return withFreeze;
 
         const scale = Math.max(gridWidth / totalDefinedWidth, 1);
 
-        return dataGridColumns.map((column) => {
+        return withFreeze.map((column) => {
             if (!column.width) return column;
             const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
 
@@ -546,7 +562,7 @@ const RequestTracker = () => {
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth]);
+    }, [dataGridColumns, gridWidth, frozenKeys]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -568,9 +584,20 @@ const RequestTracker = () => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-tvs-border overflow-hidden fade-in">
 
+            <div className="px-6 py-4">
+                <FreezeToolbar
+                    columns={freezeColumnList}
+                    frozenKeys={frozenKeys}
+                    onApply={setFrozenKeys}
+                    frozenRowCount={frozenRowCount}
+                    setFrozenRowCount={setFrozenRowCount}
+                    maxRows={Math.min(gridRows.length, 50)}
+                />
+            </div>
+
             <div ref={gridContainerRef} className="w-full h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white relative">
                 <div className="h-full">
-                    <DataGrid
+                    <FrozenRowsDataGrid
                         columns={autoFitColumns}
                         rows={gridRows}
                         rowKeyGetter={(row) => row._id || row.mhRequestId}
@@ -578,15 +605,12 @@ const RequestTracker = () => {
                         style={{ blockSize: '100%', width: '100%' }}
                         rowHeight={52}
                         headerRowHeight={48}
+                        frozenRowCount={frozenRowCount}
                         defaultColumnOptions={{
                             resizable: true
                         }}
+                        loading={loadingRequests}
                     />
-                    {loadingRequests && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                            <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                        </div>
-                    )}
                 </div>
             </div>
 

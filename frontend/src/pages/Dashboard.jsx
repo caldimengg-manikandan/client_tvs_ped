@@ -773,8 +773,8 @@ const Dashboard = () => {
                 </h2>
                 <div className="relative">
                     <div className="relative mx-auto w-full">
-                        <div className="relative w-full">
-                            <div className="flex flex-col gap-6">
+                        <div className="relative w-full overflow-x-auto pb-6 -mb-6 custom-scrollbar">
+                            <div className="flex flex-col gap-6 min-w-[1000px] lg:min-w-0">
                                 {/* Stepper track with icons and aligned labels */}
                                 <div className="flex items-start gap-0">
                                     {workflowStages.map((stage, index) => {
@@ -1137,7 +1137,8 @@ const Dashboard = () => {
                 title={<div className="font-outfit text-xl font-bold text-gray-900 pb-2">{kpiModal.title}</div>}
                 open={kpiModal.open}
                 onCancel={() => setKpiModal({ ...kpiModal, open: false })}
-                width={1200}
+                width="95%"
+                style={{ maxWidth: '1200px' }}
                 centered
                 footer={null}
                 className="custom-modal"

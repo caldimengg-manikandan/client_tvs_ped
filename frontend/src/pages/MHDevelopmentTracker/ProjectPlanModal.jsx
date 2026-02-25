@@ -228,7 +228,8 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             open={visible}
             onCancel={onCancel}
             onOk={handleSubmit}
-            width={1200}
+            width="95%"
+            style={{ maxWidth: '1200px' }}
             okText="Save Tracking Data"
             centered
             okButtonProps={{ className: 'bg-indigo-600 hover:bg-indigo-700' }}

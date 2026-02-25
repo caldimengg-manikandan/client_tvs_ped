@@ -283,7 +283,8 @@ const ProjectPlanActualModal = ({ visible, onCancel, onSave, trackerInfo }) => {
             open={visible}
             onCancel={onCancel}
             onOk={handleSubmit}
-            width={1200}
+            width="95%"
+            style={{ maxWidth: '1200px' }}
             confirmLoading={loading}
             okText="Save Actuals"
             centered
