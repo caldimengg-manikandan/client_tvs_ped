@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CreateMHRequestList from './pages/CreateMHRequest/CreateMHRequestList';
@@ -31,7 +31,8 @@ function App() {
           <Route path="/login" element={<Login />} />
 
           <Route path="/" element={<Layout />}>
-            <Route index element={
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={
               <ProtectedRoute permission="dashboard">
                 <Dashboard />
               </ProtectedRoute>
