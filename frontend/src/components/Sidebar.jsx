@@ -1,127 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Home,
-    Settings,
-    FileText,
-    ClipboardList,
-    Activity,
-    Users,
-    Shield,
-    BarChart,
-    ChevronRight,
-    TrendingUp,
-    Menu,
-    ChevronLeft,
-    ChevronDown,
-    Layout as LayoutIcon,
-    PieChart
-} from 'lucide-react';
+
+import React from 'react';
+import { Home, Settings, FileText, ClipboardList, Activity, Users, Shield, BarChart, ChevronRight, TrendingUp, Menu, ChevronLeft, ChevronDown } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import tvsLogo from '../assets/tvs bg.webp';
 
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
-    const { hasPermission } = useAuth();
+    const { hasPermission, loading } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Group state: only one group can be expanded at a time
-    const [expandedGroup, setExpandedGroup] = useState(null);
+    const [openGroups, setOpenGroups] = React.useState({
+        vendorManagement: true
+    });
 
-    // Initial expansion based on current path
-    useEffect(() => {
-        const path = location.pathname;
-        if (path.startsWith('/vendor-master')) {
-            setExpandedGroup('vendorManagement');
-        } else if (path.startsWith('/asset-')) {
-            setExpandedGroup('assetManagement');
-        } else if (path === '/project-plan-model' || path === '/mh-development-tracker') {
-            setExpandedGroup('development');
-        } else {
-            // For simple links, we might want to collapse everything, 
-            // but usually we keep the group open if we are on a page belonging to it.
-            // If it doesn't match any group, collapse.
-            // setExpandedGroup(null);
+    const isVendorGroupActive = location.pathname.startsWith('/vendor-master');
+
+    React.useEffect(() => {
+        if (isVendorGroupActive) {
+            setOpenGroups(prev => ({
+                ...prev,
+                vendorManagement: true
+            }));
         }
-    }, [location.pathname]);
+    }, [isVendorGroupActive]);
 
-    const navConfig = [
-        {
-            name: 'Dashboard',
-            icon: Home,
-            path: '/',
-            permission: 'dashboard'
-        },
-        {
-            name: 'Employee Master',
-            icon: Users,
-            path: '/employee-master',
-            permission: 'employeeMaster'
-        },
-        {
-            name: 'MH Requests',
-            icon: FileText,
-            path: '/mh-requests',
-            permission: 'assetRequest'
-        },
-        {
-            name: 'Request Tracker',
-            icon: ClipboardList,
-            path: '/request-tracker',
-            permission: 'requestTracker'
-        },
-        {
-            name: 'MH Dev Tracker',
-            icon: TrendingUp,
-            permission: 'mhDevelopmentTracker',
-            groupKey: 'development',
-            subItems: [
-                { name: 'Live Tracker', icon: Activity, path: '/mh-development-tracker' },
-                { name: 'Project Plan', icon: LayoutIcon, path: '/project-plan-model' }
-            ]
-        },
+    const navItems = [
+        { name: 'Dashboard', icon: Home, path: '/', permission: 'dashboard' },
+        { name: 'Employee Master', icon: Users, path: '/employee-master', permission: 'employeeMaster' },
+        { name: 'MH Requests', icon: FileText, path: '/mh-requests', permission: 'assetRequest' },
+        { name: 'Request Tracker', icon: ClipboardList, path: '/request-tracker', permission: 'requestTracker' },
+        { name: 'MH Dev Tracker', icon: TrendingUp, path: '/mh-development-tracker', permission: 'mhDevelopmentTracker' },
+        { name: 'Project Plan Tracking', icon: ClipboardList, path: '/project-plan-model', permission: 'mhDevelopmentTracker', isSubItem: true },
         {
             name: 'Vendor Management System',
             icon: Shield,
+            path: '#',
             permission: 'vendorMaster',
-            groupKey: 'vendorManagement',
-            subItems: [
-                { name: 'Vendor Master', icon: Users, path: '/vendor-master' },
-                { name: 'Vendor Scoring', icon: BarChart, path: '/vendor-master/scoring' },
-                { name: 'Loading Chart', icon: PieChart, path: '/vendor-master/loading' }
-            ]
+            isHeader: true,
+            groupKey: 'vendorManagement'
         },
-        {
-            name: 'Asset Management',
-            icon: ClipboardList,
-            permission: 'assetSummary',
-            groupKey: 'assetManagement',
-            subItems: [
-                { name: 'Asset Update', icon: Activity, path: '/asset-management-update' },
-                { name: 'Asset Summary', icon: ClipboardList, path: '/asset-summary' }
-            ]
-        },
-        {
-            name: 'Settings',
-            icon: Settings,
-            path: '/settings',
-            permission: 'settings'
-        }
+        { name: 'Vendor Master', icon: Shield, path: '/vendor-master', permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
+        { name: 'Vendor Scoring', icon: Shield, path: '/vendor-master/scoring', permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
+        { name: 'Loading Chart', icon: ClipboardList, path: '/vendor-master/loading', permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
+        { name: 'Asset Management Update', icon: ClipboardList, path: '/asset-management-update', permission: 'assetSummary' },
+        { name: 'Asset Summary', icon: ClipboardList, path: '/asset-summary', permission: 'assetSummary' },
+        { name: 'Settings', icon: Settings, path: '/settings', permission: 'settings' }
     ];
-
-    const handleToggle = (groupKey) => {
-        if (!isSidebarOpen) {
-            setIsSidebarOpen(true);
-            setExpandedGroup(groupKey);
-            return;
-        }
-        setExpandedGroup(prev => (prev === groupKey ? null : groupKey));
-    };
-
-    const handleSimpleClick = () => {
-        setExpandedGroup(null);
-    };
 
     return (
         <>
@@ -132,6 +58,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.3 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
                         className="fixed inset-0 bg-black/30 z-backdrop lg:hidden"
                         onClick={() => setIsSidebarOpen(false)}
                     />
@@ -139,144 +66,222 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             </AnimatePresence>
 
             <motion.aside
-                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100 flex flex-col shadow-xl transition-all duration-300 z-sidebar ${
-                    isSidebarOpen ? 'w-[280px]' : 'w-[80px]'
-                }`}
+                key="sidebar"
+                initial={{ x: windowWidth <= 1024 ? -280 : 0, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -280, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+                className={`h-screen fixed left-0 top-0 bg-white border-r border-gray-100/50 z-sidebar flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-[width] duration-300 ${isSidebarOpen ? 'w-[280px]' : 'w-[72px]'
+                    }`}
             >
-                {/* Logo Section */}
-                <div className="flex items-center justify-between px-4 py-6 border-b border-gray-50">
-                    <div className="flex flex-col items-center gap-1 flex-1 overflow-hidden">
-                        <img src={tvsLogo} alt="TVS logo" className={`h-16 w-auto object-contain transition-all duration-300 ${isSidebarOpen ? 'scale-100' : 'scale-75'}`} />
+                <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                        <img src={tvsLogo} alt="TVS logo" className="h-24 w-auto object-contain" />
                         {isSidebarOpen && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex flex-col items-center"
-                            >
-                                <span className="text-xs font-black tracking-[0.2em] uppercase text-tvs-blue">TVS Motors</span>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Plant Engineering</span>
-                            </motion.div>
+                            <>
+                                <span className="text-[14px] font-bold tracking-[0.18em] uppercase text-tvs-blue">
+                                     TVS Motors
+                                </span>
+                                <span className="text-[14px] font-bold tracking-[0.18em] uppercase text-tvs-blue">
+                                    PLANT ENGINEERING 
+                                </span>
+                            </>
                         )}
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-tvs-blue hidden lg:inline-flex"
+                    >
+                        {isSidebarOpen ? <ChevronLeft size={18} /> : <Menu size={18} />}
+                    </button>
                 </div>
 
-                {/* Navigation Section */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 custom-scrollbar px-3 space-y-1">
-                    {navConfig.map((item) => {
-                        if (item.permission && !hasPermission(item.permission)) return null;
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-8 custom-scrollbar">
+                    {isSidebarOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="px-8 mb-4"
+                        >
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px]">
+                                Main Menu
+                            </span>
+                        </motion.div>
+                    )}
+                    <ul className={`space-y-2 list-none ${isSidebarOpen ? 'px-3' : 'px-2'}`}>
+                        {navItems.map((item, index) => {
+                            if (item.permission && !hasPermission(item.permission)) {
+                                return null;
+                            }
 
-                        const isGroup = !!item.subItems;
-                        const isExpanded = expandedGroup === item.groupKey && isSidebarOpen;
+                            if (!isSidebarOpen && (item.isHeader || item.isSubItem)) {
+                                return null;
+                            }
 
-                        if (isGroup) {
-                            return (
-                                <div key={item.groupKey} className="mb-1">
-                                    <button
-                                        onClick={() => handleToggle(item.groupKey)}
-                                        className={`w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all duration-200 group ${
-                                            isExpanded ? 'bg-tvs-blue/5 text-tvs-blue' : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg transition-colors ${isExpanded ? 'bg-tvs-blue text-white' : 'bg-gray-50 group-hover:bg-tvs-blue/10'}`}>
-                                                <item.icon size={20} />
+                            if (item.groupKey && !item.isHeader && openGroups[item.groupKey] === false) {
+                                return null;
+                            }
+
+                            if (item.isHeader) {
+                                const isGroupActive = item.groupKey === 'vendorManagement' && isVendorGroupActive;
+
+                                return (
+                                    <li key={item.name} className="pt-1 pb-1 shadow-none">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (item.groupKey) {
+                                                    setOpenGroups(prev => ({
+                                                        ...prev,
+                                                        [item.groupKey]: !prev[item.groupKey]
+                                                    }));
+                                                }
+                                                navigate('/vendor-master');
+                                            }}
+                                            className={`group w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-xs ${isGroupActive
+                                                ? 'bg-tvs-blue/5 text-tvs-blue'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isGroupActive
+                                                        ? 'bg-tvs-blue text-white'
+                                                        : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:text-tvs-blue'
+                                                        }`}
+                                                >
+                                                    <item.icon size={18} />
+                                                </div>
+                                                {isSidebarOpen && (
+                                                    <span className="font-inter whitespace-nowrap truncate">
+                                                        {item.name}
+                                                    </span>
+                                                )}
                                             </div>
-                                            {isSidebarOpen && <span className="text-sm font-bold whitespace-nowrap">{item.name}</span>}
-                                        </div>
-                                        {isSidebarOpen && (
-                                            <ChevronDown size={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                                        )}
-                                    </button>
 
-                                    <AnimatePresence>
-                                        {isExpanded && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden"
-                                            >
-                                                <ul className="mt-1 ml-4 border-l-2 border-gray-100 space-y-1 py-1">
-                                                    {item.subItems.map((sub) => (
-                                                        <li key={sub.path}>
-                                                            <NavLink
-                                                                to={sub.path}
-                                                                className={({ isActive }) =>
-                                                                    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold transition-all relative ${
-                                                                        isActive
-                                                                            ? 'text-tvs-blue bg-tvs-blue/5 ml-2'
-                                                                            : 'text-gray-500 hover:text-tvs-blue hover:bg-gray-50 ml-2'
-                                                                    }`
-                                                                }
-                                                            >
-                                                                {({ isActive }) => (
-                                                                    <>
-                                                                        <sub.icon size={14} className={isActive ? 'text-tvs-blue' : 'text-gray-400'} />
-                                                                        <span>{sub.name}</span>
-                                                                        {isActive && (
-                                                                            <motion.div 
-                                                                                layoutId="activeSub"
-                                                                                className="absolute left-[-10px] w-1.5 h-1.5 rounded-full bg-tvs-blue"
-                                                                            />
-                                                                        )}
-                                                                    </>
-                                                                )}
-                                                            </NavLink>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </motion.div>
+                                            {item.groupKey && (
+                                                <ChevronDown
+                                                    size={14}
+                                                    className={`transition-transform duration-200 ${openGroups[item.groupKey]
+                                                        ? 'rotate-180 text-tvs-blue'
+                                                        : 'text-gray-300'
+                                                        }`}
+                                                />
+                                            )}
+                                        </button>
+                                    </li>
+                                );
+                            }
+
+                            return (
+                                <motion.li
+                                    key={item.name}
+                                    initial={
+                                        item.isSubItem && isSidebarOpen
+                                            ? { opacity: 0, x: -10 }
+                                            : false
+                                    }
+                                    animate={
+                                        item.isSubItem && isSidebarOpen
+                                            ? { opacity: 1, x: 0 }
+                                            : false
+                                    }
+                                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                                >
+                                    <NavLink
+                                        to={item.path}
+                                        end
+                                        className={({ isActive }) =>
+                                            `group flex items-center ${isSidebarOpen ? 'justify-between' : 'justify-center'
+                                            } px-4 py-3.5 rounded-2xl transition-all duration-300 font-semibold text-sm transform relative
+                                         ${isSidebarOpen && item.isSubItem
+                                                ? 'ml-4 py-2.5'
+                                                : ''
+                                            }
+                                         ${isActive && item.path !== '#'
+                                                ? 'scale-[1.03] bg-tvs-blue/5 text-tvs-blue'
+                                                : 'hover:scale-[1.01] text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
+                                            }`
+                                        }
+                                    >
+                                        {({ isActive }) => (
+                                            <>
+                                                <div className="flex items-center gap-3">
+                                                    {!item.isSubItem ? (
+                                                        <div
+                                                            className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${isActive
+                                                                ? 'bg-tvs-blue text-white scale-100'
+                                                                : 'bg-transparent group-hover:bg-tvs-blue/10 group-hover:scale-110'
+                                                                }`}
+                                                        >
+                                                            <item.icon size={18} />
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className={`p-1.5 rounded-lg transition-all duration-300 flex items-center justify-center ${isActive
+                                                                ? 'bg-tvs-blue/10 text-tvs-blue'
+                                                                : 'bg-transparent group-hover:bg-tvs-blue/5 group-hover:text-tvs-blue'
+                                                                }`}
+                                                        >
+                                                            <item.icon size={14} />
+                                                        </div>
+                                                    )}
+                                                    {isSidebarOpen && (
+                                                        <span
+                                                            className={`${item.isSubItem
+                                                                ? 'text-xs font-bold'
+                                                                : 'font-inter'
+                                                                }`}
+                                                        >
+                                                            {item.name}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {isSidebarOpen &&
+                                                    isActive &&
+                                                    item.path !== '#' && (
+                                                        <motion.div
+                                                            layoutId="active-nav"
+                                                            transition={{
+                                                                type: 'spring',
+                                                                stiffness: 400,
+                                                                damping: 30
+                                                            }}
+                                                            className="w-1.5 h-1.5 rounded-full bg-tvs-blue shadow-[0_0_8px_rgba(30,58,138,0.4)]"
+                                                        />
+                                                    )}
+
+                                                {!isSidebarOpen && isActive && (
+                                                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-1 h-6 bg-tvs-blue rounded-l-full shadow-[0_0_8px_rgba(30,58,138,0.3)]" />
+                                                )}
+                                            </>
                                         )}
-                                    </AnimatePresence>
-                                </div>
+                                    </NavLink>
+                                </motion.li>
                             );
-                        }
-
-                        // Simple NavLink
-                        return (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                onClick={handleSimpleClick}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
-                                        isActive ? 'bg-tvs-blue text-white shadow-md shadow-tvs-blue/20' : 'text-gray-500 hover:bg-gray-50 hover:text-tvs-blue'
-                                    }`
-                                }
-                            >
-                                <div className={`p-2 rounded-lg transition-colors ${isSidebarOpen ? '' : 'mx-auto'}`}>
-                                    <item.icon size={20} />
-                                </div>
-                                {isSidebarOpen && <span className="text-sm font-bold whitespace-nowrap">{item.name}</span>}
-                                {!isSidebarOpen && (
-                                    <div className="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity font-bold">
-                                        {item.name}
-                                    </div>
-                                )}
-                            </NavLink>
-                        );
-                    })}
+                        })}
+                    </ul>
                 </nav>
 
-                {/* Footer / Toggle Section */}
                 <div className="p-4 border-t border-gray-50">
-                    <button
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="w-full flex items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
+                    <div
+                        className={`bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100 transition-all duration-300 ${isSidebarOpen ? 'p-4' : 'p-2 flex justify-center'
+                            }`}
                     >
-                        {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                    </button>
-                    {isSidebarOpen && (
-                        <div className="mt-4 flex items-center gap-3 px-2">
-                            <div className="w-8 h-8 rounded-full bg-tvs-blue flex items-center justify-center text-white font-black text-[10px]">
-                                AD
+                        {isSidebarOpen ? (
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                                    <Shield size={16} className="text-tvs-blue" />
+                                </div>
+
                             </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs font-black text-gray-800">Admin Panel</span>
-                                <span className="text-[10px] font-bold text-gray-400">Enterprise Mode</span>
-                            </div>
-                        </div>
-                    )}
+                        ) : (
+                            <Shield size={20} className="text-tvs-blue opacity-50" />
+                        )}
+                    </div>
                 </div>
             </motion.aside>
         </>
