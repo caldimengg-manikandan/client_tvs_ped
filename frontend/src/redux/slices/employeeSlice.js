@@ -18,9 +18,9 @@ export const checkIdAvailability = createAsyncThunk(
 
 export const fetchEmployees = createAsyncThunk(
     'employees/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get('/employees');
+            const response = await api.get('/employees', { params });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch employees');
@@ -106,6 +106,9 @@ const employeeSlice = createSlice({
     name: 'employees',
     initialState: {
         items: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
         currentItem: null,
         loading: false,
         error: null,
@@ -130,7 +133,14 @@ const employeeSlice = createSlice({
             })
             .addCase(fetchEmployees.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload.data || action.payload;
+                if (action.payload.success && action.payload.data) {
+                    state.items = action.payload.data;
+                    state.totalItems = action.payload.total;
+                    state.totalPages = action.payload.totalPages;
+                    state.currentPage = action.payload.currentPage;
+                } else {
+                    state.items = action.payload.data || action.payload;
+                }
             })
             .addCase(fetchEmployees.rejected, (state, action) => {
                 state.loading = false;

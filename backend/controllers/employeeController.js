@@ -9,7 +9,7 @@ const ExcelJS = require('exceljs');
 // @access  Private/Admin/Manager
 const getAllEmployees = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 1000;
     const skip = (page - 1) * limit;
 
     // Filtering options
@@ -30,7 +30,7 @@ const getAllEmployees = asyncHandler(async (req, res) => {
     }
 
     const employees = await Employee.find(filter)
-        .sort({ sNo: 1 })
+        .sort({ createdAt: 1 })
         .skip(skip)
         .limit(limit)
         .select('-__v');
@@ -96,7 +96,10 @@ const createEmployee = asyncHandler(async (req, res) => {
 
     // Check if employee already exists
     const existingEmployee = await Employee.findOne({
-        $or: [{ employeeId }, { mailId }]
+        $or: [
+            { employeeId: { $regex: new RegExp(`^${employeeId.trim()}$`, 'i') } },
+            { mailId: { $regex: new RegExp(`^${mailId.trim().toLowerCase()}$`, 'i') } }
+        ]
     });
 
     if (existingEmployee) {
@@ -105,12 +108,12 @@ const createEmployee = asyncHandler(async (req, res) => {
     }
 
     const employee = await Employee.create({
-        employeeId,
-        employeeName,
-        departmentName,
-        plantLocation,
+        employeeId: employeeId.trim(),
+        employeeName: employeeName.trim(),
+        departmentName: departmentName.trim(),
+        plantLocation: plantLocation.trim(),
         accessLevel,
-        mailId,
+        mailId: mailId.trim().toLowerCase(),
         status,
         permissions,
         createdBy: actorId,
@@ -125,9 +128,9 @@ const createEmployee = asyncHandler(async (req, res) => {
         const hashed = await bcrypt.hash(passwordPlain, salt);
 
         const userPayload = {
-            userId: `USR${Date.now()}`,
+            userId: `USR${Date.now()}_${Math.floor(Math.random() * 1000)}`,
             employeeId: employee._id,
-            email: mailId,
+            email: employee.mailId,
             passwordHash: hashed,
             role: accessLevel === 'Admin' || accessLevel === 'Super Admin' ? 'Admin' : 'Employee',
             permissions: permissions || {},
@@ -166,25 +169,29 @@ const updateEmployee = asyncHandler(async (req, res) => {
 
     // Check if new email or ID already exists (excluding current employee)
     if (req.body.mailId && req.body.mailId !== employee.mailId) {
+        const mailLower = req.body.mailId.trim().toLowerCase();
         const emailExists = await Employee.findOne({
-            mailId: req.body.mailId,
+            mailId: { $regex: new RegExp(`^${mailLower}$`, 'i') },
             _id: { $ne: req.params.id }
         });
         if (emailExists) {
             res.status(400);
             throw new Error('Email already exists');
         }
+        req.body.mailId = mailLower;
     }
 
     if (req.body.employeeId && req.body.employeeId !== employee.employeeId) {
+        const idTrimmed = req.body.employeeId.trim();
         const idExists = await Employee.findOne({
-            employeeId: req.body.employeeId,
+            employeeId: { $regex: new RegExp(`^${idTrimmed}$`, 'i') },
             _id: { $ne: req.params.id }
         });
         if (idExists) {
             res.status(400);
             throw new Error('Employee ID already exists');
         }
+        req.body.employeeId = idTrimmed;
     }
 
     const actorId = req.user?.id || null;
@@ -312,23 +319,41 @@ const bulkUpload = asyncHandler(async (req, res) => {
     // Process employees
     for (const empData of employees) {
         try {
-            // Check for duplicates
+            // Check for duplicates (case-insensitive)
             const exists = await Employee.findOne({
                 $or: [
-                    { employeeId: empData.employeeId },
-                    { mailId: empData.mailId }
+                    { employeeId: { $regex: new RegExp(`^${empData.employeeId.trim()}$`, 'i') } },
+                    { mailId: { $regex: new RegExp(`^${empData.mailId.trim().toLowerCase()}$`, 'i') } }
                 ]
             });
 
             if (!exists) {
-                await Employee.create({
+                const newEmp = await Employee.create({
                     ...empData,
+                    employeeId: empData.employeeId.trim(),
+                    mailId: empData.mailId.trim().toLowerCase(),
                     createdBy: req.user.id,
                     updatedBy: req.user.id
                 });
+
+                // CREATE USER FOR BULK UPLOADED EMPLOYEE
+                const defaultPwd = `Emp@${newEmp.employeeId}123`;
+                const salt = await bcrypt.genSalt(10);
+                const hashed = await bcrypt.hash(defaultPwd, salt);
+
+                await User.create({
+                    userId: `USR${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                    employeeId: newEmp._id,
+                    email: newEmp.mailId,
+                    passwordHash: hashed,
+                    role: (newEmp.accessLevel === 'Admin' || newEmp.accessLevel === 'Super Admin') ? 'Admin' : 'Employee',
+                    permissions: newEmp.permissions || {},
+                    status: 'Active'
+                });
+
                 successCount++;
             } else {
-                errors.push(`Duplicate: ${empData.employeeId} or ${empData.mailId}`);
+                errors.push(`Duplicate ID: ${empData.employeeId} or Email: ${empData.mailId}`);
             }
         } catch (error) {
             errors.push(`Error processing ${empData.employeeId}: ${error.message}`);

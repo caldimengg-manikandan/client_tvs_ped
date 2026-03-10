@@ -18,9 +18,9 @@ export const fetchNextVendorId = createAsyncThunk(
 
 export const fetchVendors = createAsyncThunk(
     'vendors/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get('/vendors');
+            const response = await api.get('/vendors', { params });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendors');
@@ -80,6 +80,9 @@ const vendorSlice = createSlice({
     name: 'vendors',
     initialState: {
         items: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
         currentItem: null,
         loading: false,
         error: null,
@@ -104,7 +107,14 @@ const vendorSlice = createSlice({
             })
             .addCase(fetchVendors.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload.data || action.payload; // Handle if response wrapped in data
+                if (action.payload.success && action.payload.data) {
+                    state.items = action.payload.data;
+                    state.totalItems = action.payload.total;
+                    state.totalPages = action.payload.totalPages;
+                    state.currentPage = action.payload.currentPage;
+                } else {
+                    state.items = action.payload.data || action.payload;
+                }
             })
             .addCase(fetchVendors.rejected, (state, action) => {
                 state.loading = false;

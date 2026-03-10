@@ -21,7 +21,7 @@ const mhRequestSchema = new mongoose.Schema({
     requestType: {
         type: String,
         required: true,
-        enum: ['New Project', 'Upgrade', 'Refresh', 'Capacity', 'Special Improvements']
+        enum: ['New Project', 'Upgrade', 'Refresh', 'Capacity', 'Special Improvements', 'Modification', 'Replacement', 'New Process']
     },
     productModel: {
         type: String,
@@ -51,7 +51,10 @@ const mhRequestSchema = new mongoose.Schema({
             'Hosur Plant 2 (TN)',
             'Hosur Plant 3 (TN)',
             'Mysore (KA)',
-            'Nalagarh (HP)'
+            'Mysore Plant (KA)',
+            'Nalagarh (HP)',
+            'Nalagarh Plant (HP)',
+            'Karawang Plant (Indonesia)'
         ]
     },
     from: {

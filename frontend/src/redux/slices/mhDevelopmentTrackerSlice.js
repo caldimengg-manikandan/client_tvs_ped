@@ -6,10 +6,10 @@ const API_URL = '/mh-development-tracker';
 // Async thunks
 export const fetchTrackers = createAsyncThunk(
     'mhDevelopmentTracker/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get(API_URL);
-            return response.data.data;
+            const response = await api.get(API_URL, { params });
+            return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch trackers');
         }
@@ -108,7 +108,10 @@ export const allocateVendor = createAsyncThunk(
 const mhDevelopmentTrackerSlice = createSlice({
     name: 'mhDevelopmentTracker',
     initialState: {
-        trackers: [],
+        items: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
         vendors: [],
         loading: false,
         error: null,
@@ -131,7 +134,14 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(fetchTrackers.fulfilled, (state, action) => {
                 state.loading = false;
-                state.trackers = action.payload;
+                if (action.payload.success && action.payload.data) {
+                    state.items = action.payload.data;
+                    state.totalItems = action.payload.total;
+                    state.totalPages = action.payload.totalPages;
+                    state.currentPage = action.payload.currentPage;
+                } else {
+                    state.items = Array.isArray(action.payload) ? action.payload : (action.payload.data || []);
+                }
             })
             .addCase(fetchTrackers.rejected, (state, action) => {
                 state.loading = false;
@@ -145,7 +155,7 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(createTracker.fulfilled, (state, action) => {
                 state.loading = false;
-                state.trackers.unshift(action.payload);
+                state.items.unshift(action.payload);
                 state.success = true;
             })
             .addCase(createTracker.rejected, (state, action) => {
@@ -160,9 +170,9 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(updateTracker.fulfilled, (state, action) => {
                 state.loading = false;
-                const index = state.trackers.findIndex(t => t._id === action.payload._id);
+                const index = state.items.findIndex(t => t._id === action.payload._id);
                 if (index !== -1) {
-                    state.trackers[index] = action.payload;
+                    state.items[index] = action.payload;
                 }
                 state.success = true;
             })
@@ -178,7 +188,7 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(deleteTracker.fulfilled, (state, action) => {
                 state.loading = false;
-                state.trackers = state.trackers.filter(t => t._id !== action.payload);
+                state.items = state.items.filter(t => t._id !== action.payload);
                 state.success = true;
             })
             .addCase(deleteTracker.rejected, (state, action) => {
@@ -193,10 +203,10 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(uploadDrawing.fulfilled, (state, action) => {
                 state.loading = false;
-                const index = state.trackers.findIndex(t => t._id === action.payload.id);
+                const index = state.items.findIndex(t => t._id === action.payload.id);
                 if (index !== -1) {
-                    state.trackers[index].drawingUrl = action.payload.drawingUrl;
-                    state.trackers[index].drawingFileName = action.payload.drawingFileName;
+                    state.items[index].drawingUrl = action.payload.drawingUrl;
+                    state.items[index].drawingFileName = action.payload.drawingFileName;
                 }
                 state.success = true;
             })
@@ -225,9 +235,9 @@ const mhDevelopmentTrackerSlice = createSlice({
             })
             .addCase(allocateVendor.fulfilled, (state, action) => {
                 state.loading = false;
-                const index = state.trackers.findIndex(t => t._id === action.payload._id);
+                const index = state.items.findIndex(t => t._id === action.payload._id);
                 if (index !== -1) {
-                    state.trackers[index] = action.payload;
+                    state.items[index] = action.payload;
                 }
                 state.success = true;
             })

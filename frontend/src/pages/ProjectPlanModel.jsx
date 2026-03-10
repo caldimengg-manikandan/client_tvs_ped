@@ -1,17 +1,22 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Modal } from 'antd';
-import { ClipboardList, Eye, Filter } from 'lucide-react';
+import { ClipboardList, Eye, Filter, ListChecks } from 'lucide-react';
 import dayjs from 'dayjs';
 import { fetchTrackers, updateTracker, clearError, clearSuccess } from '../redux/slices/mhDevelopmentTrackerSlice';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import ProjectPlanActualModal from './ProjectPlanActualModal';
+import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
 import { toast } from 'react-hot-toast';
 
 const ProjectPlanModel = () => {
     const dispatch = useDispatch();
-    const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
+    const { items: trackers = [], loading, error, success, totalItems, totalPages } = useSelector(state => state.mhDevelopmentTracker);
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
+    const [limit] = useState(10);
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
     const [viewPlanVisible, setViewPlanVisible] = useState(false);
@@ -23,8 +28,8 @@ const ProjectPlanModel = () => {
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchTrackers());
-    }, [dispatch]);
+        dispatch(fetchTrackers({ page, limit, search }));
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (error) {
@@ -39,10 +44,22 @@ const ProjectPlanModel = () => {
         }
     }, [error, success, dispatch]);
 
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
+
+
+
     const milestoneRows = useMemo(() => {
         const rows = [];
-        (trackers || []).forEach(t => {
+        (trackers || []).forEach((t, i) => {
             if (
+                t &&
                 t.projectPlan &&
                 Array.isArray(t.projectPlan.milestones) &&
                 t.projectPlan.milestones.length > 0
@@ -84,6 +101,7 @@ const ProjectPlanModel = () => {
                 });
 
                 rows.push({
+                    _serialNo: (page - 1) * limit + rows.length + 1,
                     trackerId: t._id,
                     assetRequestId: t.assetRequestId,
                     planStart,
@@ -95,7 +113,7 @@ const ProjectPlanModel = () => {
             }
         });
         return rows;
-    }, [trackers]);
+    }, [trackers, page, limit]);
 
     const handleProjectPlan = trackerId => {
         setSelectedTrackerId(trackerId);
@@ -110,14 +128,14 @@ const ProjectPlanModel = () => {
     const handleProjectPlanSave = () => {
         setProjectPlanVisible(false);
         setSelectedTrackerId(null);
-        dispatch(fetchTrackers());
+        dispatch(fetchTrackers({ page, limit, search }));
     };
 
-    const CustomHeaderCell = ({ column }) => (
+    const CustomHeaderCell = React.useCallback(({ column }) => (
         <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
-    );
+    ), []);
 
     const applyColumnFilters = rows => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
@@ -132,7 +150,7 @@ const ProjectPlanModel = () => {
         );
     };
 
-    const FilterHeaderCell = ({ column }) => {
+    const FilterHeaderCell = React.useCallback(({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
         milestoneRows.forEach(row => {
@@ -263,11 +281,18 @@ const ProjectPlanModel = () => {
                 )}
             </div>
         );
-    };
+    }, [columnFilters, activeFilterKey, filterSearchText, milestoneRows]);
 
     const gridRows = applyColumnFilters(milestoneRows);
 
-    const dataGridColumns = [
+    const dataGridColumns = useMemo(() => [
+        {
+            key: 'serial',
+            name: 'S.No',
+            width: 70,
+            frozen: true,
+            renderCell: ({ row }) => <span className="font-semibold text-gray-700">{row._serialNo}</span>
+        },
         {
             key: 'assetRequestId',
             name: 'ASSET ID',
@@ -347,9 +372,9 @@ const ProjectPlanModel = () => {
                 </div>
             )
         }
-    ];
+    ], [FilterHeaderCell, CustomHeaderCell]);
 
-    const autoFitColumns = useMemo(() => {
+    const columns = useMemo(() => {
         if (!gridWidth) return dataGridColumns;
 
         const totalDefinedWidth = dataGridColumns.reduce((sum, column) => {
@@ -372,7 +397,7 @@ const ProjectPlanModel = () => {
     }, [dataGridColumns, gridWidth]);
 
     const selectedViewTracker = useMemo(
-        () => trackers.find(t => t._id === viewTrackerId),
+        () => (trackers || []).find(t => t._id === viewTrackerId),
         [trackers, viewTrackerId]
     );
 
@@ -404,32 +429,68 @@ const ProjectPlanModel = () => {
     }, []);
 
     return (
-        <div className="flex-1 flex flex-col h-full w-full bg-transparent">
+        <div className="flex-1 flex flex-col h-full w-full bg-transparent p-4 md:p-6">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div
-                    ref={gridContainerRef}
-                    className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]"
-                >
-                    <div className="h-full w-full absolute inset-0">
-                        <DataGrid
-                            columns={autoFitColumns}
-                            rows={gridRows}
-                            rowKeyGetter={row =>
-                                `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
-                            }
-                            className="rdg-light project-plan-grid"
-                            style={{ blockSize: '100%' }}
-                            rowHeight={44}
-                            headerRowHeight={52}
-                            defaultColumnOptions={{
-                                resizable: true
-                            }}
+                {/* Standard Toolbar */}
+                <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200/80 shadow-sm gap-4 mx-6 mt-4 transition-all duration-300">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <SearchBar
+                            onSearch={handleSearch}
+                            placeholder="Search by Asset ID..."
+                            className="w-full sm:w-72"
                         />
-                        {loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
-                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
-                            </div>
-                        )}
+                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
+                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
+                            <ListChecks size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Project Summary</h2>
+                            <span className="text-[10px] text-gray-500 font-medium">Timeline Overview</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden mt-4">
+                    <div
+                        ref={gridContainerRef}
+                        className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]"
+                    >
+                        <div className="h-full w-full absolute inset-0">
+                            <DataGrid
+                                columns={columns}
+                                rows={gridRows}
+                                loading={loading}
+                                rowKeyGetter={row =>
+                                    `${row.trackerId || ''}-${row.assetRequestId || ''}`
+                                }
+                                className="rdg-light project-plan-grid h-full"
+                                style={{ blockSize: '100%' }}
+                                rowHeight={48}
+                                headerRowHeight={52}
+                                defaultColumnOptions={{
+                                    resizable: true
+                                }}
+                            />
+                            {loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                                    <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>
@@ -439,7 +500,7 @@ const ProjectPlanModel = () => {
                 onCancel={() => setProjectPlanVisible(false)}
                 onSave={handleProjectPlanSave}
                 trackerInfo={
-                    trackers.find(t => t._id === selectedTrackerId)
+                    (trackers || []).find(t => t._id === selectedTrackerId)
                 }
             />
 

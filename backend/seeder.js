@@ -35,6 +35,7 @@ const seedData = async () => {
                 reports: true,
                 employeeMaster: true,
                 vendorMaster: true,
+                mhDevelopmentTracker: true,
                 settings: true
             },
             status: 'Active'
@@ -60,6 +61,7 @@ const seedData = async () => {
                 reports: true,
                 employeeMaster: true,
                 vendorMaster: true,
+                mhDevelopmentTracker: true,
                 settings: true
             },
             status: 'Active'

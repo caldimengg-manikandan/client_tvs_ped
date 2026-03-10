@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Modal, Form, Input, Select, DatePicker, Button, Upload } from 'antd';
-import { Download, Upload as UploadIcon, Edit, Trash2, Filter, Pin } from 'lucide-react';
+import { Download, Upload as UploadIcon, Edit, Trash2, Filter, Pin, Activity } from 'lucide-react';
 import dayjs from 'dayjs';
 import { toast } from 'react-hot-toast';
 import {
@@ -19,6 +19,8 @@ import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import VendorSelectionPopup from './VendorSelectionPopup';
 import ProjectPlanModal from './ProjectPlanModal';
+import Pagination from '../../components/Pagination';
+import SearchBar from '../../components/SearchBar';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -93,8 +95,12 @@ const computeDerivedTrackerFields = (tracker) => {
 
 const MHDevelopmentTracker = () => {
     const dispatch = useDispatch();
-    const { trackers, loading, error, success } = useSelector(state => state.mhDevelopmentTracker);
+    const { items: trackers, loading, error, success, totalItems, totalPages, currentPage: serverPage } = useSelector(state => state.mhDevelopmentTracker);
     const { items: mhRequests, loading: requestsLoading } = useSelector(state => state.assetRequests);
+
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(50);
+    const [search, setSearch] = useState('');
     const [form] = Form.useForm();
 
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -114,9 +120,9 @@ const MHDevelopmentTracker = () => {
     const [frozenRowCount, setFrozenRowCount] = useState(0);
 
     useEffect(() => {
-        dispatch(fetchTrackers());
+        dispatch(fetchTrackers({ page, limit, search }));
         dispatch(fetchAssetRequests());
-    }, [dispatch]);
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (error) {
@@ -220,9 +226,18 @@ const MHDevelopmentTracker = () => {
         }
     };
 
-    const handleFileUpload = (trackerId, file) => {
+    const handleDrawingUpload = (trackerId, file) => {
         dispatch(uploadDrawing({ id: trackerId, file }));
         return false;
+    };
+
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
     };
 
     const handleDownloadDrawing = (drawingUrl, fileName) => {
@@ -385,7 +400,7 @@ const MHDevelopmentTracker = () => {
             frozen: true,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-700">{row._serialNo}</span>
+                <span className="font-semibold text-gray-700">{((page - 1) * limit) + row._serialNo}</span>
             )
         },
         // 2. Department Name
@@ -587,7 +602,7 @@ const MHDevelopmentTracker = () => {
                         </Button>
                     ) : (
                         <Upload
-                            beforeUpload={(file) => handleFileUpload(row._id, file)}
+                            beforeUpload={(file) => handleDrawingUpload(row._id, file)}
                             showUploadList={false}
                             accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.doc,.docx,.xls,.xlsx"
                         >
@@ -674,7 +689,15 @@ const MHDevelopmentTracker = () => {
         <div className="flex-1 flex flex-col h-full w-full bg-transparent">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 {/* Table toolbar */}
-                <div className="px-6 pt-4 pb-2">
+                <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200/80 shadow-sm gap-4 mx-6 mt-4 transition-all duration-300">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <SearchBar 
+                            onSearch={handleSearch} 
+                            placeholder="Search by ID, Name, Equipment..." 
+                            className="w-full sm:w-72"
+                        />
+
+                    </div>
                     <FreezeToolbar
                         columns={freezeColumnList}
                         frozenKeys={frozenKeys}
@@ -701,6 +724,20 @@ const MHDevelopmentTracker = () => {
                                 loading={loading}
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

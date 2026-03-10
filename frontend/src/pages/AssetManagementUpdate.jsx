@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2, Upload, FileText, X, Download, Filter } from 'lucide-react';
 import { DataGrid } from 'react-data-grid';
@@ -6,6 +6,8 @@ import 'react-data-grid/lib/styles.css';
 import { useAuth } from '../context/AuthContext';
 import FreezeToolbar from '../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
+import Pagination from '../components/Pagination';
+import SearchBar from '../components/SearchBar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -13,6 +15,11 @@ const AssetManagementUpdate = () => {
     const { user } = useAuth();
     const [assets, setAssets] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(50);
+    const [search, setSearch] = useState('');
 
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -47,6 +54,9 @@ const AssetManagementUpdate = () => {
 
     useEffect(() => {
         fetchAssets();
+    }, [page, limit, search]);
+
+    useEffect(() => {
         fetchVendors();
         fetchDepartments();
         fetchAcceptedRequests();
@@ -59,13 +69,31 @@ const AssetManagementUpdate = () => {
 
     const fetchAssets = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/asset-management`);
-            setAssets(response.data);
+            setLoading(true);
+            const response = await axios.get(`${API_BASE_URL}/api/asset-management`, {
+                params: { page, limit, search }
+            });
+            if (response.data.success) {
+                setAssets(response.data.data);
+                setTotalItems(response.data.total);
+                setTotalPages(response.data.totalPages);
+            } else {
+                setAssets(response.data);
+            }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching assets:', error);
             setLoading(false);
         }
+    };
+
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
     };
 
     const fetchAcceptedRequests = async () => {
@@ -505,7 +533,7 @@ const AssetManagementUpdate = () => {
             frozen: true,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-700">{row._serialNo}</span>
+                <span className="font-semibold text-gray-700">{((page - 1) * limit) + row._serialNo}</span>
             )
         },
         {
@@ -645,12 +673,11 @@ const AssetManagementUpdate = () => {
                 <div className="px-6 py-4 flex flex-col gap-4">
                     <div className="flex justify-between items-center bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm font-bold text-gray-700">
-                                    Total Assets: <span className="text-emerald-700">{assets.length}</span>
-                                </span>
-                            </div>
+                            <SearchBar 
+                                onSearch={handleSearch} 
+                                placeholder="Search assets, vendors..." 
+                                className="w-72"
+                            />
                         </div>
                         <div>
                             <button
@@ -697,6 +724,19 @@ const AssetManagementUpdate = () => {
                             )}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <Pagination 
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        totalItems={totalItems}
+                        itemsPerPage={limit}
+                        loading={loading}
+                    />
                 </div>
             </div>
 

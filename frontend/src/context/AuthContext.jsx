@@ -65,6 +65,45 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const signup = async (userData) => {
+        try {
+            await axios.post(`${API_BASE_URL}/api/auth/register`, userData);
+            return { success: true };
+        } catch (error) {
+            console.error('Signup error', error.response?.data?.message);
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Signup failed'
+            };
+        }
+    };
+
+    const forgotPassword = async (email) => {
+        try {
+            await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
+            return { success: true };
+        } catch (error) {
+            console.error('Forgot password error', error.response?.data?.message);
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Error sending reset link'
+            };
+        }
+    };
+
+    const resetPassword = async (token, password) => {
+        try {
+            await axios.post(`${API_BASE_URL}/api/auth/reset-password/${token}`, { password });
+            return { success: true };
+        } catch (error) {
+            console.error('Reset password error', error.response?.data?.message);
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Error resetting password'
+            };
+        }
+    };
+
     const logout = async () => {
         try {
             if (sessionId) {
@@ -97,6 +136,9 @@ export const AuthProvider = ({ children }) => {
             loading,
             login,
             logout,
+            signup,
+            forgotPassword,
+            resetPassword,
             hasPermission
         }}>
             {children}

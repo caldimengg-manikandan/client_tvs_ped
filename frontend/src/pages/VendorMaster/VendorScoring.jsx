@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Plus, Star, Download, Upload, Eye, Edit, Trash2, Calendar, TrendingUp, Filter as FilterIcon, Zap } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,6 +9,8 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
+import SearchBar from '../../components/SearchBar';
+import Pagination from '../../components/Pagination';
 import * as XLSX from 'xlsx';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -45,9 +47,12 @@ const VendorScoring = () => {
     const fileInputRef = useRef();
     const [form] = Form.useForm();
 
-    const { items: scores, loading, error } = useSelector((state) => state.vendorScoring);
+    const { items: scores, loading, error, totalItems, totalPages, currentPage } = useSelector((state) => state.vendorScoring);
     const { items: vendors } = useSelector((state) => state.vendors);
 
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
+    const [limit] = useState(10);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isPerformanceModalVisible, setIsPerformanceModalVisible] = useState(false);
     const [editingScore, setEditingScore] = useState(null);
@@ -63,9 +68,9 @@ const VendorScoring = () => {
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchVendorScores());
-        dispatch(fetchVendors());
-    }, [dispatch]);
+        dispatch(fetchVendorScores({ page, limit, search }));
+        dispatch(fetchVendors({ limit: 1000 })); // Fetch all vendors for dropdowns
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (error) {
@@ -335,6 +340,33 @@ const VendorScoring = () => {
         event.target.value = '';
     };
 
+    const handleExport = () => {
+        if (!scores || scores.length === 0) {
+            toast.error('No data to export');
+            return;
+        }
+
+        const exportData = scores.map((score, index) => ({
+            'S.NO': index + 1,
+            'VENDOR CODE': score.vendorCode,
+            'VENDOR NAME': score.vendorName,
+            'LOCATION': score.location,
+            'MONTH': score.scoringMonth,
+            'YEAR': score.scoringYear,
+            'QSR SCORE': score.qsrScore,
+            'COST SCORE': score.costScore,
+            'DELIVERY SCORE': score.deliveryScore,
+            'QCD SCORE': score.qcdScore,
+            'REMARKS': score.remarks || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vendor Scores');
+        XLSX.writeFile(wb, `Vendor_Scores_${new Date().toISOString().split('T')[0]}.xlsx`);
+        toast.success('Scores exported successfully');
+    };
+
     const applyColumnFilters = (rows) => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
 
@@ -360,7 +392,7 @@ const VendorScoring = () => {
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
-        const selectedValues = rawSelected === undefined ? values : rawSelected;
+        const selectedValues = rawSelected === undefined ? [] : rawSelected;
 
         const visibleValues = values.filter(v =>
             v.toLowerCase().includes(searchValue.toLowerCase())
@@ -369,12 +401,12 @@ const VendorScoring = () => {
         const toggleValue = (value) => {
             const strValue = value;
             setColumnFilters(prev => {
-                const base = prev[key] === undefined ? values : prev[key];
+                const base = prev[key] === undefined ? [] : prev[key];
                 const exists = base.includes(strValue);
                 const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
                 const updated = { ...prev };
 
-                if (next.length === values.length) {
+                if (next.length === 0) {
                     delete updated[key];
                 } else {
                     updated[key] = next;
@@ -447,7 +479,7 @@ const VendorScoring = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 bg-white outline-none focus:ring-1 focus:ring-tvs-blue"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -485,7 +517,16 @@ const VendorScoring = () => {
         </div>
     );
 
-    const gridRows = React.useMemo(() => applyColumnFilters(scores || []).map((row, i) => ({ ...row, _serialNo: i + 1 })), [scores, columnFilters]);
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
+
+    const gridRows = React.useMemo(() => applyColumnFilters(scores || []).map((row, i) => ({ ...row, _serialNo: (page - 1) * limit + i + 1 })), [scores, page, limit, columnFilters]);
 
     const dataGridColumns = [
         {
@@ -711,40 +752,51 @@ const VendorScoring = () => {
                 style={{ display: 'none' }}
             />
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Table toolbar */}
+                <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200/80 shadow-sm gap-4 mx-6 mt-4 transition-all duration-300">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{scores?.length || 0}</span> scores</span>
+                        <SearchBar 
+                            onSearch={handleSearch} 
+                            placeholder="Search by vendor name or code..." 
+                            className="w-full sm:w-72"
+                        />
+                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
+                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
+                            <TrendingUp size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Vendor Scoring</h2>
+                            <span className="text-[10px] text-gray-500 font-medium">Performance Metrics</span>
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={handleAddClick}
-                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
+                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
                         >
-                            <Plus size={20} /> Add Score
+                            <Plus size={18} />
+                            Add Score
                         </button>
                         <button
-                            onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-semibold transform hover:scale-105 active:scale-95"
+                            onClick={handleExport}
+                            className="flex items-center gap-2 bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-all shadow-sm"
                         >
-                            <Download size={20} />
-                            Template
+                            <Download size={18} />
+                            Export
                         </button>
                         <button
-                            onClick={handleImportClick}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl font-semibold transform hover:scale-105 active:scale-95"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-2 bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-all shadow-sm"
                         >
-                            <Upload size={20} />
-                            Import Excel
+                            <Upload size={18} />
+                            Import
                         </button>
                     </div>
                 </div>
 
                 <div className="px-6 py-4">
                     <FreezeToolbar
-                        columns={freezeColumnList}
+                        columns={dataGridColumns.filter(col => col.key !== 'serial' && col.key !== 'actions')}
                         frozenKeys={frozenKeys}
                         onApply={setFrozenKeys}
                         frozenRowCount={frozenRowCount}
@@ -775,15 +827,16 @@ const VendorScoring = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-600">Showing</span>
-                            <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{scores?.length || 0}</span>
-                            <span className="text-gray-600">of</span>
-                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{scores?.length || 0}</span>
-                            <span className="text-gray-600">vendor scores</span>
-                        </div>
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

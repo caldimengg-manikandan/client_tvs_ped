@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Plus, Edit, Trash2, Mail, Filter as FilterIcon, Download, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,8 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
+import SearchBar from '../../components/SearchBar';
+import Pagination from '../../components/Pagination';
 import * as XLSX from 'xlsx';
 import { createActionColumn } from '../../config/agGridConfig';
 
@@ -19,8 +21,11 @@ const VendorMaster = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef();
 
-    const { items: vendors, loading, error } = useSelector((state) => state.vendors);
+    const { items: vendors, loading, error, totalItems, totalPages, currentPage } = useSelector((state) => state.vendors);
 
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [search, setSearch] = useState('');
     const [editingVendor, setEditingVendor] = useState(null);
     const [viewingVendor, setViewingVendor] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
@@ -35,8 +40,8 @@ const VendorMaster = () => {
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchVendors());
-    }, [dispatch]);
+        dispatch(fetchVendors({ page, limit, search }));
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (error) {
@@ -73,7 +78,14 @@ const VendorMaster = () => {
         navigate('/vendor-master/add');
     };
 
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
 
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
@@ -239,7 +251,7 @@ const VendorMaster = () => {
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
-        const selectedValues = rawSelected === undefined ? values : rawSelected;
+        const selectedValues = rawSelected === undefined ? [] : rawSelected;
 
         const visibleValues = values.filter(v =>
             v.toLowerCase().includes(searchValue.toLowerCase())
@@ -248,12 +260,12 @@ const VendorMaster = () => {
         const toggleValue = (value) => {
             const strValue = value;
             setColumnFilters(prev => {
-                const base = prev[key] === undefined ? values : prev[key];
+                const base = prev[key] === undefined ? [] : prev[key];
                 const exists = base.includes(strValue);
                 const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
                 const updated = { ...prev };
 
-                if (next.length === values.length) {
+                if (next.length === 0) {
                     delete updated[key];
                 } else {
                     updated[key] = next;
@@ -326,7 +338,7 @@ const VendorMaster = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 bg-white outline-none focus:ring-1 focus:ring-tvs-blue"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -358,7 +370,7 @@ const VendorMaster = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(filteredVendors).map((row, i) => ({ ...row, _serialNo: i + 1 }));
+    const gridRows = useMemo(() => (vendors || []).map((row, i) => ({ ...row, _serialNo: (page - 1) * limit + i + 1 })), [vendors, page, limit]);
 
     const dataGridColumns = [
         {
@@ -368,7 +380,7 @@ const VendorMaster = () => {
             frozen: true,
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-700">{row._serialNo}</span>
+                <span className="font-semibold text-gray-700">{((page - 1) * limit) + row._serialNo}</span>
             )
         },
         {
@@ -502,18 +514,19 @@ const VendorMaster = () => {
                 {/* Toolbar with Export */}
                 <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredVendors?.length || 0}</span> vendors</span>
-                        </div>
+                        <SearchBar 
+                            onSearch={handleSearch} 
+                            placeholder="Search by name, code, GSTIN..." 
+                            className="w-full sm:w-72"
+                        />
                     </div>
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                            className="flex items-center justify-center p-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105 active:scale-95"
+                            title="Download Template"
                         >
-                            <Download size={18} />
-                            Template
+                            <Download size={20} />
                         </button>
                         <button
                             onClick={handleAddVendor}
@@ -573,23 +586,16 @@ const VendorMaster = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-600">Showing</span>
-                            <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredVendors?.length || 0}</span>
-                            <span className="text-gray-600">of</span>
-                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{vendors?.length || 0}</span>
-                            <span className="text-gray-600">vendors</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                            <Building size={16} className="text-blue-600" />
-                            <span className="text-sm font-bold text-blue-700">
-                                {vendors?.length || 0}
-                            </span>
-                            <span className="text-xs text-blue-600">total vendors</span>
-                        </div>
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

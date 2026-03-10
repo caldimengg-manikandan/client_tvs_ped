@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Plus, Edit, Trash2, Eye, Shield, User, Filter, Upload, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,8 @@ import 'react-data-grid/lib/styles.css';
 import * as XLSX from 'xlsx';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
-import 'react-data-grid/lib/styles.css';
+import SearchBar from '../../components/SearchBar';
+import Pagination from '../../components/Pagination';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -58,15 +59,14 @@ const EmployeeMaster = () => {
         });
     };
 
-    const countPermissionCount = (permissions) => {
-        if (!permissions) return 0;
-        return Object.values(permissions).filter(val => val === true).length;
-    };
+
 
     // Redux State
-    const { items: employees, loading, error } = useSelector((state) => state.employees);
+    const { items: employees, loading, error, totalItems, totalPages, currentPage: serverPage } = useSelector((state) => state.employees);
 
-    const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [accessFilter, setAccessFilter] = useState('all');
     const [columnFilters, setColumnFilters] = useState({});
@@ -76,6 +76,7 @@ const EmployeeMaster = () => {
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [isImportModalVisible, setIsImportModalVisible] = useState(false);
     const [importData, setImportData] = useState([]);
+    const [importFile, setImportFile] = useState(null);
 
     const [departments, setDepartments] = useState([]);
     const [showDeptModal, setShowDeptModal] = useState(false);
@@ -88,8 +89,8 @@ const EmployeeMaster = () => {
 
 
     useEffect(() => {
-        dispatch(fetchEmployees());
-    }, [dispatch]);
+        dispatch(fetchEmployees({ page, limit, search }));
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (error) {
@@ -164,41 +165,21 @@ const EmployeeMaster = () => {
                 const worksheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-                // Validate and transform data
-                const transformedData = jsonData.map((row, index) => ({
+                // For preview: Validate and transform data
+                const previewRows = jsonData.map((row) => ({
                     employeeId: row['Employee ID'] || row['employeeId'] || '',
                     employeeName: row['Employee Name'] || row['employeeName'] || '',
                     departmentName: row['Department'] || row['departmentName'] || '',
                     plantLocation: row['Location'] || row['plantLocation'] || '',
                     accessLevel: row['Access Level'] || row['accessLevel'] || 'Employee',
                     mailId: row['Email'] || row['mailId'] || '',
-                    status: row['Status'] || row['status'] || 'Active',
-                    password: row['Password'] || row['password'] || 'default123',
-                    permissions: {
-                        dashboard: row['Dashboard'] === 'Yes' || row['Dashboard'] === true || false,
-                        assetRequest: row['Asset Request'] === 'Yes' || row['Asset Request'] === true || false,
-                        requestTracker: row['Request Tracker'] === 'Yes' || row['Request Tracker'] === true || false,
-                        assetSummary: row['Asset Summary'] === 'Yes' || row['Asset Summary'] === true || false,
-                        employeeMaster: row['Employee Master'] === 'Yes' || row['Employee Master'] === true || false,
-                        vendorMaster: row['Vendor Master'] === 'Yes' || row['Vendor Master'] === true || false,
-                        settings: row['Settings'] === 'Yes' || row['Settings'] === true || false,
-                        reports: row['Reports'] === 'Yes' || row['Reports'] === true || false
-                    }
+                    status: row['Status'] || row['status'] || 'Active'
                 }));
 
-                // Validate required fields
-                const invalidRows = transformedData.filter(
-                    (row, idx) => !row.employeeId || !row.employeeName || !row.mailId
-                );
-
-                if (invalidRows.length > 0) {
-                    toast.error(`${invalidRows.length} rows have missing required fields (Employee ID, Name, or Email)`);
-                    return;
-                }
-
-                setImportData(transformedData);
+                setImportData(previewRows);
+                setImportFile(file); // Store the file for actual upload
                 setIsImportModalVisible(true);
-                toast.success(`${transformedData.length} employees ready to import`);
+                toast.success(`${previewRows.length} employees previewed`);
             } catch (error) {
                 console.error('Error parsing file:', error);
                 toast.error('Error parsing file. Please check the format.');
@@ -210,47 +191,43 @@ const EmployeeMaster = () => {
     };
 
     const handleConfirmImport = async () => {
+        if (!importFile) return;
+
+        const loadingToast = toast.loading('Importing employees...');
         try {
             const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
             const token = localStorage.getItem('token');
 
-            let successCount = 0;
-            let errorCount = 0;
+            const formData = new FormData();
+            formData.append('file', importFile);
 
-            for (const employee of importData) {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/employees`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify(employee)
-                    });
+            const response = await fetch(`${API_BASE_URL}/employees/bulk-upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // Content-Type is handled automatically by browser for FormData
+                },
+                body: formData
+            });
 
-                    if (response.ok) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                    }
-                } catch (err) {
-                    errorCount++;
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toast.success(result.message || 'Import successful!', { id: loadingToast });
+                if (result.summary) {
+                    const { successCount, errorCount } = result.summary;
+                    toast(`Success: ${successCount}, Failed: ${errorCount}`, { icon: '📊' });
                 }
-            }
-
-            setIsImportModalVisible(false);
-            setImportData([]);
-            dispatch(fetchEmployees());
-
-            if (successCount > 0) {
-                toast.success(`Successfully imported ${successCount} employee(s)`);
-            }
-            if (errorCount > 0) {
-                toast.error(`Failed to import ${errorCount} employee(s)`);
+                setIsImportModalVisible(false);
+                setImportFile(null);
+                setImportData([]);
+                dispatch(fetchEmployees());
+            } else {
+                toast.error(result.message || 'Import failed', { id: loadingToast });
             }
         } catch (error) {
             console.error('Import error:', error);
-            toast.error('Error importing employees');
+            toast.error('Error connecting to server', { id: loadingToast });
         }
     };
 
@@ -283,19 +260,14 @@ const EmployeeMaster = () => {
         toast.success('Template downloaded successfully');
     };
 
-    const filteredEmployees = (employees || []).filter(emp => {
-        const matchesSearch =
-            String(emp.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(emp.employeeName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(emp.departmentName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(emp.mailId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            String(emp.plantLocation || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1); // Reset to first page on new search
+    }, []);
 
-        const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
-        const matchesAccess = accessFilter === 'all' || emp.accessLevel === accessFilter;
-
-        return matchesSearch && matchesStatus && matchesAccess;
-    });
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
 
     const applyColumnFilters = (rows) => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
@@ -310,6 +282,8 @@ const EmployeeMaster = () => {
         );
     };
 
+    const gridRows = useMemo(() => applyColumnFilters(employees || []).map((row, i) => ({ ...row, _serialNo: (page - 1) * limit + i + 1 })), [employees, page, limit, columnFilters]);
+
     const PlainHeaderCell = ({ column }) => (
         <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
@@ -319,7 +293,7 @@ const EmployeeMaster = () => {
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
         const valuesSet = new Set();
-        filteredEmployees.forEach(row => {
+        employees.forEach(row => { // Use 'employees' directly as filtering is server-side
             const value = row[key];
             const str = value == null ? '' : String(value);
             valuesSet.add(str);
@@ -328,7 +302,7 @@ const EmployeeMaster = () => {
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
-        const selectedValues = rawSelected === undefined ? values : rawSelected;
+        const selectedValues = rawSelected === undefined ? [] : rawSelected;
 
         const visibleValues = values.filter(v =>
             v.toLowerCase().includes(searchValue.toLowerCase())
@@ -337,12 +311,12 @@ const EmployeeMaster = () => {
         const toggleValue = (value) => {
             const strValue = value;
             setColumnFilters(prev => {
-                const base = prev[key] === undefined ? values : prev[key];
+                const base = prev[key] === undefined ? [] : prev[key];
                 const exists = base.includes(strValue);
                 const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
                 const updated = { ...prev };
 
-                if (next.length === values.length) {
+                if (next.length === 0) {
                     delete updated[key];
                 } else {
                     updated[key] = next;
@@ -415,7 +389,7 @@ const EmployeeMaster = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 bg-white outline-none focus:ring-1 focus:ring-tvs-blue"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -446,8 +420,6 @@ const EmployeeMaster = () => {
             </div>
         );
     };
-
-    const gridRows = applyColumnFilters(filteredEmployees).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const dataGridColumns = [
         {
@@ -604,19 +576,20 @@ const EmployeeMaster = () => {
                 <div className="px-6 py-4 flex flex-col gap-4">
                     {/* Toolbar with Export */}
                     <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredEmployees?.length || 0}</span> employees</span>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <SearchBar 
+                            onSearch={handleSearch} 
+                            placeholder="Search by name, ID, email..." 
+                            className="w-full sm:w-72"
+                        />
+                    </div>
                         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                             <button
                                 onClick={handleDownloadTemplate}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                                className="flex items-center justify-center p-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105 active:scale-95"
+                                title="Download Template"
                             >
-                                <Download size={16} />
-                                Template
+                                <Download size={20} />
                             </button>
                             <button
                                 onClick={handleAddEmployee}
@@ -675,40 +648,16 @@ const EmployeeMaster = () => {
                 </div>
             </div>
             {/* Footer */}
-            <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white">
+            <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-600">Showing</span>
-                        <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredEmployees?.length || 0}</span>
-                        <span className="text-gray-600">of</span>
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{employees?.length || 0}</span>
-                        <span className="text-gray-600">employees</span>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
-                                <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                                <span className="text-xs font-semibold text-green-700">Active</span>
-                            </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-lg border border-yellow-200">
-                                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
-                                <span className="text-xs font-semibold text-yellow-700">Inactive</span>
-                            </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg border border-red-200">
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                                <span className="text-xs font-semibold text-red-700">Suspended</span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-                            <Shield size={16} className="text-purple-600" />
-                            <span className="text-sm font-bold text-purple-700">
-                                {(employees || []).reduce((acc, emp) => acc + countPermissionCount(emp.permissions), 0)}
-                            </span>
-                            <span className="text-xs text-purple-600">permissions</span>
-                        </div>
-                    </div>
+                    <Pagination 
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        totalItems={totalItems}
+                        itemsPerPage={limit}
+                        loading={loading}
+                    />
                 </div>
             </div>
 

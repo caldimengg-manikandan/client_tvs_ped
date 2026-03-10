@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, FileText, X, Filter, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Download, X, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
+import Pagination from '../../components/Pagination';
+import SearchBar from '../../components/SearchBar';
 
 const { Option } = Select;
 
@@ -15,8 +17,12 @@ const CreateMHRequestList = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useAuth();
-    const { items: requests, loading, success, error } = useSelector((state) => state.assetRequests);
+    // Redux state
+    const { items: requests, loading, error, success, totalItems, totalPages, currentPage: serverPage } = useSelector((state) => state.assetRequests);
 
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(50);
+    const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [columnFilters, setColumnFilters] = useState({});
@@ -31,8 +37,8 @@ const CreateMHRequestList = () => {
     const mhListGridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchAssetRequests());
-    }, [dispatch]);
+        dispatch(fetchAssetRequests({ page, limit, search }));
+    }, [dispatch, page, limit, search]);
 
     useEffect(() => {
         if (success && isModalOpen) {
@@ -40,15 +46,15 @@ const CreateMHRequestList = () => {
             setIsModalOpen(false);
             form.resetFields();
             dispatch(resetStatus());
-            dispatch(fetchAssetRequests());
+            dispatch(fetchAssetRequests({ page, limit, search })); // Re-fetch with current pagination/search
         }
         if (error && isModalOpen) {
             message.error(error);
             dispatch(resetStatus());
         }
-    }, [success, error, isModalOpen, form, dispatch]);
+    }, [success, error, isModalOpen, form, dispatch, page, limit, search]);
 
-    const handleCreateClick = () => {
+    const handleOpenModal = () => {
         if (!user || !user.employeeId) {
             message.error("Please add employee information first.");
             navigate('/employee-master/add');
@@ -86,6 +92,7 @@ const CreateMHRequestList = () => {
                 try {
                     await dispatch(deleteAssetRequest(row._id)).unwrap();
                     message.success('MH Request deleted successfully');
+                    dispatch(fetchAssetRequests({ page, limit, search })); // Re-fetch after delete
                 } catch (err) {
                     message.error(err || 'Failed to delete MH Request');
                 }
@@ -124,6 +131,15 @@ const CreateMHRequestList = () => {
     const baseRows = requests || [];
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
+
     const PlainHeaderCell = ({ column }) => (
         <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
@@ -142,7 +158,7 @@ const CreateMHRequestList = () => {
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
-        const selectedValues = rawSelected === undefined ? values : rawSelected;
+        const selectedValues = rawSelected === undefined ? [] : rawSelected;
 
         const visibleValues = values.filter(v =>
             v.toLowerCase().includes(searchValue.toLowerCase())
@@ -151,12 +167,12 @@ const CreateMHRequestList = () => {
         const toggleValue = (value) => {
             const strValue = value;
             setColumnFilters(prev => {
-                const base = prev[key] === undefined ? values : prev[key];
+                const base = prev[key] === undefined ? [] : prev[key];
                 const exists = base.includes(strValue);
                 const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
                 const updated = { ...prev };
 
-                if (next.length === values.length) {
+                if (next.length === 0) {
                     delete updated[key];
                 } else {
                     updated[key] = next;
@@ -231,7 +247,7 @@ const CreateMHRequestList = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 bg-white outline-none focus:ring-1 focus:ring-tvs-blue"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -269,9 +285,9 @@ const CreateMHRequestList = () => {
             name: 'S.NO',
             width: 80,
             frozen: true,
-            renderHeaderCell: PlainHeaderCell,
+            renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-gray-700">{row._serialNo}</span>
+                <span className="font-semibold text-gray-700">{((page - 1) * limit) + row._serialNo}</span>
             )
         },
         {
@@ -297,6 +313,17 @@ const CreateMHRequestList = () => {
             name: 'PLANT',
             width: 160,
             renderHeaderCell: FilterHeaderCell
+        },
+        {
+            key: 'status',
+            name: 'STATUS',
+            width: 120,
+            renderHeaderCell: FilterHeaderCell,
+            renderCell: ({ row }) => (
+                <Tag color={row.status === 'Accepted' ? 'green' : row.status === 'Rejected' ? 'red' : 'blue'} className="rounded-md font-bold uppercase">
+                    {row.status || 'Active'}
+                </Tag>
+            )
         },
         {
             key: 'productModel',
@@ -366,25 +393,25 @@ const CreateMHRequestList = () => {
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
                     <button
-                        type="button"
                         onClick={() => handleViewRequest(row)}
-                        className="p-1.5 rounded-full hover:bg-blue-50 text-blue-600 border border-blue-100"
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="View Request"
                     >
-                        <Eye size={14} />
+                        <Eye size={16} />
                     </button>
                     <button
-                        type="button"
-                        onClick={() => handleEditRequest(row)}
-                        className="p-1.5 rounded-full hover:bg-amber-50 text-amber-600 border border-amber-100"
+                        onClick={() => navigate(`edit/${row._id}`)}
+                        className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all"
+                        title="Edit Request"
                     >
-                        <Pencil size={14} />
+                        <Edit size={16} />
                     </button>
                     <button
-                        type="button"
                         onClick={() => handleDeleteRequest(row)}
-                        className="p-1.5 rounded-full hover:bg-red-50 text-red-600 border border-red-100"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        title="Delete Request"
                     >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                     </button>
                 </div>
             )
@@ -490,22 +517,24 @@ const CreateMHRequestList = () => {
             {/* Enhanced AG Grid Table Section */}
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div className="px-6 py-4 flex flex-col gap-4">
-                    {/* Toolbar with Export and Create Button */}
                     <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 px-6 py-4 rounded-xl border border-gray-200/80 shadow-sm gap-4">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span>Showing <span className="text-emerald-700 font-bold">{requests?.length || 0}</span> active requests</span>
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <SearchBar 
+                                onSearch={handleSearch} 
+                                placeholder="Search by ID, Dept, Model..." 
+                                className="w-full sm:w-72"
+                            />
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                             <button
                                 onClick={handleExportCsv}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                                className="flex items-center justify-center p-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105 active:scale-95"
+                                title="Download Template"
                             >
-                                <FileText size={16} />
-                                Template Download
+                                <Download size={20} />
                             </button>
                             <button
-                                onClick={handleCreateClick}
+                                onClick={handleOpenModal}
                                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                             >
                                 <Plus size={20} strokeWidth={3} />
@@ -513,7 +542,7 @@ const CreateMHRequestList = () => {
                             </button>
                         </div>
                     </div>
-
+                    
                     {/* Freeze Toolbar */}
                     <FreezeToolbar
                         columns={freezeColumnList}
@@ -543,6 +572,20 @@ const CreateMHRequestList = () => {
                                 loading={loading}
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* Footer Section with Pagination */}
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>
@@ -624,6 +667,10 @@ const CreateMHRequestList = () => {
                                             <Option value="New Project">New Project</Option>
                                             <Option value="Modification">Modification</Option>
                                             <Option value="Replacement">Replacement</Option>
+                                            <Option value="Upgrade">Upgrade</Option>
+                                            <Option value="Refresh">Refresh</Option>
+                                            <Option value="Capacity">Capacity</Option>
+                                            <Option value="Special Improvements">Special Improvements</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
@@ -636,6 +683,7 @@ const CreateMHRequestList = () => {
                                         <Select className="custom-select h-12 rounded-2xl overflow-hidden border-gray-100">
                                             <Option value="Hosur Plant 1 (TN)">Hosur Plant 1 (TN)</Option>
                                             <Option value="Hosur Plant 2 (TN)">Hosur Plant 2 (TN)</Option>
+                                            <Option value="Hosur Plant 3 (TN)">Hosur Plant 3 (TN)</Option>
                                             <Option value="Mysore Plant (KA)">Mysore Plant (KA)</Option>
                                             <Option value="Nalagarh Plant (HP)">Nalagarh Plant (HP)</Option>
                                             <Option value="Karawang Plant (Indonesia)">Karawang Plant (Indonesia)</Option>

@@ -28,13 +28,13 @@ const userSchema = mongoose.Schema({
     permissions: {
         dashboard: { type: Boolean, default: true },
         assetRequest: { type: Boolean, default: true },
-        requestTracker: { type: Boolean, default: false },
-        mhDevelopmentTracker: { type: Boolean, default: false },
-        assetSummary: { type: Boolean, default: false },
-        reports: { type: Boolean, default: false },
-        employeeMaster: { type: Boolean, default: false },
-        vendorMaster: { type: Boolean, default: false },
-        settings: { type: Boolean, default: false }
+        requestTracker: { type: Boolean, default: true },
+        mhDevelopmentTracker: { type: Boolean, default: true },
+        assetSummary: { type: Boolean, default: true },
+        reports: { type: Boolean, default: true },
+        employeeMaster: { type: Boolean, default: true },
+        vendorMaster: { type: Boolean, default: true },
+        settings: { type: Boolean, default: true }
     },
     status: {
         type: String,
@@ -45,6 +45,12 @@ const userSchema = mongoose.Schema({
         type: Date
     },
     previousLoginAt: {
+        type: Date
+    },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
         type: Date
     }
 }, {

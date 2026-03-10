@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, User, Fingerprint, Building2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 import tvsLogo from '../assets/j3.webp';
-import tvs1 from '../assets/j1.png';
 import tvs2 from '../assets/tvs2.webp';
 import tvs3 from '../assets/TVS 4.jpg';
-import trolley1 from '../assets/t1.jpg';
-import trolley2 from '../assets/t2.jpg';
-import trolley3 from '../assets/t3.webp';
 
-const Login = () => {
+const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const { login } = useAuth();
+    const { signup } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const from = location.state?.from?.pathname || '/dashboard';
 
     const tiltX = useMotionValue(0);
     const tiltY = useMotionValue(0);
@@ -48,12 +44,23 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
         setIsLoading(true);
 
-        const result = await login(email, password);
+        const result = await signup({
+            employeeId,
+            email,
+            password
+        });
 
         if (result.success) {
-            navigate(from, { replace: true });
+            toast.success('Registration successful! Please login.');
+            navigate('/login');
         } else {
             setError(result.message);
         }
@@ -99,62 +106,43 @@ const Login = () => {
                                                 TVS Motors
                                             </p>
                                             <p className="text-sm text-slate-200">
-                                                MH Asset Management &amp; Performance
+                                                MH Asset Management & Performance
                                             </p>
                                         </div>
                                     </div>
                                     <span className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 py-2 min-w-[160px] text-xs uppercase tracking-[0.18em] text-slate-100/90">
-                                        Secure Login
+                                        Create Account
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="mt-8 grid grid-rows-2 grid-cols-3 gap-4 flex-1">
-                                <motion.div
-                                    className="relative col-span-3 row-span-2 overflow-hidden rounded-2xl bg-slate-900/60 border border-white/20"
-                                    whileHover={{ scale: 1.02 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                >
-                                    <img
-                                        src={tvs3}
-                                        alt="TVS bikes lineup"
-                                        className="h-full w-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-900/20" />
-                                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-4">
-                                        <div>
-                                            <p className="text-xs font-medium text-slate-200/90">TVS portfolio</p>
-                                            <p className="text-sm font-semibold text-white">
-                                                Scooters, commuters and performance machines in one view
-                                            </p>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                            <div className="mt-8 relative w-full aspect-[16/9] overflow-hidden rounded-2xl bg-slate-900/60 border border-white/20">
+                                <img
+                                    src={tvs3}
+                                    alt="TVS Performance"
+                                    className="h-full w-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-900/20" />
+                                <div className="absolute bottom-6 left-6">
+                                    <h3 className="text-xl font-bold text-white mb-1">Join the Ecosystem</h3>
+                                    <p className="text-slate-200 text-sm">Empower your workflow with TVS digital assets.</p>
+                                </div>
                             </div>
 
-                            <div className="mt-4 grid grid-cols-2 gap-4">
-                                <motion.div
-                                    className="relative overflow-hidden rounded-2xl border border-white/20 bg-slate-900/70"
-                                    whileHover={{ y: -4, scale: 1.02 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                >
-                                    <img
-                                        src={tvs1}
-                                        alt="TVS manufacturing plant"
-                                        className="h-28 w-full object-cover"
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    className="relative overflow-hidden rounded-2xl border border-white/20 bg-slate-900/70 flex items-center justify-center"
-                                    whileHover={{ y: -4, scale: 1.02 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                >
-                                    <img
-                                        src={tvsLogo}
-                                        alt="TVS Eurorip brand"
-                                        className="h-20 w-full object-cover drop-shadow-[0_10px_30px_rgba(15,23,42,0.9)]"
-                                    />
-                                </motion.div>
+                            <div className="mt-8 flex items-center justify-center gap-6">
+                                <div className="flex flex-col items-center">
+                                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center mb-2">
+                                        <Fingerprint className="text-sky-400" size={20} />
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Secure</span>
+                                </div>
+                                <div className="h-8 w-px bg-white/10" />
+                                <div className="flex flex-col items-center">
+                                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center mb-2">
+                                        <Building2 className="text-rose-400" size={20} />
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Corporate</span>
+                                </div>
                             </div>
                         </div>
                     </motion.div>
@@ -164,7 +152,7 @@ const Login = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
-                    className="max-w-md w-full mx-auto space-y-8 relative"
+                    className="max-w-md w-full mx-auto space-y-6 relative overflow-y-auto max-h-screen py-6 pr-2 custom-scrollbar"
                 >
                     <div className="text-left">
                         <motion.div
@@ -172,20 +160,21 @@ const Login = () => {
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
                         >
-                            <h2 className="mt-6 text-3xl font-bold tracking-tight text-slate-900 font-outfit">
-                                Sign in to your account
+                            <img src={tvsLogo} alt="TVS Logo" className="h-10 w-auto mb-6 lg:hidden" />
+                            <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-outfit">
+                                Get Started Today
                             </h2>
                             <p className="mt-2 text-sm text-slate-600 font-inter">
-                                Use your official TVS credentials to access the Asset Management System.
+                                Create your specialized TVS associate account.
                             </p>
                         </motion.div>
                     </div>
 
-                    <div className="mt-6 space-y-6">
+                    <div className="mt-4">
                         <div className="glass-card p-8 rounded-3xl border border-slate-200 shadow-2xl shadow-slate-200/70 overflow-hidden relative group bg-white backdrop-blur-xl">
                             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-tvs-blue via-sky-400 to-tvs-red bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]" />
 
-                            <form className="space-y-6" onSubmit={handleSubmit}>
+                            <form className="space-y-4" onSubmit={handleSubmit}>
                                 <AnimatePresence mode="wait">
                                     {error && (
                                         <motion.div
@@ -201,24 +190,32 @@ const Login = () => {
                                 </AnimatePresence>
 
                                 <div className="space-y-1">
-                                    <label
-                                        htmlFor="email"
-                                        className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1"
-                                    >
-                                        Email address
-                                    </label>
+                                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Employee ID</label>
                                     <div className="relative group/input">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within/input:text-tvs-blue transition-colors">
-                                            <Mail size={18} />
+                                            <User size={16} />
                                         </div>
                                         <input
-                                            id="email"
-                                            name="email"
-                                            type="email"
-                                            autoComplete="email"
                                             required
-                                            className="block w-full pl-12 pr-4 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-slate-900 placeholder:text-slate-400 font-inter"
-                                            placeholder="admin@tvs.com"
+                                            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-sm"
+                                            placeholder="EMP001"
+                                            value={employeeId}
+                                            onChange={(e) => setEmployeeId(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Email address</label>
+                                    <div className="relative group/input">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within/input:text-tvs-blue transition-colors">
+                                            <Mail size={16} />
+                                        </div>
+                                        <input
+                                            type="email"
+                                            required
+                                            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-sm"
+                                            placeholder="you@tvs.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                         />
@@ -226,23 +223,15 @@ const Login = () => {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label
-                                        htmlFor="password"
-                                        className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1"
-                                    >
-                                        Password
-                                    </label>
+                                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Password</label>
                                     <div className="relative group/input">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within/input:text-tvs-blue transition-colors">
-                                            <Lock size={18} />
+                                            <Lock size={16} />
                                         </div>
                                         <input
-                                            id="password"
-                                            name="password"
                                             type={showPassword ? 'text' : 'password'}
-                                            autoComplete="current-password"
                                             required
-                                            className="block w-full pl-12 pr-12 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-slate-900 placeholder:text-slate-400 font-inter"
+                                            className="block w-full pl-10 pr-12 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-sm"
                                             placeholder="••••••••"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
@@ -253,117 +242,72 @@ const Login = () => {
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all outline-none"
                                             >
-                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs font-semibold">
-                                    <Link 
-                                        to="/forgot-password" 
-                                        className="text-slate-500 hover:text-tvs-blue transition-colors px-1"
-                                    >
-                                        Forgot password?
-                                    </Link>
-                                    <div className="flex items-center gap-2">
-                                        <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-                                        <span className="text-slate-400 font-medium">Internal Use</span>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider ml-1">Confirm Password</label>
+                                    <div className="relative group/input">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within/input:text-tvs-blue transition-colors">
+                                            <Lock size={16} />
+                                        </div>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-tvs-blue/60 focus:border-tvs-blue transition-all outline-none text-sm"
+                                            placeholder="••••••••"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="pt-1.5">
+                                <div className="pt-2">
                                     <motion.button
                                         whileHover={{ scale: isLoading ? 1 : 1.02 }}
                                         whileTap={{ scale: isLoading ? 1 : 0.98 }}
                                         type="submit"
                                         disabled={isLoading}
-                                        className={`w-full relative overflow-hidden flex justify-center py-3.5 px-4 rounded-xl shadow-lg shadow-tvs-blue/40 text-sm font-semibold text-white bg-gradient-to-r from-tvs-blue via-sky-500 to-tvs-red focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tvs-blue transition-all active:shadow-inner ${
-                                            isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-[0_15px_45px_rgba(37,99,235,0.55)]'
+                                        className={`w-full relative overflow-hidden flex justify-center py-3.5 px-4 rounded-xl shadow-lg shadow-tvs-blue/40 text-sm font-semibold text-white bg-gradient-to-r from-tvs-blue via-sky-500 to-tvs-red focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tvs-blue transition-all ${
+                                            isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-[0_15px_30px_rgba(37,99,235,0.45)]'
                                         }`}
                                     >
-                                        <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         {isLoading ? (
                                             <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
                                         ) : (
-                                            <span className="flex items-center gap-2">
-                                                <span>Sign In </span>
-                                            </span>
+                                            <span>Sign Up</span>
                                         )}
                                     </motion.button>
                                 </div>
                             </form>
                         </div>
 
-                        <div className="text-center mt-6">
+                        <div className="mt-8 text-center">
                             <p className="text-sm text-slate-500 font-inter">
-                                Don't have an account?{' '}
-                                <Link 
-                                    to="/signup" 
+                                Already have an account?{' '}
+                                <Link
+                                    to="/login"
                                     className="font-bold text-tvs-blue hover:text-blue-700 transition-colors"
                                 >
-                                    Sign up
+                                    Log in
                                 </Link>
                             </p>
-                        </div>
-
-                        <div className="w-full">
-                            <p className="text-[11px] font-semibold tracking-[0.25em] uppercase text-slate-500">
-                                Heavy Duty Trolley
-                            </p>
-                            <p className="mt-1 text-[11px] text-slate-500">
-                                Quick view of key trolley variants used across TVS plants.
-                            </p>
-                            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
-                                <motion.div
-                                    whileHover={{ scale: 1.03, y: -2 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                    className="min-w-[120px] max-w-[140px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
-                                >
-                                    <img
-                                        src={trolley1}
-                                        alt="Heavy duty trolley 1"
-                                        className="h-24 w-full object-cover"
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.03, y: -2 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                    className="min-w-[120px] max-w-[140px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
-                                >
-                                    <img
-                                        src={trolley2}
-                                        alt="Heavy duty trolley 2"
-                                        className="h-24 w-full object-cover"
-                                    />
-                                </motion.div>
-                                <motion.div
-                                    whileHover={{ scale: 1.03, y: -2 }}
-                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                    className="min-w-[120px] max-w-[140px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-50"
-                                >
-                                    <img
-                                        src={trolley3}
-                                        alt="Heavy duty trolley 3"
-                                        className="h-24 w-full object-cover"
-                                    />
-                                </motion.div>
-                            </div>
                         </div>
 
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.6 }}
-                            className="mt-6 text-center text-xs text-slate-500 font-inter"
+                            className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]"
                         >
-                            &copy; {new Date().getFullYear()} TVS Group. All rights reserved.
+                            &copy; {new Date().getFullYear()} TVS Group &bull; Corporate Compliance
                         </motion.p>
                     </div>
                 </motion.div>
             </div>
-
-            <div className="fixed bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-600/60 to-transparent" />
 
             <style
                 dangerouslySetInnerHTML={{
@@ -373,6 +317,16 @@ const Login = () => {
                     50% { background-position: 100% 50%; }
                     100% { background-position: 0% 50%; }
                 }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(30, 58, 138, 0.1);
+                    border-radius: 10px;
+                }
             `
                 }}
             />
@@ -380,4 +334,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Signup;

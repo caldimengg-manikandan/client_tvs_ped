@@ -9,12 +9,41 @@ const path = require('path');
 // @access  Private
 const getAllAssets = async (req, res) => {
     try {
-        const assets = await AssetManagement.find()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const filter = {};
+
+        if (req.query.search) {
+            filter.$or = [
+                { assetName: { $regex: req.query.search, $options: 'i' } },
+                { vendorName: { $regex: req.query.search, $options: 'i' } },
+                { vendorCode: { $regex: req.query.search, $options: 'i' } },
+                { departmentName: { $regex: req.query.search, $options: 'i' } },
+                { plantLocation: { $regex: req.query.search, $options: 'i' } },
+                { assetLocation: { $regex: req.query.search, $options: 'i' } }
+            ];
+        }
+
+        const assets = await AssetManagement.find(filter)
             .populate('createdBy', 'name email')
             .populate('updatedBy', 'name email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        res.json(assets);
+        const total = await AssetManagement.countDocuments(filter);
+        const totalPages = Math.ceil(total / limit);
+
+        res.json({
+            success: true,
+            total,
+            totalPages,
+            currentPage: page,
+            count: assets.length,
+            data: assets
+        });
     } catch (error) {
         console.error('Error fetching assets:', error);
         res.status(500).json({ message: 'Server error while fetching assets' });

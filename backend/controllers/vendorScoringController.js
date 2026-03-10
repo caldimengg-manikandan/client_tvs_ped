@@ -7,13 +7,35 @@ const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 // @access  Private
 const getVendorScores = async (req, res) => {
     try {
-        const scores = await VendorScoring.find()
-            .sort({ scoringYear: -1, scoringMonth: -1, qcdScore: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const filter = {};
+
+        if (req.query.search) {
+            filter.$or = [
+                { vendorCode: { $regex: req.query.search, $options: 'i' } },
+                { vendorName: { $regex: req.query.search, $options: 'i' } },
+                { location: { $regex: req.query.search, $options: 'i' } }
+            ];
+        }
+
+        const scores = await VendorScoring.find(filter)
+            .sort({ scoringYear: -1, scoringMonth: -1, qcdScore: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await VendorScoring.countDocuments(filter);
+        const totalPages = Math.ceil(total / limit);
 
         res.status(200).json({
             success: true,
-            data: scores,
-            count: scores.length
+            total,
+            totalPages,
+            currentPage: page,
+            count: scores.length,
+            data: scores
         });
     } catch (error) {
         console.error('Error fetching vendor scores:', error);

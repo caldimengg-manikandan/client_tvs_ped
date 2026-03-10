@@ -4,7 +4,8 @@ import { Switch } from 'antd';
 import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings, TrendingUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { createEmployee, updateEmployee, fetchEmployeeById, fetchUserByEmployeeId, checkIdAvailability } from '../../redux/slices/employeeSlice';
+import { createEmployee, updateEmployee, fetchEmployeeById, fetchUserByEmployeeId, checkIdAvailability, fetchNextEmployeeId } from '../../redux/slices/employeeSlice';
+import axios from '../../api/axiosConfig';
 const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
@@ -23,6 +24,7 @@ const permissionList = [
     { id: 'employeeMaster', label: 'Employee Master', icon: <Users size={20} />, description: 'Manage employees' },
     { id: 'vendorMaster', label: 'Vendor Master', icon: <Truck size={20} />, description: 'Manage vendors' },
     { id: 'mhDevelopmentTracker', label: 'MH Dev Tracker', icon: <TrendingUp size={20} />, description: 'Track MH development progress' },
+    { id: 'reports', label: 'Reports', icon: <FileBarChart size={20} />, description: 'Access system reports' },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} />, description: 'System configuration' }
 ];
 
@@ -54,6 +56,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
         employeeMaster: false,
         vendorMaster: false,
         mhDevelopmentTracker: false,
+        reports: false,
         settings: false
     });
 
@@ -88,8 +91,13 @@ const EmployeeForm = ({ mode = 'add' }) => {
     useEffect(() => {
         if (mode === 'edit' && id) {
             dispatch(fetchEmployeeById(id));
+        } else if (mode === 'add') {
+            dispatch(fetchNextEmployeeId()).then(action => {
+                if (fetchNextEmployeeId.fulfilled.match(action)) {
+                    setFormData(prev => ({ ...prev, employeeId: action.payload }));
+                }
+            });
         }
-        // Removed fetchNextEmployeeId for 'add' mode as it is now manual entry
     }, [dispatch, id, mode]);
 
     useEffect(() => {
@@ -178,9 +186,11 @@ const EmployeeForm = ({ mode = 'add' }) => {
     const validateForm = () => {
         const newErrors = {};
         const isEditMode = !!id;
-        if (!formData.employeeId.trim() && isEditMode) newErrors.employeeId = 'Employee ID is required';
-        if (!formData.employeeName.trim()) newErrors.employeeName = 'Full Name is required';
-        if (!formData.mailId.trim()) newErrors.mailId = 'Email is required';
+        if (!formData.employeeId || !formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
+        if (!formData.employeeName || !formData.employeeName.trim()) newErrors.employeeName = 'Full Name is required';
+        if (!formData.departmentName || !formData.departmentName.trim()) newErrors.departmentName = 'Department Name is required';
+        if (!formData.plantLocation || !formData.plantLocation.trim()) newErrors.plantLocation = 'Plant Location is required';
+        if (!formData.mailId || !formData.mailId.trim()) newErrors.mailId = 'Email is required';
 
         if (formData.mailId && !/\S+@\S+\.\S+/.test(formData.mailId)) {
             newErrors.mailId = 'Please enter a valid email';
@@ -195,8 +205,9 @@ const EmployeeForm = ({ mode = 'add' }) => {
         }
 
         if (formData.password && formData.password !== '********') {
-            if (formData.password.length < 8) {
-                newErrors.password = 'Password must be at least 8 characters';
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!passwordRegex.test(formData.password)) {
+                newErrors.password = 'Password must be at least 8 characters with uppercase, lowercase, number, and special character';
             }
 
             if (formData.password !== formData.confirmPassword) {
@@ -361,31 +372,42 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         {/* Department */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                Department Name
+                                Department Name *
                             </label>
                             <input
                                 type="text"
                                 name="departmentName"
                                 value={formData.departmentName}
                                 onChange={handleChange}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter Department"
+                                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.departmentName ? 'border-red-300' : 'border-gray-300'}`}
+                                placeholder="Enter Department (e.g. Engineering)"
+                                required
                             />
+                            {errors.departmentName && (
+                                <p className="text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle size={14} /> {errors.departmentName}
+                                </p>
+                            )}
                         </div>
 
                         {/* Location */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                Plant Location
+                                Plant Location *
                             </label>
                             <input
                                 type="text"
                                 name="plantLocation"
                                 value={formData.plantLocation}
                                 onChange={handleChange}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.plantLocation ? 'border-red-300' : 'border-gray-300'}`}
                                 placeholder="Enter Plant Location"
                             />
+                            {errors.plantLocation && (
+                                <p className="text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle size={14} /> {errors.plantLocation}
+                                </p>
+                            )}
                         </div>
 
                         {/* Access Level */}

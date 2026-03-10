@@ -1,6 +1,8 @@
 const MHRequest = require('../models/MHRequest');
 const AssetManagement = require('../models/AssetManagement');
 const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
+const VendorScoring = require('../models/VendorScoring');
+const User = require('../models/UserModel');
 
 async function ensureMHDevelopmentTrackerForRequest(request, assetId) {
     if (!request || !request.mhRequestId) return;
@@ -95,7 +97,10 @@ const createMHRequest = async (req, res) => {
             'Hosur Plant 2 (TN)': 'HSR',
             'Hosur Plant 3 (TN)': 'HSR',
             'Mysore (KA)': 'MYS',
-            'Nalagarh (HP)': 'NAL'
+            'Mysore Plant (KA)': 'MYS',
+            'Nalagarh (HP)': 'NAL',
+            'Nalagarh Plant (HP)': 'NAL',
+            'Karawang Plant (Indonesia)': 'IDN'
         };
 
         const locPart = plantCodes[plantLocation] || (plantLocation || location || "LOC").replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
@@ -171,13 +176,46 @@ const createMHRequest = async (req, res) => {
 // @access  Public
 const getAllMHRequests = async (req, res) => {
     try {
-        const requests = await MHRequest.find({ activeStatus: true })
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const filter = { activeStatus: true };
+
+        if (req.query.search) {
+            filter.$or = [
+                { mhRequestId: { $regex: req.query.search, $options: 'i' } },
+                { departmentName: { $regex: req.query.search, $options: 'i' } },
+                { productModel: { $regex: req.query.search, $options: 'i' } },
+                { handlingPartName: { $regex: req.query.search, $options: 'i' } },
+                { plantLocation: { $regex: req.query.search, $options: 'i' } }
+            ];
+        }
+
+        const requests = await MHRequest.find(filter)
             .populate('assignedVendor')
-            .sort({ createdAt: -1 });
-        res.json(requests);
+            .sort({ createdAt: -1 }) // Newest first
+            .skip(skip)
+            .limit(limit);
+
+        const total = await MHRequest.countDocuments(filter);
+        const totalPages = Math.ceil(total / limit);
+
+        res.json({
+            success: true,
+            total,
+            totalPages,
+            currentPage: page,
+            count: requests.length,
+            data: requests
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Error in getAllMHRequests:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error while fetching MH Requests',
+            error: err.message
+        });
     }
 };
 

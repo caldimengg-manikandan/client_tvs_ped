@@ -1,9 +1,11 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/UserModel');
 const Employee = require('../models/EmployeeModel');
 const UserActivity = require('../models/UserActivity');
+const sendEmail = require('../utils/emailService');
 
 // @desc    Authenticate user & get token
 // @route   POST /api/auth/login
@@ -122,7 +124,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Create user
     const user = await User.create({
-        userId,
+        userId: userId || employeeId, // Use provided userId or fallback to employeeId
         employeeId: employee._id, // Save the ObjectId reference
         email,
         passwordHash: hashedPassword,
@@ -240,10 +242,110 @@ const seedDatabase = asyncHandler(async (req, res) => {
     res.status(201).json({ message: 'Database seeded successfully. You can now login with admin@tvs.com / admin123' });
 });
 
+// @desc    Forgot Password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found with this email');
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+
+    // Set expires
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    await user.save();
+
+    // Create reset url
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px; max-width: 600px;">
+            <h2 style="color: #253C80;">TVS MH Request - Password Reset Request</h2>
+            <p>You are receiving this email because you (or someone else) have requested the reset of a password.</p>
+            <p>Please click on the following button to complete the process:</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background-color: #253C80; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+            </div>
+            <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+            <hr style="border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 12px; color: #777;">Link expires in 1 hour.</p>
+        </div>
+    `;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Password Reset Request',
+            html
+        });
+
+        res.status(200).json({ success: true, message: 'Email sent' });
+    } catch (err) {
+        console.error('Email sending error:', err);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.status(500);
+        throw new Error(`Email could not be sent: ${err.message}`);
+    }
+});
+
+// @desc    Reset Password
+// @route   POST /api/auth/reset-password/:token
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+    // Hash URL token
+    const resetPasswordToken = crypto
+        .createHash('sha256')
+        .update(req.params.token)
+        .digest('hex');
+
+    const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+        res.status(400);
+        throw new Error('Invalid or expired token');
+    }
+
+    // Set new password
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Password reset successful',
+        token: generateToken(user._id)
+    });
+});
+
 module.exports = {
     loginUser,
     registerUser,
     getMe,
     logoutUser,
-    seedDatabase
+    seedDatabase,
+    forgotPassword,
+    resetPassword
 };

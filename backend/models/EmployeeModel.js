@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const employeeSchema = mongoose.Schema({
+    sNo: {
+        type: Number,
+        unique: true
+    },
     employeeId: {
         type: String,
         required: true,
@@ -53,6 +57,13 @@ const employeeSchema = mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+// Auto-increment sNo before validation
+employeeSchema.pre('validate', async function () {
+    if (!this.isNew) return;
+    const lastEmployee = await this.constructor.findOne({}, {}, { sort: { 'sNo': -1 } });
+    this.sNo = lastEmployee && lastEmployee.sNo ? lastEmployee.sNo + 1 : 1;
 });
 
 module.exports = mongoose.model('Employee', employeeSchema);

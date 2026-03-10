@@ -4,9 +4,9 @@ import api, { uploadApi } from '../../api/axiosConfig';
 // Async Thunks
 export const fetchAssetRequests = createAsyncThunk(
     'assetRequests/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get('/asset-request');
+            const response = await api.get('/asset-request', { params });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch requests');
@@ -80,6 +80,9 @@ const assetRequestSlice = createSlice({
     name: 'assetRequests',
     initialState: {
         items: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
         currentItem: null,
         loading: false,
         error: null,
@@ -114,7 +117,14 @@ const assetRequestSlice = createSlice({
             })
             .addCase(fetchAssetRequests.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = Array.isArray(action.payload) ? action.payload : [];
+                if (action.payload.success && action.payload.data) {
+                    state.items = action.payload.data;
+                    state.totalItems = action.payload.total;
+                    state.totalPages = action.payload.totalPages;
+                    state.currentPage = action.payload.currentPage;
+                } else {
+                    state.items = Array.isArray(action.payload) ? action.payload : [];
+                }
             })
             .addCase(fetchAssetRequests.rejected, (state, action) => {
                 state.loading = false;

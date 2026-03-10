@@ -3,9 +3,9 @@ import api from '../../api/axiosConfig';
 
 export const fetchVendorScores = createAsyncThunk(
     'vendorScoring/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (params = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get('/vendor-scoring');
+            const response = await api.get('/vendor-scoring', { params });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch vendor scores');
@@ -77,6 +77,9 @@ const vendorScoringSlice = createSlice({
     name: 'vendorScoring',
     initialState: {
         items: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
         loading: false,
         error: null,
         success: false
@@ -96,7 +99,14 @@ const vendorScoringSlice = createSlice({
             })
             .addCase(fetchVendorScores.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload.data || action.payload;
+                if (action.payload.success && action.payload.data) {
+                    state.items = action.payload.data;
+                    state.totalItems = action.payload.total;
+                    state.totalPages = action.payload.totalPages;
+                    state.currentPage = action.payload.currentPage;
+                } else {
+                    state.items = action.payload.data || action.payload;
+                }
             })
             .addCase(fetchVendorScores.rejected, (state, action) => {
                 state.loading = false;

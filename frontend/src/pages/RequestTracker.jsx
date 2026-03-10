@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { UserPlus, X, Check, ArrowRight, Filter } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { UserPlus, X, Check, ArrowRight, Filter, Activity } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAssetRequests, updateAssetRequest, sendEmailNotification, upsertRequest } from '../redux/slices/assetRequestSlice';
@@ -8,6 +8,8 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
+import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
 
 // AG Grid Modules are registered GLOBALLY in agGridConfig.js
 
@@ -15,10 +17,12 @@ const RequestTracker = () => {
     const dispatch = useDispatch();
 
     // Redux State
-    const { items: requests, loading: loadingRequests } = useSelector((state) => state.assetRequests);
+    const { items: requests, loading: loadingRequests, totalItems, totalPages, currentPage } = useSelector((state) => state.assetRequests);
     const { items: employees, loading: loadingEmployees } = useSelector((state) => state.employees);
 
-    // Local UI State
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
+    const [limit] = useState(10);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [selectedMembers, setSelectedMembers] = useState([]);
@@ -32,8 +36,8 @@ const RequestTracker = () => {
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchAssetRequests());
-    }, [dispatch]);
+        dispatch(fetchAssetRequests({ page, limit, search }));
+    }, [dispatch, page, limit, search]);
 
     const handleAssignClick = (request) => {
         // Frontend validation - only allow notification for Rejected status
@@ -205,9 +209,14 @@ const RequestTracker = () => {
         }
     };
 
-    
+    const handleSearch = useCallback((val) => {
+        setSearch(val);
+        setPage(1);
+    }, []);
 
-    const baseRows = requests || [];
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+    };
 
     const applyColumnFilters = (rows) => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
@@ -222,7 +231,8 @@ const RequestTracker = () => {
         );
     };
 
-    const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
+    const baseRows = requests || [];
+    const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: (page - 1) * limit + i + 1 }));
 
     const PlainHeaderCell = ({ column }) => (
         <div className="h-full w-full flex items-center px-2 text-white" style={{ backgroundColor: '#253C80' }}>
@@ -242,7 +252,7 @@ const RequestTracker = () => {
 
         const searchValue = filterSearchText[key] || '';
         const rawSelected = columnFilters[key];
-        const selectedValues = rawSelected === undefined ? values : rawSelected;
+        const selectedValues = rawSelected === undefined ? [] : rawSelected;
 
         const visibleValues = values.filter(v =>
             v.toLowerCase().includes(searchValue.toLowerCase())
@@ -251,12 +261,12 @@ const RequestTracker = () => {
         const toggleValue = (value) => {
             const strValue = value;
             setColumnFilters(prev => {
-                const base = prev[key] === undefined ? values : prev[key];
+                const base = prev[key] === undefined ? [] : prev[key];
                 const exists = base.includes(strValue);
                 const next = exists ? base.filter(v => v !== strValue) : [...base, strValue];
                 const updated = { ...prev };
 
-                if (next.length === values.length) {
+                if (next.length === 0) {
                     delete updated[key];
                 } else {
                     updated[key] = next;
@@ -328,7 +338,7 @@ const RequestTracker = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 bg-white outline-none focus:ring-1 focus:ring-tvs-blue"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -591,6 +601,25 @@ const RequestTracker = () => {
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                {/* Table toolbar */}
+                <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200/80 shadow-sm gap-4 mx-6 mt-4 transition-all duration-300">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <SearchBar 
+                            onSearch={handleSearch} 
+                            placeholder="Search by ID, Dept, Model..." 
+                            className="w-full sm:w-72"
+                        />
+                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
+                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
+                            <Activity size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Request Tracker</h2>
+                            <span className="text-[10px] text-gray-500 font-medium">Monitoring & Approval</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="px-6 py-4">
                     <FreezeToolbar
                         columns={freezeColumnList}
@@ -622,6 +651,21 @@ const RequestTracker = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Footer */}
+                <div className="px-8 py-5 border-t border-gray-200/80 bg-gradient-to-r from-gray-50/50 to-white mt-auto">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            totalItems={totalItems}
+                            itemsPerPage={limit}
+                            loading={loadingRequests}
+                        />
+                    </div>
+                </div>
+            </div>
 
             {/* Assign Member Modal */}
             {isModalOpen && (
@@ -751,7 +795,6 @@ const RequestTracker = () => {
                     color: #ffffff;
                 }
             `}</style>
-        </div>
         </div>
     );
 };
