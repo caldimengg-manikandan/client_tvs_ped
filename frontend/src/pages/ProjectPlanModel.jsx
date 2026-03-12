@@ -16,7 +16,7 @@ const ProjectPlanModel = () => {
     const { items: trackers = [], loading, error, success, totalItems, totalPages } = useSelector(state => state.mhDevelopmentTracker);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [limit] = useState(10);
+    const [limit] = useState(7);
     const [projectPlanVisible, setProjectPlanVisible] = useState(false);
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
     const [viewPlanVisible, setViewPlanVisible] = useState(false);
@@ -28,7 +28,7 @@ const ProjectPlanModel = () => {
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
-        dispatch(fetchTrackers({ page, limit, search }));
+        dispatch(fetchTrackers({ page, limit, search, hasPlan: true }));
     }, [dispatch, page, limit, search]);
 
     useEffect(() => {
@@ -128,7 +128,7 @@ const ProjectPlanModel = () => {
     const handleProjectPlanSave = () => {
         setProjectPlanVisible(false);
         setSelectedTrackerId(null);
-        dispatch(fetchTrackers({ page, limit, search }));
+        dispatch(fetchTrackers({ page, limit, search, hasPlan: true }));
     };
 
     const CustomHeaderCell = React.useCallback(({ column }) => (
@@ -137,7 +137,7 @@ const ProjectPlanModel = () => {
         </div>
     ), []);
 
-    const applyColumnFilters = rows => {
+    const applyColumnFilters = useCallback(rows => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
 
         return rows.filter(row =>
@@ -148,7 +148,7 @@ const ProjectPlanModel = () => {
                 return values.includes(str);
             })
         );
-    };
+    }, [columnFilters]);
 
     const FilterHeaderCell = React.useCallback(({ column }) => {
         const key = column.key;
@@ -439,14 +439,7 @@ const ProjectPlanModel = () => {
                             placeholder="Search by Asset ID..."
                             className="w-full sm:w-72"
                         />
-                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
-                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
-                            <ListChecks size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Project Summary</h2>
-                            <span className="text-[10px] text-gray-500 font-medium">Timeline Overview</span>
-                        </div>
+                        
                     </div>
                 </div>
 

@@ -24,7 +24,7 @@ const VendorMaster = () => {
     const { items: vendors, loading, error, totalItems, totalPages, currentPage } = useSelector((state) => state.vendors);
 
     const [page, setPage] = useState(1);
-    const [limit] = useState(10);
+    const [limit] = useState(7);
     const [search, setSearch] = useState('');
     const [editingVendor, setEditingVendor] = useState(null);
     const [viewingVendor, setViewingVendor] = useState(null);

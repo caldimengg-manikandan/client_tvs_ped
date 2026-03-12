@@ -22,7 +22,7 @@ const RequestTracker = () => {
 
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [limit] = useState(10);
+    const [limit] = useState(7);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [selectedMembers, setSelectedMembers] = useState([]);
@@ -609,14 +609,7 @@ const RequestTracker = () => {
                             placeholder="Search by ID, Dept, Model..." 
                             className="w-full sm:w-72"
                         />
-                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
-                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
-                            <Activity size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Request Tracker</h2>
-                            <span className="text-[10px] text-gray-500 font-medium">Monitoring & Approval</span>
-                        </div>
+                        
                     </div>
                 </div>
 

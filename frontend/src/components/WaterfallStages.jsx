@@ -101,12 +101,12 @@ const WaterfallStages = ({ stats }) => {
                                 {isActive && <div className={`absolute top-0 left-0 w-full h-1 bg-${stageColor}-500/30`}></div>}
                                 
                                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-2">{stage.description}</div>
-                                <h3 className={`text-sm font-black font-outfit truncate ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                                <h3 className={`text-sm font-black font-mono truncate ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
                                     {stage.title}
                                 </h3>
                                 
                                 <div className="mt-5 flex flex-col items-center gap-1">
-                                    <span className={`text-3xl font-black font-outfit tracking-tighter ${isActive ? `text-${stageColor}-600` : 'text-gray-300'}`}>
+                                    <span className={`text-3xl font-black font-mono tracking-tighter ${isActive ? `text-${stageColor}-600` : 'text-gray-300'}`}>
                                         {stage.count}
                                     </span>
                                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Units</span>

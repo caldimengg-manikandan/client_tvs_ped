@@ -20,11 +20,8 @@ const DEFAULT_MILESTONES = [
 ];
 
 const PlainHeaderCell = ({ column }) => (
-    <div
-        className="h-full w-full flex items-center px-4"
-        style={{ backgroundColor: '#253C80' }}
-    >
-        <span className="font-bold text-white text-[11px] leading-tight tracking-[0.08em] uppercase whitespace-normal">
+    <div className="h-full w-full flex items-center px-4">
+        <span className="font-bold text-[11px] leading-tight tracking-[0.08em] uppercase whitespace-normal">
             {column.name}
         </span>
     </div>

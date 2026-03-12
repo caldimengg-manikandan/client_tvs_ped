@@ -172,7 +172,7 @@ const Login = () => {
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
                         >
-                            <h2 className="mt-6 text-3xl font-bold tracking-tight text-slate-900 font-outfit">
+                            <h2 className="mt-6 text-3xl font-bold tracking-tight text-slate-900 font-mono">
                                 Sign in to your account
                             </h2>
                             <p className="mt-2 text-sm text-slate-600 font-inter">

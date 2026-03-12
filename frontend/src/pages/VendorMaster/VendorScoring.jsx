@@ -52,7 +52,7 @@ const VendorScoring = () => {
 
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [limit] = useState(10);
+    const [limit] = useState(7);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isPerformanceModalVisible, setIsPerformanceModalVisible] = useState(false);
     const [editingScore, setEditingScore] = useState(null);
@@ -760,14 +760,7 @@ const VendorScoring = () => {
                             placeholder="Search by vendor name or code..." 
                             className="w-full sm:w-72"
                         />
-                        <div className="h-8 w-[1px] bg-gray-200 mx-1 hidden sm:block"></div>
-                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue shadow-sm">
-                            <TrendingUp size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-sm font-bold text-gray-800 leading-tight">Vendor Scoring</h2>
-                            <span className="text-[10px] text-gray-500 font-medium">Performance Metrics</span>
-                        </div>
+                        
                     </div>
                     <div className="flex items-center gap-3">
                         <button

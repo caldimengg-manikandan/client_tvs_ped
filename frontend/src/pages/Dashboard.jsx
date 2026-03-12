@@ -1147,7 +1147,7 @@ const Dashboard = () => {
 
             {/* KPI Details Modal */}
             <Modal
-                title={<div className="font-outfit text-xl font-bold text-gray-900 pb-2">{kpiModal.title}</div>}
+                title={<div className="font-mono text-xl font-bold text-gray-900 pb-2">{kpiModal.title}</div>}
                 open={kpiModal.open}
                 onCancel={() => setKpiModal({ ...kpiModal, open: false })}
                 width="95%"

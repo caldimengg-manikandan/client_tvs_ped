@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import InactivityTracker from './InactivityTracker';
@@ -18,7 +17,6 @@ const Layout = () => {
             if (width <= 1024) {
                 setIsSidebarOpen(false);
             } else if (width > 1024 && !isSidebarOpen && !window.sidebarToggledManually) {
-                // Auto open only if not manually closed by user
                 setIsSidebarOpen(true);
             }
         };
@@ -33,7 +31,7 @@ const Layout = () => {
     };
 
     return (
-        <div className="flex h-screen bg-tvs-light selection:bg-tvs-blue/10 selection:text-tvs-blue font-inter overflow-hidden">
+        <div className="flex h-screen bg-white font-inter overflow-hidden">
             <InactivityTracker />
             <Sidebar
                 isSidebarOpen={isSidebarOpen}
@@ -41,26 +39,20 @@ const Layout = () => {
                 windowWidth={windowWidth}
             />
 
-            <div className={`flex-1 ${isSidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[72px]'} pl-0 flex flex-col min-h-screen transition-all duration-300 relative overflow-hidden`}>
-                {/* Global decorative background elements */}
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-tvs-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
-                <div className="absolute bottom-[-5%] left-[-5%] w-[30%] h-[30%] bg-tvs-red/5 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className={`flex-1 ${isSidebarOpen ? 'lg:pl-64' : 'lg:pl-[72px]'} pl-0 flex flex-col min-h-screen transition-all duration-300 relative overflow-hidden`}>
+                {/* Global Saas Background Gradient */}
+                <div className="absolute top-0 left-0 w-full h-full bg-slate-50/50 pointer-events-none -z-10"></div>
+                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+                
+                <Header 
+                    isSidebarOpen={isSidebarOpen} 
+                    setIsSidebarOpen={handleToggleSidebar} 
+                />
 
-                <Header isSidebarOpen={isSidebarOpen} setIsSidebarOpen={handleToggleSidebar} />
-
-                <main className={`flex-1 overflow-x-hidden mt-20 relative z-10 custom-scrollbar flex flex-col ${['/mh-development-tracker', '/project-plan-model'].includes(location.pathname) ? 'p-4 md:p-6 lg:p-6' : 'p-4 sm:p-6 lg:p-8'}`}>
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                            className={['/project-plan-model', '/mh-development-tracker'].includes(location.pathname) ? 'w-full flex-1 flex flex-col' : 'container mx-auto'}
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
+                <main className="flex-1 mt-header p-4 lg:p-8 overflow-y-auto custom-scrollbar relative z-0">
+                    <div className="max-w-[1600px] mx-auto">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>

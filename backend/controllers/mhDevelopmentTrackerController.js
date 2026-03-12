@@ -103,6 +103,10 @@ const getAllTrackers = async (req, res) => {
             ];
         }
 
+        if (req.query.hasPlan === 'true') {
+            filter['projectPlan.milestones'] = { $exists: true, $not: { $size: 0 } };
+        }
+
         const total = await MHDevelopmentTracker.countDocuments(filter);
         const totalPages = Math.ceil(total / limit);
 

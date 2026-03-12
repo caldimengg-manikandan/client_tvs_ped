@@ -79,76 +79,7 @@ const FrozenRowsDataGrid = ({
         return [...frozen, ...nonFrozen];
     }, [columns]);
 
-    // Apply amber frozen-row styling via CSS after render
-    useEffect(() => {
-        if (!containerRef.current || count === 0) return;
-        const style = document.getElementById('__frz_style__');
-        if (!style) {
-            const s = document.createElement('style');
-            s.id = '__frz_style__';
-            s.textContent = `
-                /* Base Grid Variable Overrides */
-                .rdg {
-                    --rdg-header-background-color: #253C80 !important;
-                    --rdg-row-hover-background-color: #f8fafc !important;
-                    --rdg-background-color: #ffffff !important;
-                    border-radius: 8px;
-                    overflow: hidden;
-                }
-
-                /* Standardized Header Styling — Universal & Sticky Fix */
-                .rdg .rdg-header-row .rdg-cell {
-                    background-color: #253C80 !important;
-                    color: #ffffff !important;
-                    font-weight: 700 !important;
-                    text-transform: uppercase !important;
-                    letter-spacing: 0.025em !important;
-                    border-bottom: 2px solid #1e293b !important;
-                    display: flex !important;
-                    align-items: center !important;
-                }
-
-                /* Target sticky frozen headers specifically to prevent transparency/gaps */
-                .rdg .rdg-header-row .rdg-cell.rdg-cell-frozen {
-                    background-color: #253C80 !important;
-                    z-index: 10 !important;
-                    opacity: 1 !important;
-                }
-
-                /* Ensure all content inside headers is white */
-                .rdg .rdg-header-row .rdg-cell * {
-                    color: #ffffff !important;
-                }
-
-                /* Frozen (summary) rows — amber tint */
-                .rdg .rdg-summary-row {
-                    background: #fffbeb !important;
-                    z-index: 5 !important;
-                }
-                .rdg .rdg-summary-row .rdg-cell {
-                    background: #fffbeb !important;
-                    font-weight: 500 !important;
-                }
-                /* Last frozen row gets a gold bottom border separator */
-                .rdg .rdg-summary-row:last-of-type .rdg-cell {
-                    border-bottom: 2px solid #f59e0b !important;
-                    box-shadow: 0 3px 8px rgba(245,158,11,0.15);
-                }
-
-                /* Frozen Columns — Premium Visuals */
-                .rdg .rdg-cell-frozen-last {
-                    border-right: 2px solid #f59e0b !important;
-                    box-shadow: 4px 0 8px rgba(0,0,0,0.05);
-                }
-                
-                /* Light highlight for frozen columns (except headers) */
-                .rdg .rdg-cell-frozen:not(.rdg-header-row .rdg-cell):not(.rdg-summary-row .rdg-cell) {
-                    background-color: #fcfdfe !important;
-                }
-            `;
-            document.head.appendChild(s);
-        }
-    }, [count]);
+    // Style injection removed to rely on global index.css
 
     return (
         <div ref={containerRef} style={{ position: 'relative', height: '100%', width: '100%' }}>

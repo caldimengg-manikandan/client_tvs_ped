@@ -65,7 +65,7 @@ const EmployeeMaster = () => {
     const { items: employees, loading, error, totalItems, totalPages, currentPage: serverPage } = useSelector((state) => state.employees);
 
     const [page, setPage] = useState(1);
-    const [limit] = useState(10);
+    const [limit] = useState(7);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [accessFilter, setAccessFilter] = useState('all');

@@ -1,14 +1,21 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @theme {
+  --color-primary: #253C80;
+  --color-primary-hover: #1e3a8a;
+  --color-accent: #FA1102;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-400: #94a3b8;
+  --color-slate-600: #475569;
+  --color-slate-900: #0f172a;
+
   --color-tvs-red: #FA1102;
-  --color-tvs-red-muted: #ffe5e5;
   --color-tvs-blue: #253C80;
   --color-tvs-light: #f8fafc;
-  --color-tvs-gray: #B0BBBD;
-  --color-tvs-dark-gray: #0f172a;
-  --color-tvs-border: rgba(226, 232, 240, 0.8);
+  --color-tvs-dark-gray: #334155;
 
   --spacing-sidebar: 280px;
   --spacing-header: 72px;
@@ -18,7 +25,11 @@
   --z-index-modal: 2000;
 
   --font-inter: "Inter", sans-serif;
-  --font-outfit: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --shadow-saas: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-saas-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-saas-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 html,
@@ -44,8 +55,12 @@ body,
   h4,
   h5,
   h6 {
-    @apply font-outfit;
+    @apply font-mono;
   }
+}
+
+.saas-card {
+  @apply bg-white border border-slate-100 shadow-sm rounded-2xl p-6 transition-all duration-200 hover:shadow-md;
 }
 
 .glass-card {
@@ -147,133 +162,99 @@ body,
   }
 }
 
-/* React Data Grid header: allow filter popups to overflow */
+/* ============================================================================
+   REACT DATA GRID PREMIUM STYLING (Standardized Application-Wide)
+   ============================================================================ */
+
+.rdg {
+  --rdg-background-color: #ffffff;
+  --rdg-header-background-color: #253C80;
+  --rdg-row-hover-background-color: #f8fafc;
+  --rdg-border-color: #e2e8f0;
+  --rdg-font-size: 11px;
+  --rdg-header-row-height: 52px;
+  --rdg-row-height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0 !important;
+  background-color: #ffffff;
+}
+
 .rdg-header-row .rdg-cell {
-  overflow: visible;
-}
-
-.employee-master-grid .rdg-row .rdg-cell {
-  border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
-}
-
-.employee-master-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
-  background-color: #253C80;
-  color: #ffffff;
-}
-
-/* Set rdg CSS variables so frozen sticky cells (background-color:inherit) resolve correctly */
-.mh-development-grid {
-  --rdg-header-background-color: #253C80;
-  --rdg-background-color: #ffffff;
-  --rdg-row-hover-background-color: #f8fafc;
-}
-
-.mh-development-grid .rdg-row .rdg-cell {
-  border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
-}
-
-.mh-development-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
   background-color: #253C80 !important;
-  color: #ffffff;
-}
-
-.vendor-selection-grid {
-  --rdg-header-background-color: #253C80;
-  --rdg-background-color: #ffffff;
-  --rdg-row-hover-background-color: #f8fafc;
-}
-
-.vendor-selection-grid .rdg-row .rdg-cell {
+  color: #ffffff !important;
+  @apply font-mono;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
   border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
+  border-bottom: none !important;
+  padding-inline: 16px !important;
 }
 
-.vendor-selection-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
+/* Sticky Frozen Header fix */
+.rdg-header-row .rdg-cell-frozen {
+  z-index: 10 !important;
   background-color: #253C80 !important;
-  color: #ffffff;
 }
 
-/* Vendor Master Grid */
-.vendor-master-grid {
-  --rdg-header-background-color: #253C80;
-  --rdg-background-color: #ffffff;
-  --rdg-row-hover-background-color: #f8fafc;
+.rdg-row {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
-.vendor-master-grid .rdg-row .rdg-cell {
+.rdg-row .rdg-cell {
   border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
+  padding-inline: 16px !important;
+  color: #334155 !important;
+  font-size: 12px !important;
 }
 
-.vendor-master-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
-  background-color: #253C80 !important;
-  color: #ffffff;
+.rdg-row:hover {
+  background-color: #f8fafc !important;
 }
 
-/* Vendor Loading Grid */
-.vendor-loading-grid {
-  --rdg-header-background-color: #253C80;
-  --rdg-background-color: #ffffff;
-  --rdg-row-hover-background-color: #f8fafc;
+/* Frozen columns styling */
+.rdg-cell-frozen {
+  z-index: 5 !important;
+  background-color: inherit !important;
 }
 
-.vendor-loading-grid .rdg-row .rdg-cell {
-  border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
+.rdg-cell-frozen-last {
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.1) !important;
+  border-right: 1px solid #e2e8f0 !important;
 }
 
-.vendor-loading-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
-  background-color: #253C80 !important;
-  color: #ffffff;
+/* Summary Rows (Pinned rows in FrozenRowsDataGrid) */
+.rdg-summary-row {
+  background-color: #fffbeb !important;
+  /* Subtle amber highlight for pinned rows */
+  z-index: 4 !important;
 }
 
-/* Vendor Scoring Grid */
-.vendor-scoring-grid {
-  --rdg-header-background-color: #253C80;
-  --rdg-background-color: #ffffff;
-  --rdg-row-hover-background-color: #f8fafc;
+.rdg-summary-row .rdg-cell {
+  font-weight: 700 !important;
+  color: #92400e !important;
+  background-color: transparent !important;
 }
 
-.vendor-scoring-grid .rdg-row .rdg-cell {
-  border-inline: none !important;
-  padding-block: 12px;
-  padding-inline: 16px;
+/* Scrollbar styling */
+.rdg::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.vendor-scoring-grid .rdg-header-row .rdg-cell {
-  padding-block: 14px;
-  font-weight: 700;
-  border-inline: none;
-  border-bottom: 2px solid #e2e8f0;
-  background-color: #253C80 !important;
-  color: #ffffff;
+.rdg::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.rdg::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+  border: 2px solid #f8fafc;
+}
+
+.rdg::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 
@@ -287,6 +268,7 @@ body,
   --ag-header-cell-font-weight: 700;
   --ag-header-cell-font-size: 11px;
   --ag-font-family: 'Inter', sans-serif;
+  --ag-header-font-family: 'JetBrains Mono', monospace;
   --ag-border-color: #e2e8f0;
   --ag-row-border-color: #f1f5f9;
   --ag-row-hover-color: #f8fafc;
@@ -450,7 +432,7 @@ body,
 }
 
 .ant-picker-header-view {
-  @apply !font-outfit !font-black !text-sm !text-gray-800 !tracking-tight;
+  @apply !font-mono !font-black !text-sm !text-gray-800 !tracking-tight;
 }
 
 .ant-picker-content th {

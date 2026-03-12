@@ -102,11 +102,8 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
     };
 
     const PlainHeaderCell = ({ column }) => (
-        <div
-            className={`h-full w-full flex items-center px-3 ${column.key !== 'vendorName' && column.key !== 'selection' ? 'justify-center' : ''}`}
-            style={{ backgroundColor: '#253C80' }}
-        >
-            <span className={`font-bold text-white text-[11px] leading-tight tracking-wide ${column.key !== 'vendorName' && column.key !== 'selection' ? 'text-center' : ''}`}>
+        <div className={`h-full w-full flex items-center px-4 ${column.key !== 'vendorName' && column.key !== 'selection' ? 'justify-center' : ''}`}>
+            <span className={`font-bold text-[11px] leading-tight tracking-wide ${column.key !== 'vendorName' && column.key !== 'selection' ? 'text-center' : ''}`}>
                 {column.name}
             </span>
         </div>
@@ -193,7 +190,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                             <Users size={20} />
                         </div>
                         <div>
-                            <span className="text-xl font-black text-gray-900 font-outfit uppercase tracking-tight">Vendor Decision Matrix</span>
+                            <span className="text-xl font-black text-gray-900 font-mono uppercase tracking-tight">Vendor Decision Matrix</span>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <Tag color="blue" className="text-[9px] font-bold uppercase m-0 border-none">{overrideLocation ? 'ALL LOCATIONS' : plantLocation}</Tag>
                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Select vendor for automated allocation</span>

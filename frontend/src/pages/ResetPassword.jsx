@@ -63,7 +63,7 @@ const ResetPassword = () => {
             >
                 <div className="text-center">
                     <img src={tvsLogo} alt="TVS Logo" className="h-12 w-auto mx-auto mb-6" />
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-outfit">
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
                         Reset Your Password
                     </h2>
                     <p className="mt-3 text-sm text-slate-500 font-inter px-8">

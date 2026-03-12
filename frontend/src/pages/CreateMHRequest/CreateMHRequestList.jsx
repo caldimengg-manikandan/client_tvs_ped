@@ -21,7 +21,7 @@ const CreateMHRequestList = () => {
     const { items: requests, loading, error, success, totalItems, totalPages, currentPage: serverPage } = useSelector((state) => state.assetRequests);
 
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(50);
+    const [limit] = useState(7);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
@@ -141,7 +141,7 @@ const CreateMHRequestList = () => {
     };
 
     const PlainHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-4">
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -207,7 +207,7 @@ const CreateMHRequestList = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1">
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
@@ -217,9 +217,9 @@ const CreateMHRequestList = () => {
                         e.stopPropagation();
                         setActiveFilterKey(prev => (prev === key ? null : key));
                     }}
-                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}
+                    className={`ml-1 p-1 rounded shrink-0 transition-colors ${hasFilter ? 'bg-white/30 text-white' : 'text-white/70 hover:bg-white/10'}`}
                 >
-                    <Filter size={11} />
+                    <Filter size={12} strokeWidth={2.5} />
                 </button>
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">

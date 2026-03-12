@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children, permission }) => {
                 <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-rose-100/50">
                     <ShieldAlert size={48} />
                 </div>
-                <h1 className="text-3xl font-black text-gray-900 mb-2 font-outfit">Security Restriction</h1>
+                <h1 className="text-3xl font-black text-gray-900 mb-2 font-mono">Security Restriction</h1>
                 <p className="text-gray-500 mb-10 max-w-md font-medium">Your account does not have the necessary clearance levels to access this protected resource.</p>
                 
                 <div className="glass-card px-8 py-4 rounded-2xl border border-rose-100 flex items-center gap-4">

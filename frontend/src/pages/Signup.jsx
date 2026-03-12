@@ -161,7 +161,7 @@ const Signup = () => {
                             transition={{ delay: 0.4 }}
                         >
                             <img src={tvsLogo} alt="TVS Logo" className="h-10 w-auto mb-6 lg:hidden" />
-                            <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-outfit">
+                            <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
                                 Get Started Today
                             </h2>
                             <p className="mt-2 text-sm text-slate-600 font-inter">

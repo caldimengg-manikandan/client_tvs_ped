@@ -99,7 +99,7 @@ const MHDevelopmentTracker = () => {
     const { items: mhRequests, loading: requestsLoading } = useSelector(state => state.assetRequests);
 
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(50);
+    const [limit] = useState(7);
     const [search, setSearch] = useState('');
     const [form] = Form.useForm();
 
@@ -283,7 +283,7 @@ const MHDevelopmentTracker = () => {
         }
     };
 
-    const applyColumnFilters = (rows) => {
+    const applyColumnFilters = useCallback((rows) => {
         if (!columnFilters || Object.keys(columnFilters).length === 0) return rows;
         return rows.filter(row =>
             Object.entries(columnFilters).every(([key, values]) => {
@@ -293,7 +293,7 @@ const MHDevelopmentTracker = () => {
                 return values.includes(str);
             })
         );
-    };
+    }, [columnFilters]);
 
     const FilterHeaderCell = ({ column }) => {
         const key = column.key;
@@ -650,7 +650,10 @@ const MHDevelopmentTracker = () => {
         requestsLoading,
     ]);
 
-    const gridRows = applyColumnFilters(filteredTrackers).map((row, i) => ({ ...row, _serialNo: i + 1 }));
+    const gridRows = useMemo(() => 
+        applyColumnFilters(filteredTrackers).map((row, i) => ({ ...row, _serialNo: i + 1 })),
+        [filteredTrackers, columnFilters, applyColumnFilters]
+    );
 
     const freezeColumnList = dataGridColumns
         .filter(col => col.key !== 'serial' && col.key !== 'actions' && col.key !== 'vendorSelection' && col.key !== 'projectPlan')
