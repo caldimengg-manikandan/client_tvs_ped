@@ -7,6 +7,12 @@ import fallbackImg from '../../assets/mfg_dashboard.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+
+
+
+
+
+
 export default function DashboardPreview() {
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef(null);
