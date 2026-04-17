@@ -5,6 +5,7 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
+import ColumnCustomizer from '../components/ColumnCustomizer';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -17,6 +18,9 @@ const AssetSummary = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    const [hiddenKeys, setHiddenKeys] = useState(new Set());
+    const [rowHeight, setRowHeight] = useState(44);
+    const [headerRowHeight, setHeaderRowHeight] = useState(52);
 
     const gridContainerRef = useRef(null);
 
@@ -57,7 +61,7 @@ const AssetSummary = () => {
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const PlainHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-4 text-white">
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -122,7 +126,7 @@ const AssetSummary = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white">
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
@@ -278,10 +282,12 @@ const AssetSummary = () => {
         .map(col => ({ key: col.key, name: col.name }));
 
     const autoFitColumns = React.useMemo(() => {
-        const withFreeze = dataGridColumns.map(col => ({
-            ...col,
-            frozen: col.key === 'serial' || frozenKeys.has(col.key),
-        }));
+        const withFreeze = dataGridColumns
+            .filter(col => !hiddenKeys.has(col.key))
+            .map(col => ({
+                ...col,
+                frozen: col.key === 'serial' || frozenKeys.has(col.key),
+            }));
 
         if (!gridWidth) return withFreeze;
 
@@ -306,7 +312,7 @@ const AssetSummary = () => {
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth, frozenKeys]);
+    }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -329,14 +335,26 @@ const AssetSummary = () => {
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div className="px-6 py-4">
-                    <FreezeToolbar
-                        columns={freezeColumnList}
-                        frozenKeys={frozenKeys}
-                        onApply={setFrozenKeys}
-                        frozenRowCount={frozenRowCount}
-                        setFrozenRowCount={setFrozenRowCount}
-                        maxRows={Math.min(gridRows.length, 50)}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <ColumnCustomizer
+                            columns={dataGridColumns}
+                            hiddenKeys={hiddenKeys}
+                            onChange={setHiddenKeys}
+                            gridClass="asset-summary-grid"
+                            onDensity={({ rowH, headerH }) => {
+                                setRowHeight(rowH);
+                                setHeaderRowHeight(headerH);
+                            }}
+                        />
+                        <FreezeToolbar
+                            columns={freezeColumnList}
+                            frozenKeys={frozenKeys}
+                            onApply={setFrozenKeys}
+                            frozenRowCount={frozenRowCount}
+                            setFrozenRowCount={setFrozenRowCount}
+                            maxRows={Math.min(gridRows.length, 50)}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
@@ -348,8 +366,8 @@ const AssetSummary = () => {
                                 rowKeyGetter={(row) => row._id || row.mhRequestId || row.allocationAssetId}
                                 className="rdg-light asset-summary-grid"
                                 style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={44}
-                                headerRowHeight={52}
+                                rowHeight={rowHeight}
+                                headerRowHeight={headerRowHeight}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
                                     resizable: true

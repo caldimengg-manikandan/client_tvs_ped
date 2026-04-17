@@ -52,6 +52,29 @@ const Dashboard = () => {
     const [selectedWorkflowStage, setSelectedWorkflowStage] = useState(null);
     const [topVendors, setTopVendors] = useState([]);
 
+    /* ── Blur background when workflow modal is open ── */
+    React.useEffect(() => {
+        const el = document.getElementById('dashboard-bg-content');
+        if (!el) return;
+        if (selectedWorkflowStage !== null) {
+            el.style.transition = 'filter 0.3s ease, transform 0.3s ease';
+            el.style.filter = 'blur(6px) brightness(0.75) saturate(0.8)';
+            el.style.transform = 'scale(1.02)';
+            el.style.pointerEvents = 'none';
+        } else {
+            el.style.filter = '';
+            el.style.transform = '';
+            el.style.pointerEvents = '';
+        }
+        return () => {
+            if (el) {
+                el.style.filter = '';
+                el.style.transform = '';
+                el.style.pointerEvents = '';
+            }
+        };
+    }, [selectedWorkflowStage]);
+
     const [kpiModal, setKpiModal] = useState({ open: false, type: null, title: '' });
 
     const [fromDate, setFromDate] = useState('');
@@ -531,12 +554,12 @@ const Dashboard = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh]">
+            <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                 <div className="relative">
-                    <div className="w-16 h-16 border-4 border-tvs-blue/10 border-t-tvs-blue rounded-full animate-spin"></div>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-tvs-blue/5 rounded-full animate-pulse"></div>
+                    <div className="w-14 h-14 border-4 rounded-full animate-spin" style={{ borderColor: 'rgba(0,201,167,0.15)', borderTopColor: '#00C9A7' }} />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full animate-pulse" style={{ background: 'rgba(0,201,167,0.12)' }} />
                 </div>
-                <p className="mt-4 text-gray-500 font-medium animate-pulse">Synchronizing dashboard data...</p>
+                <p className="text-sm font-bold uppercase tracking-widest animate-pulse" style={{ color: '#B0BBC9' }}>Synchronizing dashboard data…</p>
             </div>
         );
     }
@@ -565,18 +588,22 @@ const Dashboard = () => {
     }
 
     return (
+        <>
+        <div id="dashboard-bg-content" style={{ willChange: 'filter, transform', transformOrigin: 'center center' }}>
         <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-8 pb-12"
+            className="space-y-6 pb-10"
         >
             {/* ── Dashboard Hero Banner ── */}
             <motion.div
                 variants={itemVariants}
-                className="relative overflow-hidden rounded-2xl border border-white/40 shadow-xl"
+                className="relative overflow-hidden rounded-2xl"
                 style={{
-                    background: 'linear-gradient(135deg, #1a2a5e 0%, #0f3d8c 45%, #1565c0 100%)'
+                    background: 'linear-gradient(145deg, #060D1F 0%, #0F2040 55%, #0B1730 100%)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.20)'
                 }}
             >
                 {/* Decorative blobs */}
@@ -605,11 +632,11 @@ const Dashboard = () => {
                         </div>
 
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">
-                                MH Request Overview
+                            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight uppercase">
+                                MfG FACTORY <span className="text-emerald-400 opacity-90">Intelligence</span>
                             </h1>
-                            <p className="text-xs text-white/50 mt-1 font-medium">
-                                Material Handling · Performance Tracker
+                            <p className="text-[10px] text-white/40 mt-1 font-black uppercase tracking-[3px]">
+                                Engineering · Analytics · Performance
                             </p>
                         </div>
 
@@ -617,7 +644,7 @@ const Dashboard = () => {
                         <div className="w-full">
                             <p className="text-[9px] font-black uppercase tracking-[3px] text-white/40 mb-2.5 flex items-center gap-2">
                                 <span className="w-3 h-px bg-white/20" />
-                                Assets by Plant Location
+                                MfG Factory Deployment
                                 <span className="flex-1 h-px bg-white/10" />
                             </p>
                             {stats?.locationBreakdown && Object.keys(stats.locationBreakdown).length > 0 ? (() => {
@@ -695,25 +722,26 @@ const Dashboard = () => {
 
             <motion.section
                 variants={itemVariants}
-                className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden"
+                className="rounded-2xl p-6 relative overflow-hidden"
+                style={{ background: '#ffffff', border: '1px solid #E0E4EF', boxShadow: '0 2px 12px rgba(13,27,62,0.05)' }}
             >
-                <div className="absolute top-0 right-0 w-72 h-72 bg-tvs-blue/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-base font-bold text-gray-800 flex items-center gap-2.5">
-                            Assets Status Indicators
+                    <div className="flex items-center justify-between mb-5">
+                        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: '#7B8AAB' }}>
+                            <span className="w-3 h-3 rounded-full" style={{ background: '#00C9A7' }} />
+                            Asset Status Overview
                         </h2>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                        <div className="lg:col-span-2 lg:border-r lg:border-gray-100 lg:pr-6">
-                            <div className="h-full rounded-2xl bg-white/40 border border-white/60 shadow-sm flex items-center">
+                        <div className="lg:col-span-2 lg:border-r lg:pr-6" style={{ borderColor: '#F0F3F9' }}>
+                            <div className="h-full rounded-2xl flex items-center" style={{ background: '#F9FAFB', border: '1px solid #F0F3F9' }}>
                                 <div className="w-full p-4">
                                     <KPICards stats={stats?.kpiCards} onCardClick={handleKpiClick} />
                                 </div>
                             </div>
                         </div>
                         <div className="flex items-center lg:pl-6">
-                            <div className="w-full rounded-2xl bg-white/70 border border-gray-200 shadow-md p-4">
+                            <div className="w-full rounded-2xl p-4" style={{ background: '#F9FAFB', border: '1px solid #F0F3F9' }}>
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
                                         <p className="text-sm font-bold text-gray-800 mt-1">
@@ -727,27 +755,70 @@ const Dashboard = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="flex items-end justify-between gap-4 mt-6">
+                                        <div className="flex items-end justify-between gap-4 mt-8 px-2" style={{ perspective: '800px' }}>
                                             {kpiChartData.map((kpi, index) => {
                                                 const heightPercent = maxKpiValue > 0 ? Math.max((kpi.value / maxKpiValue) * 100, 10) : 0;
+                                                // Defended color palettes for each metric
+                                                const palettes = [
+                                                    ['#6366f1', '#4338ca', '#818cf8', '#6366f1'], // Blue/Indigo (Total)
+                                                    ['#10b981', '#059669', '#34d399', '#10b981'], // Emerald/Green (Accepted)
+                                                    ['#f59e0b', '#d97706', '#fbbf24', '#f59e0b'], // Amber/Orange (Implemented)
+                                                    ['#f43f5e', '#e11d48', '#fb7185', '#f43f5e']  // Rose/Red (Rejected)
+                                                ];
+                                                const currentPalette = palettes[index % palettes.length];
 
                                                 return (
-                                                    <div key={kpi.id} className="flex-1 flex flex-col items-center gap-2 h-40">
-                                                        <div className="w-full h-full flex items-end justify-center">
+                                                    <div key={kpi.id} className="flex-1 flex flex-col items-center gap-4 h-44">
+                                                        <div className="w-full h-full flex items-end justify-center relative" style={{ transformStyle: 'preserve-3d' }}>
                                                             <motion.div
-                                                                initial={{ height: 0 }}
-                                                                animate={{ height: `${heightPercent}%` }}
-                                                                transition={{ type: 'spring', stiffness: 140, damping: 18, delay: 0.1 + index * 0.05 }}
-                                                                className={`relative w-6 md:w-5 rounded-xl ${kpi.barColor} shadow-lg ${kpi.glowColor} overflow-hidden`}
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{
+                                                                    height: `${heightPercent}%`,
+                                                                    opacity: 1,
+                                                                    y: [0, -18, 0],
+                                                                    backgroundColor: currentPalette, // Defended color show
+                                                                }}
+                                                                transition={{
+                                                                    height: { type: 'spring', stiffness: 100, damping: 20, delay: index * 0.15 },
+                                                                    opacity: { duration: 0.3, delay: index * 0.15 },
+                                                                    y: {
+                                                                        duration: 1.5,
+                                                                        repeat: Infinity,
+                                                                        ease: "easeInOut",
+                                                                        delay: index * 0.2 // Snake/Wave offset
+                                                                    },
+                                                                    backgroundColor: {
+                                                                        duration: 4,
+                                                                        repeat: Infinity,
+                                                                        ease: "easeInOut",
+                                                                        delay: index * 0.4
+                                                                    }
+                                                                }}
+                                                                whileHover={{ scaleZ: 1.2, translateZ: 50, y: -10 }}
+                                                                className={`relative w-8 md:w-10 rounded-t-lg shadow-2xl ${kpi.glowColor}`}
+                                                                style={{
+                                                                    transformStyle: 'preserve-3d',
+                                                                    transform: 'rotateY(-20deg)',
+                                                                }}
                                                             >
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-white/0 to-white/30 mix-blend-overlay"></div>
+                                                                {/* Top face */}
+                                                                <div className="absolute top-0 left-0 right-0 h-3 rounded-full"
+                                                                    style={{
+                                                                        background: '#ffffff',
+                                                                        opacity: 0.3,
+                                                                        transform: 'translateY(-50%) rotateX(90deg)',
+                                                                        filter: 'blur(1px)'
+                                                                    }}
+                                                                />
+                                                                {/* Side highlight */}
+                                                                <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white/30 to-transparent" />
+                                                                {/* Bottom shadow */}
+                                                                <div className="absolute -bottom-2 translate-y-full w-full h-2 bg-black/10 blur-xl rounded-full" />
                                                             </motion.div>
                                                         </div>
-                                                        <div className="text-[11px] font-semibold text-gray-500">
-                                                            {kpi.label}
-                                                        </div>
-                                                        <div className="text-xs font-bold text-gray-900">
-                                                            {kpi.value}
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#B0BBC9' }}>{kpi.label}</span>
+                                                            <span className="text-sm font-black" style={{ color: '#0D1B3E' }}>{kpi.value}</span>
                                                         </div>
                                                     </div>
                                                 );
@@ -779,11 +850,16 @@ const Dashboard = () => {
                 </div>
             </motion.section>
 
-            <motion.section variants={itemVariants} className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-tvs-blue/5 rounded-full blur-3xl -mr-32 -mt-32 group-hover:bg-tvs-blue/10 transition-colors duration-700"></div>
-                <h2 className="text-lg font-bold mb-8 text-gray-800 flex items-center gap-2.5 relative">
-                    Production Workflow Status
-                </h2>
+            <motion.section variants={itemVariants} className="rounded-2xl p-6 relative overflow-hidden" style={{ background: '#ffffff', border: '1px solid #E0E4EF', boxShadow: '0 2px 12px rgba(13,27,62,0.05)' }}>
+                <div className="flex items-center gap-2.5 mb-8">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,201,167,0.1)' }}>
+                        <Activity size={16} style={{ color: '#00C9A7' }} />
+                    </div>
+                    <h2 className="text-base font-black m-0" style={{ fontFamily: 'Outfit,sans-serif', color: '#0D1B3E' }}>
+                        Production Workflow
+                    </h2>
+                    <span className="ml-auto badge" style={{ background: 'rgba(0,201,167,0.1)', color: '#00A98A' }}>Live</span>
+                </div>
                 <div className="relative">
                     <div className="relative mx-auto w-full">
                         <div className="relative w-full overflow-x-auto pb-6 -mb-6 custom-scrollbar">
@@ -798,61 +874,118 @@ const Dashboard = () => {
                                         const connectorStatus = index - 1 < activeWorkflowIndex ? 'completed' : 'pending';
                                         const connectorClass =
                                             connectorStatus === 'completed'
-                                                ? 'bg-gradient-to-r from-tvs-blue to-tvs-blue/70'
-                                                : 'bg-gray-200';
+                                                ? 'bg-gradient-to-r from-[#00C9A7] to-[#00A98A]'
+                                                : 'bg-gray-100';
 
-                                        let circleClass = 'w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center border transition-all duration-300 shadow-sm';
+                                        let circleClass = 'w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center border transition-all duration-300';
                                         let iconClass = 'shrink-0';
 
                                         if (status === 'completed') {
-                                            circleClass += ' bg-tvs-blue text-white border-tvs-blue shadow-md shadow-tvs-blue/40';
+                                            circleClass += ' border-[#00C9A7]';
                                             iconClass += ' text-white';
                                         } else if (status === 'active') {
-                                            circleClass += ' bg-white text-tvs-blue border-tvs-blue ring-2 ring-tvs-blue/30 shadow-md shadow-tvs-blue/30';
-                                            iconClass += ' text-tvs-blue';
+                                            circleClass += ' bg-white border-[#00C9A7] ring-2 ring-[#00C9A7]/25';
+                                            iconClass += ' text-[#00C9A7]';
                                         } else {
-                                            circleClass += ' bg-white text-gray-400 border-gray-300';
+                                            circleClass += ' bg-white border-gray-200';
                                             iconClass += ' text-gray-300';
                                         }
 
+                                        const colorCycle = ['#00C9A7', '#6366f1', '#f59e0b', '#f43f5e', '#8B5CF6', '#0ea5e9'];
+
                                         return (
-                                            <div key={stage.id} className="flex-1 flex flex-col items-center min-w-0 px-1 md:px-2">
-                                                <div className="w-full flex items-center">
-                                                    <div className={`h-[3px] flex-1 rounded-full ${index === 0 ? 'bg-transparent' : connectorClass}`} />
-                                                    <div className="flex-none flex items-center justify-center px-2">
-                                                        <button
+                                            <div key={stage.id} className="flex-1 flex flex-col items-center min-w-[120px] px-2 py-4">
+                                                <div className="w-full flex items-center relative" style={{ height: 60 }}>
+                                                    {/* Connector Left */}
+                                                    <div className="h-[2px] flex-1 relative overflow-hidden">
+                                                        <motion.div
+                                                            animate={{
+                                                                backgroundColor: colorCycle,
+                                                                opacity: index === 0 ? 0 : [0.3, 1, 0.3],
+                                                                scaleX: index === 0 ? 0 : [1, 1.2, 1]
+                                                            }}
+                                                            transition={{
+                                                                backgroundColor: { duration: 8, repeat: Infinity, ease: "linear", delay: index * 0.4 },
+                                                                opacity: { duration: 2, repeat: Infinity, delay: index * 0.4 },
+                                                                scaleX: { duration: 2, repeat: Infinity, delay: index * 0.4 }
+                                                            }}
+                                                            className="absolute inset-0 w-full rounded-full"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex-none flex items-center justify-center px-4" style={{ perspective: '800px' }}>
+                                                        <motion.button
                                                             onClick={() => setSelectedWorkflowStage(index)}
-                                                            className={`${circleClass} cursor-pointer hover:scale-110 hover:shadow-lg active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-tvs-blue/40 focus:ring-offset-2`}
+                                                            animate={{
+                                                                scale: [1, 1.1, 1],
+                                                                y: [0, -8, 0], // Refined snake wave
+                                                                borderColor: colorCycle,
+                                                                boxShadow: ['0 0 0px rgba(0,0,0,0)', '0 0 15px currentColor', '0 0 0px rgba(0,0,0,0)']
+                                                            }}
+                                                            transition={{
+                                                                duration: 2.5,
+                                                                repeat: Infinity,
+                                                                delay: index * 0.4,
+                                                                ease: "easeInOut"
+                                                            }}
+                                                            className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer focus:outline-none border-2 transition-colors relative z-10"
+                                                            style={{
+                                                                background: '#ffffff',
+                                                                transformStyle: 'preserve-3d',
+                                                                rotateY: '-10deg'
+                                                            }}
                                                             title={`View details: ${stage.label}`}
                                                         >
-                                                            <Icon size={16} className={iconClass} />
-                                                        </button>
+                                                            <div className="relative z-10" style={{ transform: 'translateZ(10px)' }}>
+                                                                <Icon size={18} style={{ color: '#0D1B3E' }} className="drop-shadow-sm" />
+                                                            </div>
+                                                        </motion.button>
                                                     </div>
-                                                    <div className={`h-[3px] flex-1 rounded-full ${index === workflowStages.length - 1 ? 'bg-transparent' : connectorClass}`} />
+
+                                                    {/* Connector Right */}
+                                                    <div className="h-[2px] flex-1 relative overflow-hidden">
+                                                        <motion.div
+                                                            animate={{
+                                                                backgroundColor: colorCycle,
+                                                                opacity: index === workflowStages.length - 1 ? 0 : [0.3, 1, 0.3],
+                                                                scaleX: index === workflowStages.length - 1 ? 0 : [1, 1.2, 1]
+                                                            }}
+                                                            transition={{
+                                                                backgroundColor: { duration: 8, repeat: Infinity, ease: "linear", delay: (index + 0.5) * 0.4 },
+                                                                opacity: { duration: 2, repeat: Infinity, delay: (index + 0.5) * 0.4 },
+                                                                scaleX: { duration: 2, repeat: Infinity, delay: (index + 0.5) * 0.4 }
+                                                            }}
+                                                            className="absolute inset-0 w-full rounded-full"
+                                                        />
+                                                    </div>
                                                 </div>
 
-                                                <button
-                                                    onClick={() => setSelectedWorkflowStage(index)}
-                                                    className="mt-3 flex flex-col items-center text-center cursor-pointer group/stage hover:bg-gray-50/80 rounded-xl px-2 py-2 -mx-1 transition-all duration-200 focus:outline-none"
-                                                    title={`View details: ${stage.label}`}
-                                                >
-                                                    <div className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[2px]">
+                                                <div className="mt-4 flex flex-col items-center text-center max-w-[110px]">
+                                                    <div className="text-[9px] font-black uppercase tracking-[1.5px] mb-1.5" style={{ color: '#B0BBC9' }}>
                                                         {`Step ${index + 1}`}
                                                     </div>
-                                                    <div className={`mt-1 text-xs md:text-sm font-black group-hover/stage:text-tvs-blue transition-colors ${status === 'pending' ? 'text-gray-500' : status === 'active' ? 'text-gray-900' : 'text-gray-800'}`}>
+                                                    <div className="text-[11px] font-bold leading-tight min-h-[32px] flex items-center justify-center transition-colors"
+                                                        style={{ color: '#0D1B3E' }}>
                                                         {stage.label}
                                                     </div>
-                                                    {status === 'active' && (
-                                                        <div className={`mt-2 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[9px] font-semibold leading-none ${statusMeta.badgeClass}`}>
-                                                            {statusMeta.label}
-                                                        </div>
-                                                    )}
-                                                    {status === 'completed' && (
-                                                        <div className="mt-2 text-[9px] font-semibold text-gray-400">
-                                                            Completed
-                                                        </div>
-                                                    )}
-                                                </button>
+                                                    <div className="h-6 mt-2 flex items-center justify-center">
+                                                        {status === 'active' && (
+                                                            <motion.span
+                                                                animate={{ opacity: [0.6, 1, 0.6] }}
+                                                                transition={{ duration: 1.5, repeat: Infinity }}
+                                                                className="badge text-[9px] px-2 py-0.5"
+                                                                style={{ background: 'rgba(0,201,167,0.1)', color: '#00A98A', border: '1px solid rgba(0,201,167,0.2)' }}
+                                                            >
+                                                                Processing
+                                                            </motion.span>
+                                                        )}
+                                                        {status === 'completed' && (
+                                                            <span className="text-[9px] font-bold flex items-center gap-1" style={{ color: '#00C9A7' }}>
+                                                                <CheckCircle2 size={10} /> Completed
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -864,203 +997,274 @@ const Dashboard = () => {
             </motion.section>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent Activity - Takes 2 columns */}
-                <motion.div variants={itemVariants} className="lg:col-span-2 glass-card rounded-2xl p-6 border border-white/40 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                    <div className="flex items-center justify-between mb-8 relative">
-                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2.5">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                <Activity size={20} />
+            {/* Activity Intelligence: Merged Activity Logs + Product Metrics */}
+            <div className="grid grid-cols-1 gap-6">
+                <motion.div variants={itemVariants} className="rounded-2xl p-6 relative overflow-hidden" style={{ background: '#ffffff', border: '1px solid #E0E4EF', boxShadow: '0 2px 12px rgba(13,27,62,0.05)' }}>
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(0,201,167,0.15) 0%, rgba(0,201,167,0.05) 100%)', border: '1px solid rgba(0,201,167,0.2)' }}>
+                                <Activity size={22} style={{ color: '#00C9A7' }} />
                             </div>
-                            Activity Logs
-                        </h2>
-                        <div className="flex items-center gap-3">
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                Live Now
-                            </span>
+                            <div className="flex flex-col">
+                                <h2 className="text-lg font-black m-0 leading-none" style={{ fontFamily: 'Outfit,sans-serif', color: '#0D1B3E' }}>
+                                    MfG Logistics
+                                </h2>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5 opacity-60">Status Tracking · Real-time Operational Telemetry</p>
+                            </div>
                         </div>
+                        <span className="badge animate-pulse" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669', border: '1px solid rgba(16,185,129,0.2)' }}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live
+                        </span>
                     </div>
-                    <div className="space-y-4 relative">
+
+                    {/* Section Top: Recent Activity Swipe */}
+                    <div className="flex gap-4 overflow-x-auto pb-10 -mb-4 custom-scrollbar relative px-1">
                         {recentActivity.length > 0 ? (
                             recentActivity.map((activity, idx) => (
                                 <motion.div
                                     key={activity._id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + idx * 0.1 }}
-                                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white/50 hover:bg-white hover:shadow-xl hover:shadow-gray-200/50 rounded-2xl border border-transparent hover:border-gray-100 transition-all duration-300"
+                                    initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    transition={{
+                                        delay: 0.2 + idx * 0.1,
+                                        type: 'spring',
+                                        stiffness: 100,
+                                        damping: 15
+                                    }}
+                                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                                    className="group flex flex-col min-w-[280px] max-w-[300px] p-5 rounded-2xl transition-all duration-300 cursor-default relative overflow-hidden shrink-0"
+                                    style={{
+                                        background: '#F9FAFB',
+                                        border: '1px solid #F0F3F9',
+                                        boxShadow: '0 4px 12px rgba(13,27,62,0.03)'
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = '#ffffff';
+                                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(13,27,62,0.08)';
+                                        e.currentTarget.style.borderColor = '#E0E4EF';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = '#F9FAFB';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(13,27,62,0.03)';
+                                        e.currentTarget.style.borderColor = '#F0F3F9';
+                                    }}
                                 >
-                                    <div className="flex items-center gap-4 flex-1">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform ${getStatusColor(activity.status).replace('text-', 'bg-').replace('border-', 'bg-opacity-10 text-')}`}>
-                                            <FileText size={20} />
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                                            style={{ background: 'rgba(0,201,167,0.1)', transform: 'rotate(-5deg)' }}>
+                                            <FileText size={17} style={{ color: '#00C9A7' }} />
                                         </div>
-                                        <div>
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <span className="font-bold text-gray-900">
-                                                    {activity.mhRequestId}
-                                                </span>
-                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${getStatusColor(activity.status)}`}>
-                                                    {activity.status}
-                                                </span>
-                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${getProgressColor(activity.progressStatus)}`}>
-                                                    {activity.progressStatus || 'PENDING'}
-                                                </span>
-                                            </div>
-                                            <div className="mt-1 text-xs text-gray-500 flex items-center gap-2 font-medium">
-                                                <span className="text-tvs-blue font-bold">{activity.userName}</span>
-                                                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                <span>{activity.departmentName}</span>
+                                        <div className="flex flex-col items-end gap-1 text-[10px] font-bold text-gray-400">
+                                            <div className="flex items-center gap-1">
+                                                <Clock size={10} />
+                                                {formatDate(activity.createdAt)}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="mt-3 sm:mt-0 flex flex-col items-end gap-1">
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                                            <Clock size={12} />
-                                            {formatDate(activity.createdAt)}
+
+                                    <div className="flex flex-col gap-3 mb-4">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-black text-sm tracking-tight" style={{ color: '#0D1B3E' }}>{activity.mhRequestId}</span>
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gray-50 border border-gray-100">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                                <span className="text-[9px] font-black uppercase text-gray-500">{activity.modelName || 'General'}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex -space-x-2">
-                                            {[1, 2, 3].map(i => (
-                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">
-                                                    {activity.userName?.charAt(0)}
-                                                </div>
-                                            ))}
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(activity.status)}`}>
+                                                {activity.status}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getProgressColor(activity.progressStatus)}`}>
+                                                {activity.progressStatus || 'PENDING'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-gray-100/50 flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black text-white"
+                                            style={{ background: 'linear-gradient(135deg, #253C80, #1C3A6E)' }}>
+                                            {activity.userName?.charAt(0) || 'U'}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] font-bold truncate" style={{ color: '#0D1B3E' }}>{activity.userName}</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 truncate">{activity.departmentName}</span>
                                         </div>
                                     </div>
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
-                                    <Activity size={32} />
-                                </div>
-                                <p className="text-sm font-bold opacity-60">No recent activity detected</p>
+                            <div className="w-full flex flex-col items-center justify-center py-10" style={{ color: '#B0BBC9' }}>
+                                <Activity size={28} className="mb-3 opacity-20" />
+                                <p className="text-xs font-bold uppercase tracking-wider">No recent activity detected</p>
                             </div>
                         )}
-                        <button className="w-full py-4 text-xs font-bold text-tvs-blue uppercase tracking-widest hover:bg-tvs-blue/5 rounded-2xl transition-colors mt-2">
+                    </div>
+
+                    <div className="flex justify-center mb-10 border-b border-gray-50 pb-8">
+                        <button className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[2px] rounded-xl transition-all border border-gray-100 hover:border-emerald-200 hover:text-emerald-500 hover:bg-emerald-50/30"
+                            style={{ color: '#7B8AAB' }}>
                             View Full Audit Log
                         </button>
                     </div>
-                </motion.div>
 
-                {/* Category & Type Breakdown - Takes 1 column */}
-                <motion.div variants={itemVariants} className="flex flex-col gap-6">
-                    <div className="glass-card rounded-2xl p-6 border border-white/40 shadow-xl flex-1 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-tvs-blue via-indigo-500 to-transparent"></div>
-                        <h2 className="text-lg font-bold mb-8 text-gray-800 flex items-center gap-2.5">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
-                                <Target size={20} />
+                    {/* Section Bottom: MH Products Intelligence Breakdown */}
+                    <div className="pt-2">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg,#6366f1,#4338ca)' }}>
+                                <Target size={18} className="text-white" />
                             </div>
-                            Material Handling Products
-                        </h2>
-
-                        {/* Product Model Breakdown */}
-                        <div className="mb-8">
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4 flex items-center justify-between">
-                                By Product Model
-                                <span className="w-1/2 h-px bg-gray-100"></span>
-                            </h3>
-                            <div className="grid grid-cols-1 gap-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
-                                {stats?.additionalStats?.productBreakdown ? Object.entries(stats.additionalStats.productBreakdown).map(([model, count]) => (
-                                    <div key={model} className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl border border-transparent hover:border-gray-100 hover:shadow-lg hover:shadow-gray-200/30 transition-all group">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full bg-tvs-blue opacity-40 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all"></div>
-                                            <span className="text-sm font-bold text-gray-700">{model}</span>
-                                        </div>
-                                        <span className="text-lg font-black text-tvs-blue bg-tvs-blue/5 px-3 py-1 rounded-xl">
-                                            {count}
-                                        </span>
-                                    </div>
-                                )) : (
-                                    <div className="text-center py-6 text-gray-400 text-xs italic">No model data available</div>
-                                )}
+                            <div>
+                                <h3 className="text-lg font-black" style={{ color: '#0D1B3E' }}>Equipment & Request Insights</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Statistical distribution of production assets</p>
                             </div>
                         </div>
 
-                        {/* Request Type Breakdown */}
-                        <div>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4 flex items-center justify-between">
-                                By Request Type
-                                <span className="w-1/2 h-px bg-gray-100"></span>
-                            </h3>
-                            <div className="grid grid-cols-1 gap-3">
-                                {stats?.additionalStats?.typeBreakdown ? Object.entries(stats.additionalStats.typeBreakdown).map(([type, count]) => (
-                                    <div key={type} className="flex items-center justify-between p-4 bg-white/50 hover:bg-white rounded-2xl border border-transparent hover:border-gray-100 hover:shadow-lg hover:shadow-gray-200/30 transition-all group">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full bg-amber-500 opacity-40 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all"></div>
-                                            <span className="text-sm font-bold text-gray-700">{type}</span>
-                                        </div>
-                                        <span className="text-lg font-black text-amber-600 bg-amber-500/5 px-3 py-1 rounded-xl">
-                                            {count}
-                                        </span>
-                                    </div>
-                                )) : (
-                                    <div className="text-center py-6 text-gray-400 text-xs italic">No type data available</div>
-                                )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                            {/* 3D Discovery Carousel: One-by-One View */}
+                            <div className="lg:col-span-2 bg-gray-50/30 rounded-3xl p-8 border border-gray-100 relative overflow-hidden">
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-8 flex items-center">
+                                    Product Model Discovery
+                                    <div className="ml-4 h-px flex-1 bg-gray-100"></div>
+                                </h4>
+
+                                <div className="relative h-[360px] flex items-center overflow-hidden" style={{ perspective: '1500px' }}>
+                                    {/* The Ticker Track */}
+                                    <motion.div
+                                        className="flex gap-10 whitespace-nowrap px-4"
+                                        animate={{
+                                            x: [0, -2000] // Initial estimate, will be fine-tuned by content
+                                        }}
+                                        transition={{
+                                            duration: 40,
+                                            repeat: Infinity,
+                                            ease: "linear"
+                                        }}
+                                        style={{ display: 'flex' }}
+                                    >
+                                        {/* Original + Duplicated for Seamless Loop */}
+                                        {[...(Object.entries(stats?.additionalStats?.productBreakdown || {})), ...(Object.entries(stats?.additionalStats?.productBreakdown || {})), ...(Object.entries(stats?.additionalStats?.productBreakdown || {}))].map(([model, count], i) => {
+                                            const imageUrls = {
+                                                'Scooter': 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=800&auto=format&fit=crop',
+                                                'Motorcycle': 'https://images.unsplash.com/photo-1558981403-c5f97db4d5b1?q=80&w=800&auto=format&fit=crop',
+                                                'Super Premium': 'https://images.unsplash.com/photo-1611634882194-e532b21cf51e?q=80&w=800&auto=format&fit=crop',
+                                                'Scooter, Motorcycle, Electric Vehicle': 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=800&auto=format&fit=crop',
+                                                'Scooter, Three Wheeler': 'https://images.unsplash.com/photo-1557053503-0c252e5c8294?q=80&w=800&auto=format&fit=crop'
+                                            };
+                                            const img = imageUrls[model] || 'https://images.unsplash.com/photo-1504917595217-d4dc5f583dab?q=80&w=800&auto=format&fit=crop';
+
+                                            return (
+                                                <motion.div
+                                                    key={`${model}-${i}`}
+                                                    whileHover={{
+                                                        scale: 1.05,
+                                                        y: -10,
+                                                        rotateY: -5,
+                                                        transition: { duration: 0.3 }
+                                                    }}
+                                                    className="shrink-0 w-[280px] md:w-[320px] aspect-[4/5] bg-[#0F172A] rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden group relative"
+                                                    style={{ transformStyle: 'preserve-3d' }}
+                                                >
+                                                    {/* Background Image Container */}
+                                                    <div className="absolute inset-0 w-full h-full overflow-hidden">
+                                                        <img
+                                                            src={img}
+                                                            alt={model}
+                                                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000 ease-out"
+                                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=800&auto=format&fit=crop'; }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-[#060D1F] via-[#060D1F]/40 to-transparent" />
+                                                    </div>
+
+                                                    {/* Content Overlay */}
+                                                    <div className="absolute inset-0 p-8 flex flex-col justify-end text-white z-20">
+                                                        <h5 className="text-2xl font-black mb-2 leading-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] whitespace-normal uppercase tracking-tight">{model}</h5>
+
+                                                        <div className="flex items-end justify-between mt-4 overflow-hidden">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Production Vol.</span>
+                                                                <span className="text-4xl font-black tracking-tighter">{count}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Reflection */}
+                                                    <div className="absolute -inset-full bg-gradient-to-tr from-transparent via-white/5 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000 pointer-events-none" />
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </motion.div>
+
+                                    {/* Indicators & Left/Right Gradient Fades */}
+                                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white via-white/40 to-transparent z-10 pointer-events-none" />
+                                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white via-white/40 to-transparent z-10 pointer-events-none" />
+
+                                </div>
+                            </div>
+
+                            {/* Request Type Grid */}
+                            <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-6 flex items-center">
+                                    By Request Type
+                                    <div className="ml-4 h-px flex-1 bg-gray-100"></div>
+                                </h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {stats?.additionalStats?.typeBreakdown ? Object.entries(stats.additionalStats.typeBreakdown).map(([type, count], i) => (
+                                        <motion.div
+                                            key={type}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.6 + i * 0.05 }}
+                                            className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:border-rose-200 hover:shadow-lg hover:shadow-rose-500/5 transition-all group"
+                                        >
+                                            <span className="text-[11px] font-black text-gray-700 truncate">{type}</span>
+                                            <span className="text-md font-black text-rose-600 px-2 py-0.5 bg-rose-50 rounded-lg shadow-sm">
+                                                {count}
+                                            </span>
+                                        </motion.div>
+                                    )) : (
+                                        <div className="col-span-full text-center py-6 text-gray-400 text-[10px] font-bold uppercase tracking-widest border-2 border-dashed border-gray-100 rounded-2xl">No Logic Defined</div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Quick Stats Highlight */}
-
                 </motion.div>
             </div>
 
             {/* Monthly Trends Chart */}
             {trends.length > 0 && (
-                <motion.section variants={itemVariants} className="glass-card rounded-2xl p-8 border border-white/40 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-tvs-red/5 rounded-full blur-3xl -mr-48 -mt-48"></div>
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8 relative">
-                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-tvs-red/10 flex items-center justify-center text-tvs-red shadow-inner">
-                                <TrendingUp size={24} />
+                <motion.section variants={itemVariants} className="rounded-2xl p-6 relative overflow-hidden" style={{ background: '#ffffff', border: '1px solid #E0E4EF', boxShadow: '0 2px 12px rgba(13,27,62,0.05)' }}>
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(250,17,2,0.08)' }}>
+                                <TrendingUp size={18} style={{ color: '#FA1102' }} />
                             </div>
                             <div>
-                                <span className="block text-xl font-bold">Monthly Chart Analysis</span>
-                                <span className="text-xs font-medium text-gray-400">Request Volume Analytics</span>
+                                <h2 className="text-base font-black m-0" style={{ fontFamily: 'Outfit,sans-serif', color: '#0D1B3E' }}>Monthly Chart Analysis</h2>
+                                <p className="text-xs m-0" style={{ color: '#B0BBC9' }}>Request Volume Analytics</p>
                             </div>
-                        </h2>
+                        </div>
 
                         {/* Filters Card */}
-                        <div className="flex flex-wrap items-center gap-4 p-3 bg-white/60 backdrop-blur-md rounded-[1.5rem] border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3 px-3">
-                                <Filter size={16} className="text-tvs-blue" />
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="date"
-                                        value={fromDate}
-                                        onChange={(e) => setFromDate(e.target.value)}
-                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 p-1"
-                                    />
-                                    <span className="text-gray-300 font-bold">—</span>
-                                    <input
-                                        type="date"
-                                        value={toDate}
-                                        onChange={(e) => setToDate(e.target.value)}
-                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 p-1"
-                                    />
-                                </div>
-                            </div>
-
+                        <div className="flex flex-wrap items-center gap-3 p-2.5 rounded-xl" style={{ background: '#F9FAFB', border: '1px solid #E0E4EF' }}>
+                            <Filter size={14} style={{ color: '#7B8AAB', marginLeft: 6 }} />
+                            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-xs font-semibold p-1"
+                                style={{ color: '#3D4B6B' }} />
+                            <span style={{ color: '#D0D5E0', fontWeight: 700 }}>—</span>
+                            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+                                className="bg-transparent border-none outline-none text-xs font-semibold p-1"
+                                style={{ color: '#3D4B6B' }} />
                             <div className="flex items-center gap-2 ml-auto">
-                                <button
-                                    onClick={fetchTrends}
-                                    disabled={!fromDate || !toDate}
-                                    className="px-6 py-2.5 bg-tvs-blue text-white rounded-xl hover:bg-tvs-blue/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed text-[10px] font-black uppercase tracking-widest shadow-lg shadow-tvs-blue/10"
-                                >
-                                    Apply Filter
+                                <button onClick={fetchTrends} disabled={!fromDate || !toDate}
+                                    className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                    style={{ background: 'linear-gradient(135deg,#253C80,#1C3A6E)', color: '#ffffff' }}>
+                                    Apply
                                 </button>
-
                                 {(fromDate || toDate) && (
-                                    <button
-                                        onClick={() => {
-                                            setFromDate('');
-                                            setToDate('');
-                                            fetchTrends();
-                                        }}
-                                        className="px-6 py-2.5 bg-white text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-[10px] font-black uppercase tracking-widest"
-                                    >
+                                    <button onClick={() => { setFromDate(''); setToDate(''); fetchTrends(); }}
+                                        className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                                        style={{ background: '#ffffff', color: '#7B8AAB', border: '1px solid #E0E4EF' }}>
                                         Clear
                                     </button>
                                 )}
@@ -1173,6 +1377,9 @@ const Dashboard = () => {
                 </div>
             </Modal>
 
+        </motion.div>
+        </div>{/* end #dashboard-bg-content */}
+
             {/* Workflow Stage Detail Modal */}
             <AnimatePresence>
                 {selectedWorkflowStage !== null && (() => {
@@ -1194,18 +1401,26 @@ const Dashboard = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.25 }}
                             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-                            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+                            style={{
+                                backdropFilter: 'blur(20px) saturate(1.4)',
+                                WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+                                background: 'radial-gradient(ellipse at center, rgba(4,10,28,0.50) 0%, rgba(4,10,28,0.72) 100%)',
+                            }}
                             onClick={(e) => { if (e.target === e.currentTarget) setSelectedWorkflowStage(null); }}
                         >
                             <motion.div
                                 key="workflow-modal-content"
-                                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                                initial={{ opacity: 0, scale: 0.88, y: 40 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+                                exit={{ opacity: 0, scale: 0.94, y: 24 }}
+                                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                                className="relative w-full max-w-2xl rounded-3xl overflow-hidden"
+                                style={{
+                                    background: 'rgba(255,255,255,0.98)',
+                                    boxShadow: '0 32px 80px rgba(0,0,0,0.38), 0 8px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.12)',
+                                }}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {/* Header gradient band */}
@@ -1425,7 +1640,7 @@ const Dashboard = () => {
                     font-size: 13px;
                 }
             `}</style>
-        </motion.div>
+        </>
     );
 };
 

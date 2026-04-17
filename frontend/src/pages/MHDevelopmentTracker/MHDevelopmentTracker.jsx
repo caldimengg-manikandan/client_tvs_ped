@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Modal, Form, Input, Select, DatePicker, Button, Upload } from 'antd';
 import { Download, Upload as UploadIcon, Edit, Trash2, Filter, Pin } from 'lucide-react';
+import ColumnCustomizer from '../../components/ColumnCustomizer';
 import dayjs from 'dayjs';
 import { toast } from 'react-hot-toast';
 import {
@@ -112,6 +113,9 @@ const MHDevelopmentTracker = () => {
 
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    const [hiddenKeys, setHiddenKeys] = useState(new Set());
+    const [rowHeight, setRowHeight] = useState(44);
+    const [headerRowHeight, setHeaderRowHeight] = useState(52);
 
     useEffect(() => {
         dispatch(fetchTrackers());
@@ -318,7 +322,6 @@ const MHDevelopmentTracker = () => {
         return (
             <div
                 className="relative h-full w-full flex items-center justify-between px-3 text-xs"
-                style={{ backgroundColor: '#253C80' }}
             >
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-white text-[11px] leading-tight tracking-wide">{column.name}</span>
@@ -368,7 +371,6 @@ const MHDevelopmentTracker = () => {
     const PlainHeaderCell = ({ column }) => (
         <div
             className="h-full w-full flex items-center px-3"
-            style={{ backgroundColor: '#253C80' }}
         >
             <span className="font-bold text-white text-[11px] leading-tight tracking-wide">
                 {column.name}
@@ -642,10 +644,12 @@ const MHDevelopmentTracker = () => {
         .map(col => ({ key: col.key, name: col.name }));
 
     const autoFitColumns = useMemo(() => {
-        const withFreeze = dataGridColumns.map(col => ({
-            ...col,
-            frozen: col.key === 'serial' || frozenKeys.has(col.key),
-        }));
+        const withFreeze = dataGridColumns
+            .filter(col => !hiddenKeys.has(col.key))
+            .map(col => ({
+                ...col,
+                frozen: col.key === 'serial' || frozenKeys.has(col.key),
+            }));
         if (!gridWidth) return withFreeze;
         const totalDefinedWidth = withFreeze.reduce((sum, column) => sum + (column.width || 0), 0);
         if (!totalDefinedWidth) return withFreeze;
@@ -655,7 +659,7 @@ const MHDevelopmentTracker = () => {
             const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
             return { ...column, width: scaledWidth };
         });
-    }, [dataGridColumns, gridWidth, frozenKeys]);
+    }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
 
 
 
@@ -673,8 +677,35 @@ const MHDevelopmentTracker = () => {
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                {/* Table toolbar */}
-                <div className="px-6 pt-4 pb-2">
+                {/* Toolbar: count + customize + freeze */}
+                <div style={{ padding: '12px 24px 8px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    {/* Record count */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '7px 14px', borderRadius: 12,
+                        background: 'linear-gradient(135deg,#fdf4ff,#fae8ff)',
+                        border: '1px solid #e9d5ff',
+                    }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#a855f7', display: 'inline-block' }} />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#6b21a8' }}>
+                            {gridRows.length}
+                            <span style={{ fontWeight: 500, color: '#9333ea', marginLeft: 4 }}>trackers</span>
+                        </span>
+                    </div>
+
+                    {/* Customize Columns */}
+                    <ColumnCustomizer
+                        columns={dataGridColumns}
+                        hiddenKeys={hiddenKeys}
+                        onChange={setHiddenKeys}
+                        gridClass="mh-development-grid"
+                        onDensity={({ rowH, headerH }) => {
+                            setRowHeight(rowH);
+                            setHeaderRowHeight(headerH);
+                        }}
+                    />
+
+                    {/* Freeze toolbar */}
                     <FreezeToolbar
                         columns={freezeColumnList}
                         frozenKeys={frozenKeys}
@@ -694,8 +725,8 @@ const MHDevelopmentTracker = () => {
                                 rowKeyGetter={(row) => row._id || row.assetRequestId}
                                 className="rdg-light mh-development-grid"
                                 style={{ blockSize: '100%' }}
-                                rowHeight={44}
-                                headerRowHeight={52}
+                                rowHeight={rowHeight}
+                                headerRowHeight={headerRowHeight}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{ resizable: true, minWidth: 100 }}
                                 loading={loading}

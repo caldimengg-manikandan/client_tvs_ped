@@ -9,6 +9,7 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
+import ColumnCustomizer from '../../components/ColumnCustomizer';
 import * as XLSX from 'xlsx';
 import { Line, Bar } from 'react-chartjs-2';
 import {
@@ -60,6 +61,9 @@ const VendorScoring = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    const [hiddenKeys, setHiddenKeys] = useState(new Set());
+    const [rowHeight, setRowHeight] = useState(48);
+    const [headerRowHeight, setHeaderRowHeight] = useState(52);
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
@@ -409,7 +413,7 @@ const VendorScoring = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white">
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
@@ -480,7 +484,7 @@ const VendorScoring = () => {
     };
 
     const PlainHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-4 text-white">
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -608,10 +612,12 @@ const VendorScoring = () => {
         .map(col => ({ key: col.key, name: col.name }));
 
     const autoFitColumns = React.useMemo(() => {
-        const withFreeze = dataGridColumns.map(col => ({
-            ...col,
-            frozen: col.key === 'serial' || frozenKeys.has(col.key),
-        }));
+        const withFreeze = dataGridColumns
+            .filter(col => !hiddenKeys.has(col.key))
+            .map(col => ({
+                ...col,
+                frozen: col.key === 'serial' || frozenKeys.has(col.key),
+            }));
 
         if (!gridWidth) return withFreeze;
 
@@ -632,7 +638,7 @@ const VendorScoring = () => {
                 width: scaledWidth
             };
         });
-    }, [dataGridColumns, gridWidth, frozenKeys]);
+    }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
 
 
 
@@ -743,14 +749,26 @@ const VendorScoring = () => {
                 </div>
 
                 <div className="px-6 py-4">
-                    <FreezeToolbar
-                        columns={freezeColumnList}
-                        frozenKeys={frozenKeys}
-                        onApply={setFrozenKeys}
-                        frozenRowCount={frozenRowCount}
-                        setFrozenRowCount={setFrozenRowCount}
-                        maxRows={Math.min(gridRows.length, 50)}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <ColumnCustomizer
+                            columns={dataGridColumns}
+                            hiddenKeys={hiddenKeys}
+                            onChange={setHiddenKeys}
+                            gridClass="vendor-scoring-grid"
+                            onDensity={({ rowH, headerH }) => {
+                                setRowHeight(rowH);
+                                setHeaderRowHeight(headerH);
+                            }}
+                        />
+                        <FreezeToolbar
+                            columns={freezeColumnList}
+                            frozenKeys={frozenKeys}
+                            onApply={setFrozenKeys}
+                            frozenRowCount={frozenRowCount}
+                            setFrozenRowCount={setFrozenRowCount}
+                            maxRows={Math.min(gridRows.length, 50)}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
@@ -762,8 +780,8 @@ const VendorScoring = () => {
                                 rowKeyGetter={(row) => row._id || row.vendorCode}
                                 className="rdg-light vendor-scoring-grid"
                                 style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={48}
-                                headerRowHeight={52}
+                                rowHeight={rowHeight}
+                                headerRowHeight={headerRowHeight}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
                                     resizable: true

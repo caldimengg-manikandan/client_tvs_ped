@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UserPlus, X, Check, ArrowRight, Filter } from 'lucide-react';
+import ColumnCustomizer from '../components/ColumnCustomizer';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAssetRequests, updateAssetRequest, sendEmailNotification, upsertRequest } from '../redux/slices/assetRequestSlice';
@@ -28,6 +29,9 @@ const RequestTracker = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    const [hiddenKeys, setHiddenKeys] = useState(new Set());
+    const [rowHeight, setRowHeight] = useState(44);
+    const [headerRowHeight, setHeaderRowHeight] = useState(52);
 
     const gridContainerRef = useRef(null);
 
@@ -205,7 +209,7 @@ const RequestTracker = () => {
         }
     };
 
-    
+
 
     const baseRows = requests || [];
 
@@ -225,7 +229,7 @@ const RequestTracker = () => {
     const gridRows = applyColumnFilters(baseRows).map((row, i) => ({ ...row, _serialNo: i + 1 }));
 
     const PlainHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-2 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-2 text-white">
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -290,7 +294,7 @@ const RequestTracker = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-2 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-2 text-xs gap-1 text-white">
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
                 </div>
@@ -545,10 +549,12 @@ const RequestTracker = () => {
         .map(col => ({ key: col.key, name: col.name }));
 
     const autoFitColumns = React.useMemo(() => {
-        const withFreeze = dataGridColumns.map(col => ({
-            ...col,
-            frozen: col.key === 'serial' || frozenKeys.has(col.key),
-        }));
+        const withFreeze = dataGridColumns
+            .filter(col => !hiddenKeys.has(col.key))
+            .map(col => ({
+                ...col,
+                frozen: col.key === 'serial' || frozenKeys.has(col.key),
+            }));
 
         if (!gridWidth) return withFreeze;
 
@@ -563,13 +569,9 @@ const RequestTracker = () => {
         return withFreeze.map((column) => {
             if (!column.width) return column;
             const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
-
-            return {
-                ...column,
-                width: scaledWidth
-            };
+            return { ...column, width: scaledWidth };
         });
-    }, [dataGridColumns, gridWidth, frozenKeys]);
+    }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
@@ -591,7 +593,35 @@ const RequestTracker = () => {
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div className="px-6 py-4">
+                {/* Toolbar: count + customize + freeze */}
+                <div style={{ padding: '12px 24px 8px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    {/* Record count */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '7px 14px', borderRadius: 12,
+                        background: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)',
+                        border: '1px solid #bae6fd',
+                    }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0ea5e9', display: 'inline-block' }} />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#0369a1' }}>
+                            {gridRows.length}
+                            <span style={{ fontWeight: 500, color: '#0284c7', marginLeft: 4 }}>requests</span>
+                        </span>
+                    </div>
+
+                    {/* Customize Columns */}
+                    <ColumnCustomizer
+                        columns={dataGridColumns}
+                        hiddenKeys={hiddenKeys}
+                        onChange={setHiddenKeys}
+                        gridClass="request-tracker-grid"
+                        onDensity={({ rowH, headerH }) => {
+                            setRowHeight(rowH);
+                            setHeaderRowHeight(headerH);
+                        }}
+                    />
+
+                    {/* Freeze toolbar */}
                     <FreezeToolbar
                         columns={freezeColumnList}
                         frozenKeys={frozenKeys}
@@ -611,8 +641,8 @@ const RequestTracker = () => {
                                 rowKeyGetter={(row) => row._id || row.mhRequestId}
                                 className="rdg-light request-tracker-grid"
                                 style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={44}
-                                headerRowHeight={52}
+                                rowHeight={rowHeight}
+                                headerRowHeight={headerRowHeight}
                                 frozenRowCount={frozenRowCount}
                                 defaultColumnOptions={{
                                     resizable: true
@@ -623,105 +653,105 @@ const RequestTracker = () => {
                     </div>
                 </div>
 
-            {/* Assign Member Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden transform transition-all">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h2 className="text-lg font-bold text-tvs-dark-gray">Select Employee</h2>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-white focus:outline-none"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-6">
-                            <p className="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                Select employees to notify about Request <strong className="text-tvs-blue">{selectedRequest?.mhRequestId}</strong>
-                            </p>
-
-                            <div className="max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg shadow-inner bg-gray-50/30">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-tvs-blue text-white font-semibold border-b border-tvs-blue">
-                                        <tr>
-                                            <th className="px-4 py-3 w-16 text-center border-r border-gray-200">S.No</th>
-                                            <th className="px-4 py-3 border-r border-gray-200">Email</th>
-                                            <th className="px-4 py-3 w-16 text-center">Select</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 bg-white">
-
-                                        {loadingEmployees ? (
-                                            <tr>
-                                                <td colSpan="3" className="p-4 text-center text-gray-500">Loading employees...</td>
-                                            </tr>
-                                        ) : employees.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="3" className="p-4 text-center text-gray-500">No employees found</td>
-                                            </tr>
-                                        ) : (
-                                            employees.map((emp, index) => {
-                                                const email = emp.contactEmail || emp.mailId;
-                                                const name = emp.employeeName || emp.fullName;
-
-                                                if (!email) return null;
-
-                                                const isSelected = selectedMembers.includes(email);
-                                                return (
-                                                    <tr
-                                                        key={emp._id || index}
-                                                        className={`hover:bg-blue-50 transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/30' : ''}`}
-                                                        onClick={() => {
-                                                            if (isSelected) {
-                                                                setSelectedMembers(selectedMembers.filter(m => m !== email));
-                                                            } else {
-                                                                setSelectedMembers([...selectedMembers, email]);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <td className="px-4 py-3 text-center text-gray-500 border-r border-gray-100">{index + 1}</td>
-                                                        <td className="px-4 py-3 text-gray-700 font-medium border-r border-gray-100">
-                                                            <div>{name}</div>
-                                                            <div className="text-xs text-gray-400 font-normal">{email}</div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${isSelected
-                                                                ? 'bg-tvs-blue border-tvs-blue text-white'
-                                                                : 'bg-white border-gray-300 text-transparent hover:border-tvs-blue'
-                                                                }`}>
-                                                                <Check size={14} strokeWidth={3} />
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                {/* Assign Member Modal */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                        <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden transform transition-all">
+                            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h2 className="text-lg font-bold text-tvs-dark-gray">Select Employee</h2>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition-colors"
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-white focus:outline-none"
                                 >
-                                    Cancel
+                                    <X size={20} />
                                 </button>
-                                <button
-                                    onClick={handleConfirmAssign}
-                                    className="px-4 py-2 text-sm font-medium !text-white bg-tvs-blue rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                    disabled={selectedMembers.length === 0}
-                                >
-                                    Send Email{selectedMembers.length !== 1 ? 's' : ''}
-                                </button>
+                            </div>
+
+                            <div className="p-6">
+                                <p className="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    Select employees to notify about Request <strong className="text-tvs-blue">{selectedRequest?.mhRequestId}</strong>
+                                </p>
+
+                                <div className="max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg shadow-inner bg-gray-50/30">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-tvs-blue text-white font-semibold border-b border-tvs-blue">
+                                            <tr>
+                                                <th className="px-4 py-3 w-16 text-center border-r border-gray-200">S.No</th>
+                                                <th className="px-4 py-3 border-r border-gray-200">Email</th>
+                                                <th className="px-4 py-3 w-16 text-center">Select</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 bg-white">
+
+                                            {loadingEmployees ? (
+                                                <tr>
+                                                    <td colSpan="3" className="p-4 text-center text-gray-500">Loading employees...</td>
+                                                </tr>
+                                            ) : employees.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="3" className="p-4 text-center text-gray-500">No employees found</td>
+                                                </tr>
+                                            ) : (
+                                                employees.map((emp, index) => {
+                                                    const email = emp.contactEmail || emp.mailId;
+                                                    const name = emp.employeeName || emp.fullName;
+
+                                                    if (!email) return null;
+
+                                                    const isSelected = selectedMembers.includes(email);
+                                                    return (
+                                                        <tr
+                                                            key={emp._id || index}
+                                                            className={`hover:bg-blue-50 transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/30' : ''}`}
+                                                            onClick={() => {
+                                                                if (isSelected) {
+                                                                    setSelectedMembers(selectedMembers.filter(m => m !== email));
+                                                                } else {
+                                                                    setSelectedMembers([...selectedMembers, email]);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <td className="px-4 py-3 text-center text-gray-500 border-r border-gray-100">{index + 1}</td>
+                                                            <td className="px-4 py-3 text-gray-700 font-medium border-r border-gray-100">
+                                                                <div>{name}</div>
+                                                                <div className="text-xs text-gray-400 font-normal">{email}</div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${isSelected
+                                                                    ? 'bg-tvs-blue border-tvs-blue text-white'
+                                                                    : 'bg-white border-gray-300 text-transparent hover:border-tvs-blue'
+                                                                    }`}>
+                                                                    <Check size={14} strokeWidth={3} />
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                    <button
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmAssign}
+                                        className="px-4 py-2 text-sm font-medium !text-white bg-tvs-blue rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        disabled={selectedMembers.length === 0}
+                                    >
+                                        Send Email{selectedMembers.length !== 1 ? 's' : ''}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-            <style>{`
+                )}
+                <style>{`
                 .request-tracker-grid.rdg-light {
                     width: 100%;
                     height: 100%;
@@ -751,7 +781,7 @@ const RequestTracker = () => {
                     color: #ffffff;
                 }
             `}</style>
-        </div>
+            </div>
         </div>
     );
 };

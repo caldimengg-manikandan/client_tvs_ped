@@ -42,6 +42,9 @@ app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
 app.use('/api/mh-development-tracker', require('./routes/mhDevelopmentTrackerRoutes'));
 app.use('/api/project-plan', require('./routes/projectPlanRoutes'));
 
+// Public routes (no auth required — for landing page)
+app.use('/api/public', require('./routes/publicRoutes'));
+
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

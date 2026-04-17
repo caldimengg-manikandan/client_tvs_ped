@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Plus, Edit, Trash2, Mail, Filter as FilterIcon, Download, Eye, Building, MapPin, Upload, FileText } from 'lucide-react';
+import ColumnCustomizer from '../../components/ColumnCustomizer';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,6 +33,9 @@ const VendorMaster = () => {
     const [gridWidth, setGridWidth] = useState(0);
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    const [hiddenKeys, setHiddenKeys] = useState(new Set());
+    const [rowHeight, setRowHeight] = useState(48);
+    const [headerRowHeight, setHeaderRowHeight] = useState(52);
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
@@ -222,7 +226,7 @@ const VendorMaster = () => {
     };
 
     const PlainHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-4 text-white">
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -288,7 +292,7 @@ const VendorMaster = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white">
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
@@ -470,10 +474,12 @@ const VendorMaster = () => {
         .map(col => ({ key: col.key, name: col.name }));
 
     const autoFitColumns = React.useMemo(() => {
-        const withFreeze = dataGridColumns.map(col => ({
-            ...col,
-            frozen: col.key === 'serial' || frozenKeys.has(col.key),
-        }));
+        const withFreeze = dataGridColumns
+            .filter(col => !hiddenKeys.has(col.key))
+            .map(col => ({
+                ...col,
+                frozen: col.key === 'serial' || frozenKeys.has(col.key),
+            }));
 
         if (!gridWidth) return withFreeze;
 
@@ -488,70 +494,84 @@ const VendorMaster = () => {
         return withFreeze.map((column) => {
             if (!column.width) return column;
             const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
-
-            return {
-                ...column,
-                width: scaledWidth
-            };
+            return { ...column, width: scaledWidth };
         });
-    }, [dataGridColumns, gridWidth, frozenKeys]);
+    }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
 
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent fade-in">
-            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                {/* Toolbar with Export */}
-                <div className="px-6 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200 w-full sm:w-auto">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm font-bold text-gray-700">Showing <span className="text-emerald-700">{filteredVendors?.length || 0}</span> vendors</span>
+            <div className="flex-1 bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex flex-col">
+
+                {/* ── Premium Toolbar ── */}
+                <div className="px-5 pt-4 pb-3 flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+
+                        {/* Left: count badge + Customize */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '7px 14px', borderRadius: 12,
+                                background: 'linear-gradient(135deg,#eff6ff,#dbeafe)',
+                                border: '1px solid #bfdbfe',
+                            }}>
+                                <Building size={13} style={{ color: '#2563eb', flexShrink: 0 }} />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#1e40af' }}>
+                                    {filteredVendors?.length || 0}
+                                    <span style={{ fontWeight: 500, color: '#3b82f6', marginLeft: 4 }}>vendors</span>
+                                </span>
+                            </div>
+                            <ColumnCustomizer
+                                columns={dataGridColumns}
+                                hiddenKeys={hiddenKeys}
+                                onChange={setHiddenKeys}
+                                gridClass="vendor-master-grid"
+                                onDensity={({ rowH, headerH }) => {
+                                    setRowHeight(rowH);
+                                    setHeaderRowHeight(headerH);
+                                }}
+                            />
+                        </div>
+
+                        {/* Right: action buttons */}
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                            <button onClick={handleDownloadTemplate}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-95 hover:scale-[1.02]"
+                                style={{ background: 'linear-gradient(135deg, #253C80, #1a3c6e)', boxShadow: '0 2px 10px rgba(37,60,128,0.25)' }}>
+                                <Download size={14} /> Template
+                            </button>
+                            <button onClick={handleAddVendor}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-95 hover:scale-[1.02]"
+                                style={{ background: 'linear-gradient(135deg, #253C80, #3b5bbf)', boxShadow: '0 2px 10px rgba(37,60,128,0.3)' }}>
+                                <Plus size={14} /> Add Vendor
+                            </button>
+                            <button onClick={handleImportClick}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-95 hover:scale-[1.02]"
+                                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 2px 10px rgba(5,150,105,0.3)' }}>
+                                <Upload size={14} /> Import Excel
+                            </button>
+                            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv"
+                                onChange={handleFileUpload} style={{ display: 'none' }} />
                         </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                        <button
-                            onClick={handleDownloadTemplate}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Download size={18} />
-                            Template
-                        </button>
-                        <button
-                            onClick={handleAddVendor}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-tvs-blue hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Plus size={18} /> Add Vendor
-                        </button>
-                        <button
-                            onClick={handleImportClick}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
-                        >
-                            <Upload size={18} />
-                            Import Excel
-                        </button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
+
+                    {/* Freeze toolbar */}
+                    <div className="pt-1 border-t border-gray-100">
+                        <FreezeToolbar
+                            columns={freezeColumnList}
+                            frozenKeys={frozenKeys}
+                            onApply={setFrozenKeys}
+                            frozenRowCount={frozenRowCount}
+                            setFrozenRowCount={setFrozenRowCount}
+                            maxRows={Math.min(gridRows.length, 50)}
                         />
                     </div>
                 </div>
-                <div className="px-6 py-4">
-                    <FreezeToolbar
-                        columns={freezeColumnList}
-                        frozenKeys={frozenKeys}
-                        onApply={setFrozenKeys}
-                        frozenRowCount={frozenRowCount}
-                        setFrozenRowCount={setFrozenRowCount}
-                        maxRows={Math.min(gridRows.length, 50)}
-                    />
-                </div>
-
-                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
+                {/* ── Grid Container ── */}
+                <div className="flex-1 flex flex-col px-4 pb-4 md:px-5 md:pb-5 overflow-hidden">
                     <div
                         ref={gridContainerRef}
-                        className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px] shadow-sm"
+                        className="flex-1 w-full rounded-xl overflow-hidden bg-white relative min-h-[400px]"
+                        style={{ border: '1px solid #e4e9f2', boxShadow: '0 2px 16px rgba(15,32,64,0.06)', boxSizing: 'border-box' }}
                     >
                         <div className="h-full w-full absolute inset-0">
                             <FrozenRowsDataGrid
@@ -560,35 +580,31 @@ const VendorMaster = () => {
                                 rowKeyGetter={(row) => row._id || row.vendorCode}
                                 className="rdg-light vendor-master-grid"
                                 style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={48}
-                                headerRowHeight={52}
+                                rowHeight={rowHeight}
+                                headerRowHeight={headerRowHeight}
                                 frozenRowCount={frozenRowCount}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
+                                defaultColumnOptions={{ resizable: true }}
                                 loading={loading}
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200/80 bg-gray-50/50">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-600">Showing</span>
-                            <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{filteredVendors?.length || 0}</span>
-                            <span className="text-gray-600">of</span>
-                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{vendors?.length || 0}</span>
-                            <span className="text-gray-600">vendors</span>
+                {/* ── Premium Footer ── */}
+                <div className="px-5 py-3.5 border-t border-gray-100"
+                    style={{ background: 'linear-gradient(90deg, #f8faff 0%, #fff 100%)' }}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[12px]">
+                            <span className="text-gray-400 font-medium">Showing</span>
+                            <span className="px-2 py-0.5 rounded-lg font-black text-[#253C80] bg-[#253C80]/10 tabular-nums">{filteredVendors?.length || 0}</span>
+                            <span className="text-gray-400 font-medium">of</span>
+                            <span className="px-2 py-0.5 rounded-lg font-black text-gray-700 bg-gray-100 tabular-nums">{vendors?.length || 0}</span>
+                            <span className="text-gray-400 font-medium">vendors</span>
                         </div>
-
-                        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                            <Building size={16} className="text-blue-600" />
-                            <span className="text-sm font-bold text-blue-700">
-                                {vendors?.length || 0}
-                            </span>
-                            <span className="text-xs text-blue-600">total vendors</span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[11px] font-bold"
+                            style={{ background: '#eff6ff', borderColor: '#bfdbfe', color: '#1d4ed8' }}>
+                            <Building size={13} className="shrink-0" />
+                            {vendors?.length || 0} total vendors
                         </div>
                     </div>
                 </div>

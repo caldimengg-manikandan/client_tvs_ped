@@ -6,6 +6,7 @@ import MHRequestForm from './components/Forms/MHRequestForm';
 import RequestTracker from './pages/RequestTracker';
 import MHDevelopmentTracker from './pages/MHDevelopmentTracker/MHDevelopmentTracker';
 import ProjectPlanModel from './pages/ProjectPlanModel';
+import LandingPage from './pages/landing/LandingPage';
 
 import EmployeeMaster from './pages/EmployeeMaster/EmployeeMaster';
 import EmployeeForm from './pages/EmployeeMaster/EmployeeForm';
@@ -28,6 +29,8 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* ── Public landing page (no auth required) ── */}
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
 
           <Route path="/" element={<Layout />}>
