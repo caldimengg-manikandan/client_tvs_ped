@@ -95,8 +95,8 @@ const Layout = () => {
 
                 <main
                     ref={mainRef}
-                    className={`flex-1 overflow-x-hidden relative z-10 custom-scrollbar flex flex-col ${isFullPage ? 'p-4 md:p-5' : 'p-4 sm:p-6 lg:p-7'}`}
-                    style={{ marginTop: 68, overflowY: 'auto', scrollBehavior: 'smooth' }}
+                    className={`flex-1 relative z-10 custom-scrollbar flex flex-col ${isFullPage ? 'p-4 md:p-5' : 'p-4 sm:p-6 lg:p-7'}`}
+                    style={{ marginTop: 68, overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth' }}
                 >
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div

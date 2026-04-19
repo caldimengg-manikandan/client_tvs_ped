@@ -16,12 +16,17 @@ export const defaultColDef = {
     resizable: true,             // ✅ MANDATORY: All columns resizable
     floatingFilter: false,       // Hide floating filters for cleaner UI
     suppressHeaderMenuButton: true, // Updated for v31+ compatibility
-    minWidth: 80,                // Efficient minimum column width
-    flex: 0,                     // Auto-sizing disabled by default
+    minWidth: 120,               // Minimum column width to prevent clipping
+    flex: 1,                     // Distribute remaining space evenly
+    wrapText: true,              // Wrap long cell text
+    autoHeight: true,            // Row height adapts to cell content
     cellStyle: {
         paddingLeft: '16px',
         paddingRight: '16px',
-        lineHeight: '1.5'
+        lineHeight: '1.45',
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word',
     },
     headerClass: 'tvs-ag-header' // Custom class for header styling
 };
@@ -45,15 +50,21 @@ export const defaultGridOptions = {
     rowHeight: 56,               // ✅ PREMIUM: More spacious row height for better readability
     headerHeight: 54,            // ✅ PREMIUM: Taller, clearer header
 
+    // Layout — autoHeight so the grid expands to fit all rows
+    domLayout: 'autoHeight',
+
     // Behavior
     animateRows: true,           // Smooth row animations
     enableCellTextSelection: true, // Allow text selection
     ensureDomOrder: true,        // Maintain DOM order
     suppressCellFocus: true,    // Remove blue outline on click for cleaner UI
 
-    // Performance
-    suppressColumnVirtualisation: false, // Enable column virtualization
-    suppressRowVirtualisation: false,    // Enable row virtualization
+    // Performance / Visibility
+    suppressColumnVirtualisation: true,  // Render ALL columns, no off-screen clipping
+    suppressRowVirtualisation: false,    // Keep row virtualisation for performance
+
+    // Scroll
+    alwaysShowHorizontalScroll: true,   // Always show horizontal scrollbar
 
     // Styling
     rowClass: 'tvs-ag-row hover:bg-gray-50/50 transition-colors',
@@ -73,7 +84,7 @@ export const getGridTheme = () => {
 // ============================================================================
 // COMMON GRID CONTAINER STYLES
 // ============================================================================
-export const gridContainerClass = 'ag-theme-alpine w-full h-[600px]';
+export const gridContainerClass = 'ag-theme-alpine w-full';
 
 // ============================================================================
 // UTILITY: Create Action Column Renderer
@@ -83,6 +94,8 @@ export const createActionColumn = (actions) => {
         headerName: 'ACTIONS',
         field: 'actions',
         width: 150,
+        minWidth: 150,
+        flex: 0,
         sortable: false,
         filter: false,
         resizable: false,
@@ -105,6 +118,15 @@ export const createActionColumn = (actions) => {
             );
         }
     };
+};
+
+// ============================================================================
+// UTILITY: onFirstDataRendered — size columns to fit on initial load
+// ============================================================================
+export const onFirstDataRendered = (params) => {
+    if (params?.api) {
+        params.api.sizeColumnsToFit();
+    }
 };
 
 // ============================================================================

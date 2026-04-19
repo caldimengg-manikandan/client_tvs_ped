@@ -419,6 +419,11 @@ body,
   font-size: 12.5px !important;
   color: #1e2d4e !important;
   font-weight: 500;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
+  line-height: 1.45 !important;
 }
 
 /* Premium header cells — deep navy gradient */
@@ -475,6 +480,9 @@ body,
   --ag-list-item-height: 38px;
   --ag-control-panel-background-color: #ffffff;
   --ag-odd-row-background-color: #FAFBFE;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 200px;
 }
 
 .mh-tracker-grid {
@@ -529,6 +537,11 @@ body,
   padding-right: 16px !important;
   border: none !important;
   color: #1e2d4e !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  overflow: visible !important;
+  line-height: 1.45 !important;
 }
 
 .ag-theme-alpine .ag-paging-panel {
@@ -687,10 +700,100 @@ body,
   border-radius: 10px !important;
 }
 
-/* ====================== RDG HEADER POPUP FIX ====================== */
-.rdg-header-row .rdg-cell {
-  overflow: visible;
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  REACT-DATA-GRID — GLOBAL VISIBILITY & LAYOUT SYSTEM           ║
+   ║  Single source of truth. DO NOT add rdg overrides elsewhere.   ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+
+/* ── 1. Grid root — always-visible scrollbars, cross-browser ───── */
+.rdg {
+  display: grid;
+  overflow: scroll !important;          /* always show both scrollbars */
+  scrollbar-gutter: stable both-edges; /* reserve track space even when content fits */
+  -webkit-overflow-scrolling: touch;    /* iOS momentum */
+  block-size: 100% !important;          /* fill panel height */
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37,60,128,0.5) #dde5f7;
 }
+
+/* ── 2. Header cells — always visible, never clipped ────────────── */
+.rdg .rdg-header-row .rdg-cell {
+  overflow: visible !important;     /* filter dropdowns must escape cell */
+  white-space: nowrap !important;   /* keep header text on one line */
+  position: relative !important;    /* needed for absolute filter popups */
+  z-index: 3 !important;
+}
+
+/* ── 3. Body cells — clip at boundary, no bleed ─────────────────── */
+.rdg .rdg-row .rdg-cell {
+  overflow: hidden !important;        /* prevent text bleeding past cell edge */
+  white-space: nowrap !important;     /* single-line display; use tooltip for full value */
+  text-overflow: ellipsis !important; /* … shows for truncated content */
+  line-height: 1.45 !important;
+}
+
+/* ── 4. Scroll-first layout wrapper ─────────────────────────────── */
+/*   .rdg-scroll-outer  — provides padding and sits inside the card  */
+/*   .rdg-scroll-panel  — fixed vh height; rdg scrolls inside it     */
+
+.rdg-scroll-outer {
+  width: 100%;
+  padding-bottom: 16px;  /* room for the horizontal scrollbar at the bottom */
+}
+
+.rdg-scroll-panel {
+  position: relative;              /* anchors loading overlay */
+  width: 100%;
+  height: 75vh;
+  min-height: 420px;
+  max-height: calc(100vh - 240px);
+  box-sizing: border-box;
+  border-radius: 12px;
+  overflow: hidden;  /* clip rounded corners; rdg scrolls inside */
+}
+
+/* Expand on large high-resolution displays */
+@media (min-width: 1280px) {
+  .rdg-scroll-panel {
+    height: 78vh;
+  }
+}
+
+/* Shrink on short-screen laptops (e.g. 768px tall) */
+@media (max-height: 700px) {
+  .rdg-scroll-panel {
+    height: 62vh;
+    min-height: 320px;
+  }
+}
+
+/* ── 5. Webkit scrollbar — always visible, including macOS ──────── */
+/* -webkit-appearance:none forces macOS to use classic (always-on)   */
+/* scrollbars instead of the invisible overlay-style scrollbars.     */
+.rdg::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 12px;
+}
+.rdg::-webkit-scrollbar-track {
+  background: #eef1f9;
+  border-radius: 10px;
+}
+.rdg::-webkit-scrollbar-thumb {
+  background: rgba(37, 60, 128, 0.50);
+  border-radius: 10px;
+  border: 2px solid #eef1f9;
+}
+.rdg::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 60, 128, 0.82);
+}
+.rdg::-webkit-scrollbar-corner { background: #eef1f9; }
+
 
 /* ====================== SMOOTH UX GLOBALS ====================== */
 

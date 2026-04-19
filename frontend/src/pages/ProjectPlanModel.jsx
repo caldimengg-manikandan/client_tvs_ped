@@ -406,11 +406,12 @@ const ProjectPlanModel = () => {
     return (
         <div className="flex-1 flex flex-col h-full w-full bg-transparent">
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div
-                    ref={gridContainerRef}
-                    className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]"
-                >
-                    <div className="h-full w-full absolute inset-0">
+                <div className="rdg-scroll-outer p-4 md:p-5">
+                    <div
+                        ref={gridContainerRef}
+                        className="rdg-scroll-panel border border-gray-200 bg-white"
+                        style={{ position: 'relative' }}
+                    >
                         <DataGrid
                             columns={autoFitColumns}
                             rows={gridRows}
@@ -418,15 +419,17 @@ const ProjectPlanModel = () => {
                                 `${row.trackerId || ''}-${row.sNo || ''}-${row.activity || ''}`
                             }
                             className="rdg-light project-plan-grid"
-                            style={{ blockSize: '100%' }}
+                            style={{ blockSize: '100%', width: '100%' }}
                             rowHeight={44}
                             headerRowHeight={52}
-                            defaultColumnOptions={{
-                                resizable: true
-                            }}
+                            defaultColumnOptions={{ resizable: true, minWidth: 120 }}
                         />
                         {loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                            <div style={{
+                                position: 'absolute', inset: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: 'rgba(255,255,255,0.6)', zIndex: 20, pointerEvents: 'none'
+                            }}>
                                 <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
                             </div>
                         )}

@@ -9,11 +9,11 @@ import PptxGenJS from 'pptxgenjs';
 class PPTGenerator {
   constructor() {
     this.ppt = new PptxGenJS();
-    // TVS Master Palette (Designer Curated)
+    // CalTIMS Master Palette (Designer Curated)
     this.colors = {
       primary: '1E293B',    // Slate Dark (Modern Base)
-      tvsBlue: '253C80',    // TVS Deep Blue
-      tvsRed: 'FA1102',     // TVS Racing Red
+      tvsBlue: '253C80',    // CalTIMS Deep Blue
+      tvsRed: 'FA1102',     // CalTIMS Racing Red
       accentGold: 'F59E0B', // Strategic Gold
       surfaceHigh: 'F1F5F9',// Surface Background
       textHeavy: '0F172A',  // Midnight Text
@@ -25,7 +25,7 @@ class PPTGenerator {
     };
 
     this.margin = 0.5;
-    this.ppt.title = 'TVS PED | Executive Strategic Analytics';
+    this.ppt.title = 'CalTIMS PED | Executive Strategic Analytics';
     this.ppt.layout = 'LAYOUT_16x9';
   }
 
@@ -67,7 +67,7 @@ class PPTGenerator {
       // 10. STRATEGIC VISION & CLOSURE
       this.addSlideRoadmap();
 
-      const fileName = `TVS_Executive_Strategy_V3_${new Date().toISOString().split('T')[0]}.pptx`;
+      const fileName = `CalTIMS_Executive_Strategy_V3_${new Date().toISOString().split('T')[0]}.pptx`;
       await this.ppt.writeFile({ fileName });
 
       return { success: true, fileName };
@@ -91,7 +91,7 @@ class PPTGenerator {
     slide.addShape(this.ppt.ShapeType.rtTriangle, { x: 3, y: 0, w: 2, h: '100%', fill: { color: this.colors.tvsBlue }, opacity: 20 });
 
     // Title Branding
-    slide.addText('TVS MOTOR COMPANY', {
+    slide.addText('CalTIMS', {
       x: 0.5, y: 1.0, w: 3, fontSize: 14, bold: true, color: this.colors.white, letterSpacing: 3, align: 'left'
     });
 
@@ -250,7 +250,7 @@ class PPTGenerator {
       ], { x: 1.2, y, w: 7.6, h: 0.9, valign: 'middle' });
     });
 
-    slide.addText('TVS MOTOR COMPANY | PROCESS ENGINEERING DIVISION 2026', {
+    slide.addText('CalTIMS | PROCESS ENGINEERING DIVISION 2026', {
       x: 0, y: 5.2, w: '100%', align: 'center', fontSize: 10, color: '888888', letterSpacing: 2
     });
   }
@@ -262,7 +262,7 @@ class PPTGenerator {
     slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 0, w: '100%', h: 1, fill: { color: this.colors.surfaceHigh } });
     slide.addShape(this.ppt.ShapeType.line, { x: 0, y: 1, w: '100%', h: 0, line: { color: this.colors.tvsBlue, width: 3 } });
 
-    slide.addText('TVS PED', { x: 8.5, y: 0.2, w: 1, fontSize: 12, bold: true, color: this.colors.tvsBlue, align: 'right' });
+    slide.addText('CalTIMS PED', { x: 8.5, y: 0.2, w: 1, fontSize: 12, bold: true, color: this.colors.tvsBlue, align: 'right' });
     slide.addText(title, { x: 0.5, y: 0.25, w: 7, fontSize: 22, bold: true, color: this.colors.textHeavy, align: 'left', fit: 'shrink' });
     slide.addText(subtitle, { x: 0.5, y: 0.65, w: 7, fontSize: 9, italic: true, color: this.colors.textLight, align: 'left' });
 

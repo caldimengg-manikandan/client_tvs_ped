@@ -622,7 +622,7 @@ const EmployeeMaster = () => {
         const scale = Math.max(gridWidth / totalDefinedWidth, 1);
         return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 120);
             return { ...column, width: scaledWidth };
         });
     }, [dataGridColumns, gridWidth, frozenKeys]);
@@ -738,26 +738,24 @@ const EmployeeMaster = () => {
                 </div>
 
                 {/* ── Grid Container ── */}
-                <div className="flex-1 flex flex-col px-4 pb-4 md:px-5 md:pb-5 overflow-hidden">
+                <div className="rdg-scroll-outer px-4 pb-4 md:px-5 md:pb-5">
                     <div ref={gridContainerRef}
-                        className="flex-1 w-full rounded-xl overflow-hidden relative min-h-[400px]"
+                        className="rdg-scroll-panel rounded-xl"
                         style={{ border: '1px solid #e4e9f2', boxShadow: '0 2px 16px rgba(15,32,64,0.06)' }}>
-                        <div className="h-full w-full absolute inset-0">
-                            <FrozenRowsDataGrid
-                                columns={autoFitColumns}
-                                rows={gridRows}
-                                rowKeyGetter={(row) => row._id || row.employeeId}
-                                className="rdg-light employee-master-grid"
-                                style={{ blockSize: '100%', width: '100%' }}
-                                rowHeight={rowHeight}
-                                headerRowHeight={headerRowHeight}
-                                frozenRowCount={frozenRowCount}
-                                defaultColumnOptions={{
-                                    resizable: true
-                                }}
-                                loading={loading}
-                            />
-                        </div>
+                        <FrozenRowsDataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id || row.employeeId}
+                            className="rdg-light employee-master-grid"
+                            style={{ blockSize: '100%', width: '100%' }}
+                            rowHeight={rowHeight}
+                            headerRowHeight={headerRowHeight}
+                            frozenRowCount={frozenRowCount}
+                            defaultColumnOptions={{
+                                resizable: true, minWidth: 120
+                            }}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>

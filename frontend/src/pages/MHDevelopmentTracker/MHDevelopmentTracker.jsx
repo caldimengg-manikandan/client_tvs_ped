@@ -656,7 +656,7 @@ const MHDevelopmentTracker = () => {
         const scale = Math.max(gridWidth / totalDefinedWidth, 1);
         return withFreeze.map((column) => {
             if (!column.width) return column;
-            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 80);
+            const scaledWidth = Math.max(Math.floor(column.width * scale), column.width, 120);
             return { ...column, width: scaledWidth };
         });
     }, [dataGridColumns, gridWidth, frozenKeys, hiddenKeys]);
@@ -716,22 +716,20 @@ const MHDevelopmentTracker = () => {
                     />
                 </div>
 
-                <div className="flex-1 flex flex-col px-4 pb-4 md:px-6 md:pb-6 overflow-hidden">
-                    <div ref={gridContainerRef} className="flex-1 w-full border border-gray-200 rounded-xl overflow-hidden bg-white relative min-h-[400px]">
-                        <div className="h-full w-full absolute inset-0">
-                            <FrozenRowsDataGrid
-                                columns={autoFitColumns}
-                                rows={gridRows}
-                                rowKeyGetter={(row) => row._id || row.assetRequestId}
-                                className="rdg-light mh-development-grid"
-                                style={{ blockSize: '100%' }}
-                                rowHeight={rowHeight}
-                                headerRowHeight={headerRowHeight}
-                                frozenRowCount={frozenRowCount}
-                                defaultColumnOptions={{ resizable: true, minWidth: 100 }}
-                                loading={loading}
-                            />
-                        </div>
+                <div className="rdg-scroll-outer px-4 pb-4 md:px-6 md:pb-6">
+                    <div ref={gridContainerRef} className="rdg-scroll-panel border border-gray-200 rounded-xl bg-white">
+                        <FrozenRowsDataGrid
+                            columns={autoFitColumns}
+                            rows={gridRows}
+                            rowKeyGetter={(row) => row._id || row.assetRequestId}
+                            className="rdg-light mh-development-grid"
+                            style={{ blockSize: '100%' }}
+                            rowHeight={rowHeight}
+                            headerRowHeight={headerRowHeight}
+                            frozenRowCount={frozenRowCount}
+                            defaultColumnOptions={{ resizable: true, minWidth: 120 }}
+                            loading={loading}
+                        />
                     </div>
                 </div>
             </div>
