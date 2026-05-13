@@ -41,7 +41,7 @@ export default function LandingPage() {
   useEffect(() => {
     document.body.style.background = '#F8FAFD';
     document.body.style.overflowX  = 'hidden';
-    document.title = 'MfG Factory — Manufacturing Intelligence Portal';
+    document.title = 'TVS — Manufacturing Intelligence Portal';
 
     fetchPublicStats().then(({ data }) => {
       setPublicStats(data);

@@ -66,7 +66,7 @@ export default function LandingFooter() {
                 fontSize: 16, fontWeight: 800, color: '#0D1B3E',
                 fontFamily: "'Outfit', sans-serif",
               }}>
-                MfG Factory
+                TVS Factory
               </span>
             </div>
             <p style={{
