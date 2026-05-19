@@ -3,7 +3,7 @@
 ================================================================================
 Generated: 2026-05-05
 Project Root: client_tvs_ped/
-Application Name: mfg-factory-portal (QuickTIMS)
+Application Name: TVS Company 
 Description: Multi-module manufacturing management web application for TVS-PED
              covering vendor management, employee management, MH request tracking,
              asset management, dashboard analytics, and project planning.

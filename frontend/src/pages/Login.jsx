@@ -190,7 +190,7 @@ const Login = () => {
                             <Factory size={22} color="#00C9A7" />
                         </div>
                         <div>
-                            <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.16em', textTransform:'uppercase', color:'#00C9A7', lineHeight:1.2 }}>MfG FACTORY</div>
+                            <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.16em', textTransform:'uppercase', color:'#00C9A7', lineHeight:1.2 }}>TVS Company </div>
                             <div style={{ fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:1 }}>Manufacturing Intelligence Portal</div>
                         </div>
                         <div style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:5, padding:'5px 13px', borderRadius:99, background:'rgba(0,201,167,0.1)', border:'1px solid rgba(0,201,167,0.22)', color:'#00C9A7', fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase' }}>
@@ -303,7 +303,7 @@ const Login = () => {
                                 <Factory size={22} color="#253C80" />
                             </div>
                             <div>
-                                <div style={{ fontSize:15, fontWeight:900, letterSpacing:'0.16em', textTransform:'uppercase', color:'#1A2F70', lineHeight:1.2, fontFamily:"'Outfit', sans-serif" }}>MfG FACTORY</div>
+                                <div style={{ fontSize:15, fontWeight:900, letterSpacing:'0.16em', textTransform:'uppercase', color:'#1A2F70', lineHeight:1.2, fontFamily:"'Outfit', sans-serif" }}>TVS Company</div>
                                 <div style={{ fontSize:11.5, color:'#A0ABBF', marginTop:4, fontWeight:500, letterSpacing:'0.02em' }}>Manufacturing Intelligence Portal</div>
                             </div>
                         </motion.div>
