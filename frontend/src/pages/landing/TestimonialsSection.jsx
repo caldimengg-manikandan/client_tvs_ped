@@ -10,7 +10,7 @@ const FEATURED = {
   title: 'Plant Manager — Hosur',
   dept: 'Manufacturing Operations',
   initials: 'RS',
-  color: '#1B3A7A',
+  color: '#B31818',
   metric: '70% faster approvals',
 };
 
@@ -28,7 +28,7 @@ const STACK = [
 ];
 
 const METRICS = [
-  { value: '70%',    label: 'Faster Approvals',   color: '#1B3A7A' },
+  { value: '70%',    label: 'Faster Approvals',   color: '#B31818' },
   { value: '18%',    label: 'Cost Reduction',      color: '#4F46E5' },
   { value: '342+',   label: 'Assets Tracked',      color: '#0D9488' },
   { value: '4',      label: 'Plants Unified',       color: '#7C3AED' },
@@ -113,7 +113,7 @@ export default function TestimonialsSection() {
             initial={{ opacity: 0, y: 10 }} animate={inView ? { opacity: 1, y: 0 } : {}}
             style={{
               display: 'block', marginBottom: 14,
-              fontSize: 11, fontWeight: 800, color: '#1B3A7A',
+              fontSize: 11, fontWeight: 800, color: '#B31818',
               letterSpacing: '0.12em', textTransform: 'uppercase',
             }}
           >

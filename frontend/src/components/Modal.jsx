@@ -19,7 +19,7 @@ const Modal = ({ isOpen, onClose, title, data }) => {
                             data.map((item, index) => (
                                 <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
                                     <span className="text-gray-600 font-medium text-sm">{item.label}</span>
-                                    <span className="font-bold text-tvs-blue">{item.value}</span>
+                                    <span className="font-bold text-tvs-primary">{item.value}</span>
                                 </div>
                             ))
                         ) : (

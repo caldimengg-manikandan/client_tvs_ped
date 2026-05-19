@@ -44,7 +44,7 @@ export default function CTASection() {
           }}
         >
           Start Driving{' '}
-          <span style={{ color: '#1B3A7A' }}>Factory Intelligence</span>{' '}
+          <span style={{ color: '#B31818' }}>Factory Intelligence</span>{' '}
           Today
         </motion.h2>
 
@@ -75,7 +75,7 @@ export default function CTASection() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 10,
               padding: '14px 32px', borderRadius: 10, border: 'none',
-              background: '#1B3A7A',
+              background: '#B31818',
               color: '#fff', fontSize: 15, fontWeight: 700,
               cursor: 'pointer', fontFamily: 'inherit',
               boxShadow: '0 4px 18px rgba(27,58,122,0.25)',

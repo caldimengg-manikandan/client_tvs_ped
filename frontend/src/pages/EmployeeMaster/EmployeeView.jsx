@@ -114,7 +114,7 @@ const EmployeeView = () => {
                     </div>
                     <button
                         onClick={() => navigate(`/employee-master/edit/${employee._id}`)}
-                        className="flex items-center bg-tvs-blue !text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all"
+                        className="flex items-center bg-tvs-primary !text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all"
                     >
                         <Edit size={18} className="mr-2" /> Edit Employee
                     </button>

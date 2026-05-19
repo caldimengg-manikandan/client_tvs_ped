@@ -104,7 +104,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
     const PlainHeaderCell = ({ column }) => (
         <div
             className={`h-full w-full flex items-center px-3 ${column.key !== 'vendorName' && column.key !== 'selection' ? 'justify-center' : ''}`}
-            style={{ backgroundColor: '#253C80' }}
+            style={{ backgroundColor: '#CC1F1F' }}
         >
             <span className={`font-bold text-white text-[11px] leading-tight tracking-wide ${column.key !== 'vendorName' && column.key !== 'selection' ? 'text-center' : ''}`}>
                 {column.name}
@@ -123,7 +123,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                 <div className="flex items-center justify-center h-full">
                     <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue pointer-events-none"
+                        className="w-4 h-4 rounded border-gray-300 text-tvs-primary focus:ring-tvs-primary pointer-events-none"
                         checked={selectedVendor?._id === row._id}
                         readOnly
                     />
@@ -200,7 +200,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                                 {isAdmin && (
                                     <button 
                                         onClick={() => setOverrideLocation(!overrideLocation)}
-                                        className="text-[9px] font-bold text-tvs-blue hover:underline uppercase ml-2"
+                                        className="text-[9px] font-bold text-tvs-primary hover:underline uppercase ml-2"
                                     >
                                         {overrideLocation ? 'Filter by Location' : 'Show All Vendors'}
                                     </button>
@@ -235,7 +235,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                             disabled={!selectedVendor}
                             loading={loading}
                             icon={<CheckCircle size={16} />}
-                            className="bg-tvs-blue hover:bg-tvs-blue/90 font-black rounded-xl h-10 flex items-center gap-2 px-4 sm:px-8 shadow-lg shadow-tvs-blue/20 text-xs"
+                            className="bg-tvs-primary hover:bg-tvs-primary/90 font-black rounded-xl h-10 flex items-center gap-2 px-4 sm:px-8 shadow-lg shadow-tvs-primary/20 text-xs"
                         >
                             Allocate
                         </Button>
@@ -284,7 +284,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                             placeholder="Search by vendor name or code..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-tvs-blue/20 focus:border-tvs-blue bg-white shadow-sm transition-all"
+                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-tvs-primary/20 focus:border-tvs-primary bg-white shadow-sm transition-all"
                         />
                     </div>
                 </div>
@@ -295,7 +295,7 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                         <span className="text-xl font-black text-gray-400">No Vendors Found</span>
                         <p className="text-gray-400 text-sm mt-2 max-w-xs text-center border-t pt-4 border-gray-100">
                             {searchTerm ? `No results for "${searchTerm}"` : `There are no registered vendors for the location: `}
-                            {!searchTerm && <span className="font-black text-tvs-blue">{overrideLocation ? 'Any' : plantLocation}</span>}
+                            {!searchTerm && <span className="font-black text-tvs-primary">{overrideLocation ? 'Any' : plantLocation}</span>}
                         </p>
                     </div>
                 ) : (
@@ -310,14 +310,14 @@ const VendorSelectionPopup = ({ visible, onCancel, trackerId, plantLocation }) =
                             headerRowHeight={44}
                             onCellClick={handleCellClick}
                             rowClass={(row) => {
-                                if (selectedVendor?._id === row._id) return '!bg-blue-50 border-l-4 !border-l-tvs-blue';
+                                if (selectedVendor?._id === row._id) return '!bg-blue-50 border-l-4 !border-l-tvs-primary';
                                 if (suggestedVendorId === row._id) return '!bg-amber-50';
                                 return undefined;
                             }}
                         />
                         {loading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none z-10">
-                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                <div className="w-8 h-8 border-4 border-tvs-primary/20 border-t-tvs-primary rounded-full animate-spin" />
                             </div>
                         )}
                     </div>

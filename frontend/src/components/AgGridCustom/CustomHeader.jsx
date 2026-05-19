@@ -57,7 +57,7 @@ const CustomHeader = (props) => {
             {/* Filter Icon - Always visible as requested "Excel-style checkbox filter icon" usually implies the dropdown arrow/funnel */}
             <div
                 ref={refButton}
-                className={`ml-2 p-1 rounded cursor-pointer transition-colors ${filterActive ? 'text-tvs-blue bg-blue-50' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`}
+                className={`ml-2 p-1 rounded cursor-pointer transition-colors ${filterActive ? 'text-tvs-primary bg-blue-50' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`}
                 onClick={onMenuClicked}
             >
                 {/* Using Lucide Filter icon for a modern look, or we can use ag-icon-filter */}

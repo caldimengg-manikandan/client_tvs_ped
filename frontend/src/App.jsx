@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CreateMHRequestList from './pages/CreateMHRequest/CreateMHRequestList';
@@ -35,7 +36,23 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
+  const antdTheme = {
+    token: {
+      colorPrimary:        '#CC1F1F',
+      colorPrimaryHover:   '#B31818',
+      colorPrimaryActive:  '#991515',
+      colorPrimaryBg:      '#FFF0F0',
+      colorPrimaryBgHover: '#F5D0D0',
+      colorPrimaryBorder:  '#F5D0D0',
+      colorPrimaryText:    '#CC1F1F',
+      colorLink:           '#CC1F1F',
+      colorLinkHover:      '#B31818',
+      borderRadius:        8,
+    },
+  };
+
   return (
+    <ConfigProvider theme={antdTheme}>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
@@ -175,6 +192,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </ConfigProvider>
   );
 }
 

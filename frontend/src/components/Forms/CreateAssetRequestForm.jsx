@@ -219,7 +219,7 @@ const CreateAssetRequestForm = () => {
                             onChange={handleChange}
                             placeholder="Enter Name"
                             disabled
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 bg-gray-50 focus:ring-1 transition-colors outline-none cursor-not-allowed ${errors.userName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 bg-gray-50 focus:ring-1 transition-colors outline-none cursor-not-allowed ${errors.userName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.userName && <span className="text-xs text-red-500">{errors.userName}</span>}
                     </div>
@@ -233,7 +233,7 @@ const CreateAssetRequestForm = () => {
                             onChange={handleChange}
                             placeholder="Enter Department"
                             disabled
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 bg-gray-50 focus:ring-1 transition-colors outline-none cursor-not-allowed ${errors.departmentName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 bg-gray-50 focus:ring-1 transition-colors outline-none cursor-not-allowed ${errors.departmentName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.departmentName && <span className="text-xs text-red-500">{errors.departmentName}</span>}
                     </div>
@@ -246,7 +246,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.location}
                             onChange={handleChange}
                             placeholder="Enter Location"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.location ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.location ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.location && <span className="text-xs text-red-500">{errors.location}</span>}
                     </div>
@@ -258,7 +258,7 @@ const CreateAssetRequestForm = () => {
                             name="requestType"
                             value={formData.requestType}
                             onChange={handleChange}
-                            className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-tvs-blue focus:ring-1 focus:ring-tvs-blue transition-colors outline-none"
+                            className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-tvs-primary focus:ring-1 focus:ring-tvs-primary transition-colors outline-none"
                         >
                             <option value="New">New</option>
                             <option value="Modify">Modify</option>
@@ -271,7 +271,7 @@ const CreateAssetRequestForm = () => {
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
-                            className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-tvs-blue focus:ring-1 focus:ring-tvs-blue transition-colors outline-none"
+                            className="w-full p-3 border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-tvs-primary focus:ring-1 focus:ring-tvs-primary transition-colors outline-none"
                         >
                             <option value="New Project">New Project</option>
                             <option value="Current Product Support">Current Product Support</option>
@@ -286,7 +286,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.handlingPartName}
                             onChange={handleChange}
                             placeholder="e.g. Engine Block"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.handlingPartName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.handlingPartName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.handlingPartName && <span className="text-xs text-red-500">{errors.handlingPartName}</span>}
                     </div>
@@ -299,7 +299,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.assetNeededLocation}
                             onChange={handleChange}
                             placeholder="e.g. Assembly Line 2"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.assetNeededLocation ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none ${errors.assetNeededLocation ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.assetNeededLocation && <span className="text-xs text-red-500">{errors.assetNeededLocation}</span>}
                     </div>
@@ -312,7 +312,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.assetName}
                             onChange={handleChange}
                             placeholder="e.g. Laser Cutter 3000"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-primary focus:ring-tvs-primary transition-colors outline-none`}
                         />
                     </div>
 
@@ -324,7 +324,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.poPrice}
                             onChange={handleChange}
                             placeholder="e.g. 50000"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-primary focus:ring-tvs-primary transition-colors outline-none`}
                         />
                     </div>
 
@@ -336,7 +336,7 @@ const CreateAssetRequestForm = () => {
                             value={formData.assetLocation}
                             onChange={handleChange}
                             placeholder="e.g. Shop Floor Zone A"
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-blue focus:ring-tvs-blue transition-colors outline-none`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 border-gray-200 focus:ring-1 focus:border-tvs-primary focus:ring-tvs-primary transition-colors outline-none`}
                         />
                     </div>
 
@@ -351,7 +351,7 @@ const CreateAssetRequestForm = () => {
                             onChange={handleChange}
                             maxLength={500}
                             placeholder="Describe the need for this asset..."
-                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none min-h-[100px] resize-y ${errors.problemStatement ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-blue focus:ring-tvs-blue'}`}
+                            className={`w-full p-3 border rounded-lg text-sm text-gray-700 focus:ring-1 transition-colors outline-none min-h-[100px] resize-y ${errors.problemStatement ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-tvs-primary focus:ring-tvs-primary'}`}
                         />
                         {errors.problemStatement && <span className="text-xs text-red-500">{errors.problemStatement}</span>}
                     </div>
@@ -377,7 +377,7 @@ const CreateAssetRequestForm = () => {
                                 }}
                                 fileList={formData.file ? [formData.file] : []}
                                 showUploadList={false} // Hide default list to custom render
-                                className="w-full bg-gray-50 hover:border-tvs-blue transition-colors rounded-lg overflow-hidden" // Add rounded and overflow to match
+                                className="w-full bg-gray-50 hover:border-tvs-primary transition-colors rounded-lg overflow-hidden" // Add rounded and overflow to match
                                 style={{ borderRadius: '0.5rem' }}
                             >
                                 <div className="p-8 flex flex-col items-center justify-center text-center relative group">
@@ -405,11 +405,11 @@ const CreateAssetRequestForm = () => {
                                             </div>
                                             <p className="text-base font-medium text-gray-700">{formData.file.name}</p>
                                             <p className="text-sm text-gray-500 mt-1">{(formData.file.size / 1024).toFixed(1)} KB</p>
-                                            <p className="text-xs text-tvs-blue mt-2 hover:underline">Click to change file</p>
+                                            <p className="text-xs text-tvs-primary mt-2 hover:underline">Click to change file</p>
                                         </>
                                     ) : formData.drawingFile ? (
                                         <>
-                                            <div className="mb-4 p-3 bg-blue-50 rounded-full text-tvs-blue">
+                                            <div className="mb-4 p-3 bg-blue-50 rounded-full text-tvs-primary">
                                                 <FileText size={32} />
                                             </div>
                                             <p className="text-base font-medium text-gray-700">
@@ -421,18 +421,18 @@ const CreateAssetRequestForm = () => {
                                                     href={`${serverUrl}/${formData.drawingFile}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-xs text-tvs-blue hover:underline"
+                                                    className="text-xs text-tvs-primary hover:underline"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     View current file
                                                 </a>
                                                 <span className="text-xs text-gray-300">|</span>
-                                                <p className="text-xs text-tvs-blue hover:underline">Click to change file</p>
+                                                <p className="text-xs text-tvs-primary hover:underline">Click to change file</p>
                                             </div>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="mb-4 p-3 bg-blue-50 rounded-full text-tvs-blue">
+                                            <div className="mb-4 p-3 bg-blue-50 rounded-full text-tvs-primary">
                                                 <UploadCloud size={32} />
                                             </div>
                                             <p className="text-base font-medium text-gray-700">Click or drag file to this area to upload</p>
@@ -455,7 +455,7 @@ const CreateAssetRequestForm = () => {
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2.5 bg-tvs-blue !text-white border border-transparent rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all"
+                        className="px-6 py-2.5 bg-tvs-primary !text-white border border-transparent rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all"
                     >
                         {isEditMode ? 'Update Request' : 'Submit Request'}
                     </button>

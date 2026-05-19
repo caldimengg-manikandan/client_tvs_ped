@@ -511,7 +511,7 @@ const EmployeeMaster = () => {
             width: 220,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <a href={`mailto:${row.mailId}`} className="text-tvs-blue hover:underline font-medium">
+                <a href={`mailto:${row.mailId}`} className="text-tvs-primary hover:underline font-medium">
                     {row.mailId}
                 </a>
             )
@@ -691,14 +691,14 @@ const EmployeeMaster = () => {
                                 style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '7px',
                                     padding: '8px 16px', borderRadius: '10px',
-                                    background: 'linear-gradient(135deg, #253C80, #3b5bbf)',
-                                    boxShadow: '0 2px 8px rgba(37,60,128,0.35)',
+                                    background: 'linear-gradient(135deg, #CC1F1F, #E8413E)',
+                                    boxShadow: '0 2px 8px rgba(204,31,31,0.35)',
                                     color: '#fff', fontSize: '12px', fontWeight: 700,
                                     border: 'none', cursor: 'pointer', transition: 'all 0.12s',
                                     letterSpacing: '0.01em',
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(37,60,128,0.5)'}
-                                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(37,60,128,0.35)'}
+                                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 14px rgba(204,31,31,0.5)'}
+                                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(204,31,31,0.35)'}
                             >
                                 <Plus size={14} /> Add Employee
                             </button>
@@ -767,7 +767,7 @@ const EmployeeMaster = () => {
                     {/* Count row */}
                     <div className="flex items-center gap-2 text-[12px]">
                         <span className="text-gray-400 font-medium">Showing</span>
-                        <span className="px-2 py-0.5 rounded-lg font-black text-[#253C80] bg-[#253C80]/10 tabular-nums">
+                        <span className="px-2 py-0.5 rounded-lg font-black text-[#CC1F1F] bg-[#CC1F1F]/10 tabular-nums">
                             {filteredEmployees?.length || 0}
                         </span>
                         <span className="text-gray-400 font-medium">of</span>
@@ -874,7 +874,7 @@ const EmployeeMaster = () => {
             <Modal
                 title={
                     <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                        <User size={20} className="text-tvs-blue" />
+                        <User size={20} className="text-tvs-primary" />
                         <span className="text-xl font-bold text-tvs-dark-gray">Employee Details</span>
                     </div>
                 }
@@ -948,7 +948,7 @@ const EmployeeMaster = () => {
                             </h3>
                             <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between border border-gray-100">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-tvs-blue">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-tvs-primary">
                                         <Shield size={20} />
                                     </div>
                                     <div>
@@ -957,7 +957,7 @@ const EmployeeMaster = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-2xl font-bold text-tvs-blue">
+                                    <span className="text-2xl font-bold text-tvs-primary">
                                         {countPermissionCount(viewingEmployee.permissions)}
                                     </span>
                                     <span className="text-sm font-medium text-gray-400 ml-1">/ 8 granted</span>

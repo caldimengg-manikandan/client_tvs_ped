@@ -82,6 +82,7 @@ const createEmployee = asyncHandler(async (req, res) => {
         departmentName,
         plantLocation,
         accessLevel,
+        role,
         mailId,
         status,
         permissions,
@@ -104,12 +105,17 @@ const createEmployee = asyncHandler(async (req, res) => {
         throw new Error('Employee ID or Email already exists');
     }
 
+    // Determine the role for the Employee record
+    const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
+    const employeeRole = (role && validRoles.includes(role)) ? role : 'Employee';
+
     const employee = await Employee.create({
         employeeId,
         employeeName,
         departmentName,
         plantLocation,
         accessLevel,
+        role: employeeRole,
         mailId,
         status,
         permissions,
@@ -124,12 +130,18 @@ const createEmployee = asyncHandler(async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(passwordPlain, salt);
 
+        // Determine user role: explicit role field takes precedence, then accessLevel mapping
+        let userRole = employeeRole;
+        if (!validRoles.includes(userRole)) {
+            userRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee';
+        }
+
         const userPayload = {
             userId: `USR${Date.now()}`,
             employeeId: employee._id,
             email: mailId,
             passwordHash: hashed,
-            role: accessLevel === 'Admin' || accessLevel === 'Super Admin' ? 'Admin' : 'Employee',
+            role: userRole,
             permissions: permissions || {},
             status: 'Active'
         };
@@ -203,20 +215,36 @@ const updateEmployee = asyncHandler(async (req, res) => {
 
     // Update or create associated User record if permissions, mailId or password provided
     try {
-        const { permissions, mailId, password, accessLevel } = req.body;
+        const { permissions, mailId, password, accessLevel, role: updatedRole } = req.body;
         let user = await User.findOne({ employeeId: employee._id });
+
+        // Resolve the new user role
+        const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
+        let resolvedUserRole = null;
+        if (updatedRole && validRoles.includes(updatedRole)) {
+            resolvedUserRole = updatedRole;
+        } else if (accessLevel) {
+            resolvedUserRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee';
+        }
 
         if (user) {
             const update = {};
             if (permissions) update.permissions = permissions;
             if (mailId) update.email = mailId;
-            if (accessLevel) update.role = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee';
+            if (resolvedUserRole) update.role = resolvedUserRole;
             if (password && !/^\*+$/.test(password)) {
                 const salt = await bcrypt.genSalt(10);
                 update.passwordHash = await bcrypt.hash(password, salt);
             }
             if (Object.keys(update).length > 0) {
-                await User.findByIdAndUpdate(user._id, update);
+                if (update.role) {
+                    // Use .save() to trigger pre-save hook for permissions
+                    const userDoc = await User.findById(user._id);
+                    Object.assign(userDoc, update);
+                    await userDoc.save();
+                } else {
+                    await User.findByIdAndUpdate(user._id, update);
+                }
             }
         } else if (mailId) {
             // create user if not exists but email provided
@@ -228,7 +256,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
                 employeeId: employee._id,
                 email: mailId,
                 passwordHash: hashed,
-                role: (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee',
+                role: resolvedUserRole || 'Employee',
                 permissions: permissions || {},
                 status: 'Active'
             });
@@ -514,6 +542,33 @@ const checkEmployeeId = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get all PED Engineers
+// @route   GET /api/employees/ped-engineers
+// @access  Private
+const getPedEngineers = asyncHandler(async (req, res) => {
+    const engineers = await Employee.find({ role: 'PED Engineer', status: 'Active' })
+        .select('employeeId employeeName mailId departmentName plantLocation role')
+        .sort({ employeeName: 1 });
+
+    res.json({ success: true, count: engineers.length, data: engineers });
+});
+
+// @desc    Get all Approvers
+// @route   GET /api/employees/approvers
+// @access  Private
+const getApprovers = asyncHandler(async (req, res) => {
+    const filter = { role: 'Approver', status: 'Active' };
+    if (req.query.department) {
+        filter.departmentName = req.query.department;
+    }
+
+    const approvers = await Employee.find(filter)
+        .select('employeeId employeeName mailId departmentName plantLocation role')
+        .sort({ employeeName: 1 });
+
+    res.json({ success: true, count: approvers.length, data: approvers });
+});
+
 module.exports = {
     getAllEmployees,
     getEmployee,
@@ -527,5 +582,7 @@ module.exports = {
     getEmployeesByAccessLevel,
     searchEmployees,
     getNextEmployeeId,
-    checkEmployeeId
+    checkEmployeeId,
+    getPedEngineers,
+    getApprovers
 };

@@ -46,7 +46,7 @@ const VendorView = () => {
     if (loading) {
         return (
             <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-blue mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-primary mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading vendor details...</p>
             </div>
         );
@@ -58,7 +58,7 @@ const VendorView = () => {
                 <p className="text-gray-600">Vendor not found</p>
                 <button
                     onClick={() => navigate('/vendor-master')}
-                    className="mt-4 text-tvs-blue hover:underline"
+                    className="mt-4 text-tvs-primary hover:underline"
                 >
                     Back to Vendor List
                 </button>
@@ -98,7 +98,7 @@ const VendorView = () => {
                 </div>
                 <button
                     onClick={() => navigate(`/vendor-master/edit/${vendor._id}`)}
-                    className="flex items-center bg-tvs-blue text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer"
+                    className="flex items-center bg-tvs-primary text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer"
                 >
                     <Edit size={18} style={{ marginRight: '0.5rem' }} /> Edit Vendor
                 </button>
@@ -139,7 +139,7 @@ const VendorView = () => {
                         <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
                             <h3 className="font-semibold text-gray-900 mb-3">Vendor Code</h3>
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-tvs-blue mb-2 font-mono">{vendor.vendorCode}</div>
+                                <div className="text-3xl font-bold text-tvs-primary mb-2 font-mono">{vendor.vendorCode}</div>
                                 <p className="text-sm text-gray-600">Use this code for purchase orders and transactions</p>
                             </div>
                         </div>
@@ -165,7 +165,7 @@ const VendorView = () => {
                                 </button>
                                 <button
                                     onClick={() => navigate(`/vendor-master/edit/${vendor._id}`)}
-                                    className="w-full flex items-center justify-center px-4 py-3 border border-tvs-border text-tvs-blue rounded-lg hover:bg-blue-50 transition-colors"
+                                    className="w-full flex items-center justify-center px-4 py-3 border border-tvs-border text-tvs-primary rounded-lg hover:bg-blue-50 transition-colors"
                                 >
                                     <Edit size={18} className="mr-2" /> Edit Vendor Details
                                 </button>

@@ -155,7 +155,7 @@ const VendorForm = ({ mode = 'add' }) => {
     if (loading && mode === 'edit' && !currentItem) {
         return (
             <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-blue mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-primary mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading vendor data...</p>
             </div>
         );
@@ -180,7 +180,7 @@ const VendorForm = ({ mode = 'add' }) => {
                     <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex items-center bg-tvs-blue !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                        className="flex items-center bg-tvs-primary !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                     >
                         <Save size={18} style={{ marginRight: '0.5rem' }} />
                         {loading ? 'Saving...' : 'Update Vendor'}
@@ -397,7 +397,7 @@ const VendorForm = ({ mode = 'add' }) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex items-center bg-tvs-blue !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                            className="flex items-center bg-tvs-primary !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                         >
                             <Save size={18} style={{ marginRight: '0.5rem' }} />
                             {loading ? 'Saving...' : 'Save Vendor'}

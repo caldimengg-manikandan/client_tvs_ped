@@ -22,7 +22,7 @@ const DEFAULT_MILESTONES = [
 const PlainHeaderCell = ({ column }) => (
     <div
         className="h-full w-full flex items-center px-4"
-        style={{ backgroundColor: '#253C80' }}
+        style={{ backgroundColor: '#CC1F1F' }}
     >
         <span className="font-bold text-white text-[11px] leading-tight tracking-[0.08em] uppercase whitespace-normal">
             {column.name}
@@ -164,10 +164,10 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                         <DatePicker 
                             bordered={false} 
                             popupClassName="premium-datepicker-popup"
-                            className="w-full text-[12px] font-bold text-tvs-blue hover:scale-[1.02] transform transition-all duration-200" 
+                            className="w-full text-[12px] font-bold text-tvs-primary hover:scale-[1.02] transform transition-all duration-200" 
                             format="DD-MMM-YYYY" 
                             placeholder="Select Date"
-                            suffixIcon={<Calendar size={14} className="text-tvs-blue/40" />}
+                            suffixIcon={<Calendar size={14} className="text-tvs-primary/40" />}
                         />
                     </Form.Item>
                 </div>
@@ -311,7 +311,7 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                 .mh-development-grid {
                     --rdg-border-color: #f1f5f9;
                     --rdg-row-hover-background-color: #f8fafc;
-                    --rdg-header-background-color: #253C80;
+                    --rdg-header-background-color: #CC1F1F;
                     border: none;
                 }
                 .mh-development-grid .rdg-header-row .rdg-cell {

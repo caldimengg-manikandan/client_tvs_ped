@@ -21,7 +21,7 @@ const pageTransition = {
 const Layout = () => {
     const location = useLocation();
     const mainRef  = useRef(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [windowWidth,   setWindowWidth]   = useState(window.innerWidth);
 
     /* Resize handler */
@@ -48,7 +48,7 @@ const Layout = () => {
         setIsSidebarOpen(state);
     };
 
-    const sidebarW   = isSidebarOpen ? 272 : 72;
+    const sidebarW   = isSidebarOpen ? 220 : 64;
     const isFullPage = ['/', '/mh-development-tracker', '/project-plan-model'].includes(location.pathname);
 
     return (
@@ -85,7 +85,7 @@ const Layout = () => {
                     style={{
                         bottom: '-6%', left: '-4%',
                         width: '30%', height: '30%',
-                        background: 'rgba(37,60,128,0.05)',
+                        background: 'rgba(204,31,31,0.05)',
                         borderRadius: '50%',
                         filter: 'blur(80px)',
                     }}

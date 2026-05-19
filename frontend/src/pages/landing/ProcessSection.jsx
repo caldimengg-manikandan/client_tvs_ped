@@ -12,7 +12,7 @@ const STEPS = [
     icon: FileText,
     title: 'Asset Registration',
     desc: 'Assign a unique auto-generated Asset ID (AID) and link directly to Vendor Master profiles.',
-    color: '#1B3A7A',
+    color: '#B31818',
     lineColor: '#EF4444',
   },
   {
@@ -20,15 +20,15 @@ const STEPS = [
     icon: MapPin,
     title: 'Location Allocation',
     desc: 'Automatically fetch associated Plant Locations and assign assets to verified user branches.',
-    color: '#1B3A7A',
-    lineColor: '#1B3A7A',
+    color: '#B31818',
+    lineColor: '#B31818',
   },
   {
     num: '03',
     icon: FolderOpen,
     title: 'Document Vault',
     desc: 'Securely upload sign-off validation and mechanical drawings directly into the cloud bucket.',
-    color: '#1B3A7A',
+    color: '#B31818',
     lineColor: '#EF4444',
   },
   {
@@ -36,8 +36,8 @@ const STEPS = [
     icon: Search,
     title: 'Tracking & Audit',
     desc: 'Monitor asset health through real-time grids, full search, pagination, and multi-field filters.',
-    color: '#1B3A7A',
-    lineColor: '#1B3A7A',
+    color: '#B31818',
+    lineColor: '#B31818',
   },
 ];
 
@@ -72,7 +72,7 @@ const StepCard = ({ step, index, total }) => {
         marginBottom: 20, position: 'relative', zIndex: 1,
         boxShadow: '0 2px 12px rgba(13,27,62,0.06)',
       }}>
-        <Icon size={22} color="#1B3A7A" />
+        <Icon size={22} color="#B31818" />
       </div>
 
       {/* Step label */}

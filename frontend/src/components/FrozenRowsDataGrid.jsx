@@ -16,12 +16,12 @@ const GRID_THEME_CSS = `
 
     /* ── 1. Grid root ─────────────────────────────────── */
     .rdg {
-        --rdg-header-background-color    : #253C80;
+        --rdg-header-background-color    : #CC1F1F;
         --rdg-row-hover-background-color : #EEF3FF;
         --rdg-background-color           : #ffffff;
         --rdg-border-color               : #E8EDF8;
-        --rdg-hdr-from : #2d4a9a;
-        --rdg-hdr-to   : #1e3070;
+        --rdg-hdr-from : #CC1F1F;
+        --rdg-hdr-to   : #B31818;
         border-radius : 0 !important;
         border        : none !important;
         font-family   : 'Inter', 'DM Sans', system-ui, sans-serif;
@@ -32,7 +32,7 @@ const GRID_THEME_CSS = `
 
         /* Firefox scrollbar */
         scrollbar-width : thin;
-        scrollbar-color : rgba(37,60,128,0.55) #dde5f7;
+        scrollbar-color : rgba(204,31,31,0.55) #dde5f7;
     }
 
     /* ── 2. Webkit scrollbars (Chrome · Edge · Safari) ── */
@@ -48,12 +48,12 @@ const GRID_THEME_CSS = `
         border-radius : 10px;
     }
     .rdg::-webkit-scrollbar-thumb {
-        background    : rgba(37,60,128,0.60);
+        background    : rgba(204,31,31,0.60);
         border-radius : 10px;
         border        : 2px solid #dde5f7;
     }
     .rdg::-webkit-scrollbar-thumb:hover {
-        background : rgba(37,60,128,0.88);
+        background : rgba(204,31,31,0.88);
     }
     .rdg::-webkit-scrollbar-corner { background : #dde5f7; }
 
@@ -242,7 +242,7 @@ const FrozenRowsDataGrid = ({
                         zIndex: 20,
                         pointerEvents: 'none',
                     }}>
-                        <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-tvs-primary/20 border-t-tvs-primary rounded-full animate-spin" />
                     </div>
                 )}
             </div>

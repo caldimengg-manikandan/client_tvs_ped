@@ -12,9 +12,9 @@ const ProtectedRoute = ({ children, permission }) => {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-tvs-light">
                 <div className="relative">
-                    <div className="w-20 h-20 border-4 border-tvs-blue/10 border-t-tvs-blue rounded-full animate-spin"></div>
+                    <div className="w-20 h-20 border-4 border-tvs-primary/10 border-t-tvs-primary rounded-full animate-spin"></div>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <Fingerprint className="text-tvs-blue/40" size={32} />
+                        <Fingerprint className="text-tvs-primary/40" size={32} />
                     </div>
                 </div>
                 <p className="mt-8 text-sm font-bold text-gray-400 uppercase tracking-[4px] animate-pulse">Authenticating...</p>

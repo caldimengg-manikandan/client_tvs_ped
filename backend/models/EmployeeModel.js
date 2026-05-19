@@ -34,6 +34,12 @@ const employeeSchema = mongoose.Schema({
         enum: ['Employee', 'Viewer', 'Manager', 'Admin', 'Super Admin'],
         default: 'Employee'
     },
+    // Role field aligned with the 3-tier access system (Admin managed separately)
+    role: {
+        type: String,
+        enum: ['Admin', 'Employee', 'Approver', 'PED Engineer'],
+        default: 'Employee'
+    },
     permissions: {
         type: Object,
         default: {}

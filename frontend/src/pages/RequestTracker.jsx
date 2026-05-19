@@ -314,7 +314,7 @@ const RequestTracker = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -332,7 +332,7 @@ const RequestTracker = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -451,7 +451,7 @@ const RequestTracker = () => {
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
                 const statusColors = {
-                    'Active': 'bg-blue-50 text-tvs-blue border-blue-200',
+                    'Active': 'bg-blue-50 text-tvs-primary border-blue-200',
                     'Accepted': 'bg-green-50 text-green-700 border-green-200',
                     'Rejected': 'bg-red-50 text-red-700 border-red-200'
                 };
@@ -532,7 +532,7 @@ const RequestTracker = () => {
                         disabled={row.status === 'Active'}
                         className={`inline-flex items-center gap-2 px-3 py-1.5 border rounded-xl transition-all text-[10px] font-black uppercase tracking-widest
                             ${row.status === 'Rejected'
-                                ? 'bg-tvs-blue/10 text-tvs-blue border-tvs-blue/20 hover:bg-tvs-blue hover:text-white'
+                                ? 'bg-tvs-primary/10 text-tvs-primary border-tvs-primary/20 hover:bg-tvs-primary hover:text-white'
                                 : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed opacity-50'
                             }`}
                     >
@@ -667,12 +667,12 @@ const RequestTracker = () => {
 
                             <div className="p-6">
                                 <p className="text-sm text-gray-600 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                    Select employees to notify about Request <strong className="text-tvs-blue">{selectedRequest?.mhRequestId}</strong>
+                                    Select employees to notify about Request <strong className="text-tvs-primary">{selectedRequest?.mhRequestId}</strong>
                                 </p>
 
                                 <div className="max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg shadow-inner bg-gray-50/30">
                                     <table className="w-full text-sm text-left">
-                                        <thead className="bg-tvs-blue text-white font-semibold border-b border-tvs-blue">
+                                        <thead className="bg-tvs-primary text-white font-semibold border-b border-tvs-primary">
                                             <tr>
                                                 <th className="px-4 py-3 w-16 text-center border-r border-gray-200">S.No</th>
                                                 <th className="px-4 py-3 border-r border-gray-200">Email</th>
@@ -716,8 +716,8 @@ const RequestTracker = () => {
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
                                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${isSelected
-                                                                    ? 'bg-tvs-blue border-tvs-blue text-white'
-                                                                    : 'bg-white border-gray-300 text-transparent hover:border-tvs-blue'
+                                                                    ? 'bg-tvs-primary border-tvs-primary text-white'
+                                                                    : 'bg-white border-gray-300 text-transparent hover:border-tvs-primary'
                                                                     }`}>
                                                                     <Check size={14} strokeWidth={3} />
                                                                 </div>
@@ -739,7 +739,7 @@ const RequestTracker = () => {
                                     </button>
                                     <button
                                         onClick={handleConfirmAssign}
-                                        className="px-4 py-2 text-sm font-medium !text-white bg-tvs-blue rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        className="px-4 py-2 text-sm font-medium !text-white bg-tvs-primary rounded-lg hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                         disabled={selectedMembers.length === 0}
                                     >
                                         Send Email{selectedMembers.length !== 1 ? 's' : ''}
@@ -775,7 +775,7 @@ const RequestTracker = () => {
                     border-bottom: 2px solid #e2e8f0;
                     position: relative;
                     font-size: 12px;
-                    background-color: #253C80;
+                    background-color: #CC1F1F;
                     color: #ffffff;
                 }
             `}</style>

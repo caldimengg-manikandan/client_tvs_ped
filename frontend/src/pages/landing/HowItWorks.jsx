@@ -9,7 +9,7 @@ const STEPS = [
   {
     num: '01',
     icon: PlusSquare,
-    color: '#1B3A7A',
+    color: '#B31818',
     bg: '#EEF2FF',
     title: 'Add & Organise Assets',
     desc: 'Register physical assets with a unique auto-generated ID. Attach vendor details, department info, and plant location in one guided form. Documents are securely vaulted at creation.',

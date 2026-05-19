@@ -129,7 +129,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="p-2 rounded-xl transition-colors lg:hidden"
-                        style={{ color: '#253C80' }}
+                        style={{ color: '#CC1F1F' }}
                     >
                         <Menu size={20} />
                     </button>
@@ -211,8 +211,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                             <div
                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xs flex-shrink-0"
                                 style={{
-                                    background: 'linear-gradient(140deg, #253C80, #1C3A6E)',
-                                    boxShadow: '0 4px 12px rgba(37,60,128,0.30)',
+                                    background: 'linear-gradient(140deg, #CC1F1F, #B31818)',
+                                    boxShadow: '0 4px 12px rgba(204,31,31,0.30)',
                                 }}
                             >
                                 {displayInitials}
@@ -252,8 +252,8 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         <div
                                             className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg mb-3"
                                             style={{
-                                                background: 'linear-gradient(140deg, #253C80, #1C3A6E)',
-                                                boxShadow: '0 6px 20px rgba(37,60,128,0.28)',
+                                                background: 'linear-gradient(140deg, #CC1F1F, #B31818)',
+                                                boxShadow: '0 6px 20px rgba(204,31,31,0.28)',
                                             }}
                                         >
                                             {displayInitials}
@@ -264,7 +264,7 @@ const Header = ({ isSidebarOpen, setIsSidebarOpen }) => {
                                         <p className="text-xs text-gray-400 mt-0.5">{displayEmail}</p>
 
                                         <div className="flex gap-2 mt-3">
-                                            <span className="badge" style={{ background: 'rgba(37,60,128,0.09)', color: '#253C80' }}>
+                                            <span className="badge" style={{ background: 'rgba(204,31,31,0.08)', color: '#CC1F1F' }}>
                                                 {user?.role || 'User'}
                                             </span>
                                             <span className="badge" style={{ background: 'rgba(16,185,129,0.10)', color: '#059669' }}>

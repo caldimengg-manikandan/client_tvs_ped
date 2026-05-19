@@ -312,7 +312,7 @@ const VendorMaster = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -330,7 +330,7 @@ const VendorMaster = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -418,7 +418,7 @@ const VendorMaster = () => {
             renderCell: ({ row }) => (
                 <a
                     href={`mailto:${row.vendorMailId}`}
-                    className="text-tvs-blue hover:underline font-medium"
+                    className="text-tvs-primary hover:underline font-medium"
                 >
                     {row.vendorMailId}
                 </a>
@@ -445,7 +445,7 @@ const VendorMaster = () => {
                 <div className="flex items-center justify-center gap-2">
                     <button
                         onClick={() => handleView(row)}
-                        className="p-2 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 rounded-lg transition-all"
+                        className="p-2 text-gray-400 hover:text-tvs-primary hover:bg-blue-50 rounded-lg transition-all"
                         title="View Details"
                     >
                         <Eye size={16} />
@@ -536,12 +536,12 @@ const VendorMaster = () => {
                         <div className="flex flex-wrap items-center gap-2 justify-end">
                             <button onClick={handleDownloadTemplate}
                                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-95 hover:scale-[1.02]"
-                                style={{ background: 'linear-gradient(135deg, #253C80, #1a3c6e)', boxShadow: '0 2px 10px rgba(37,60,128,0.25)' }}>
+                                style={{ background: 'linear-gradient(135deg, #CC1F1F, #B31818)', boxShadow: '0 2px 10px rgba(204,31,31,0.25)' }}>
                                 <Download size={14} /> Template
                             </button>
                             <button onClick={handleAddVendor}
                                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all active:scale-95 hover:scale-[1.02]"
-                                style={{ background: 'linear-gradient(135deg, #253C80, #3b5bbf)', boxShadow: '0 2px 10px rgba(37,60,128,0.3)' }}>
+                                style={{ background: 'linear-gradient(135deg, #CC1F1F, #E8413E)', boxShadow: '0 2px 10px rgba(204,31,31,0.3)' }}>
                                 <Plus size={14} /> Add Vendor
                             </button>
                             <button onClick={handleImportClick}
@@ -594,7 +594,7 @@ const VendorMaster = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-[12px]">
                             <span className="text-gray-400 font-medium">Showing</span>
-                            <span className="px-2 py-0.5 rounded-lg font-black text-[#253C80] bg-[#253C80]/10 tabular-nums">{filteredVendors?.length || 0}</span>
+                            <span className="px-2 py-0.5 rounded-lg font-black text-[#CC1F1F] bg-[#CC1F1F]/10 tabular-nums">{filteredVendors?.length || 0}</span>
                             <span className="text-gray-400 font-medium">of</span>
                             <span className="px-2 py-0.5 rounded-lg font-black text-gray-700 bg-gray-100 tabular-nums">{vendors?.length || 0}</span>
                             <span className="text-gray-400 font-medium">vendors</span>
@@ -674,7 +674,7 @@ const VendorMaster = () => {
             <Modal
                 title={
                     <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                        <Building size={20} className="text-tvs-blue" />
+                        <Building size={20} className="text-tvs-primary" />
                         <span className="text-xl font-bold text-tvs-dark-gray">Vendor Details</span>
                     </div>
                 }

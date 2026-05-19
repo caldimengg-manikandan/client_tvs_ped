@@ -30,6 +30,9 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
+// PUBLIC: approver clicks "Assign" link from email (no auth required)
+router.get('/:id/assign-link/:engineerId', mhRequestController.assignEngineerFromLink);
+
 // Apply protection to all routes
 router.use(protect);
 
@@ -47,6 +50,16 @@ router.get('/', mhRequestController.getAllMHRequests);
 // @desc    Generate Asset ID for an accepted MH request if missing
 // @access  Private
 router.post('/:id/generate-asset', mhRequestController.generateAssetForRequest);
+
+// @route   PATCH /api/asset-request/:id/assign-engineer
+// @desc    Assign PED Engineer to MH request
+// @access  Private
+router.patch('/:id/assign-engineer', mhRequestController.assignEngineer);
+
+// @route   POST /api/asset-request/:id/email-log
+// @desc    Append email log entry to MH request
+// @access  Private
+router.post('/:id/email-log', mhRequestController.addEmailLog);
 
 // @route   GET /api/asset-request/:id
 // @desc    Get single MH request by ID

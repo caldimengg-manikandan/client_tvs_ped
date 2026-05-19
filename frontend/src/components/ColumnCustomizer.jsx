@@ -5,7 +5,7 @@ import { SlidersHorizontal, Check, Palette, Layout, Columns3, RotateCcw } from '
    HEADER GRADIENT PRESETS (16 options)
 ───────────────────────────────────────────── */
 const HEADER_PALETTES = [
-    { id: 'navy',      label: 'TVS Navy',   from: '#2d4a9a', to: '#1e3070', dot: '#253C80' },
+    { id: 'navy',      label: 'TVS Navy',   from: '#CC1F1F', to: '#B31818', dot: '#CC1F1F' },
     { id: 'midnight',  label: 'Midnight',   from: '#1e293b', to: '#0f172a', dot: '#1e293b' },
     { id: 'emerald',   label: 'Emerald',    from: '#065f46', to: '#064e3b', dot: '#059669' },
     { id: 'crimson',   label: 'Crimson',    from: '#991b1b', to: '#7f1d1d', dot: '#dc2626' },

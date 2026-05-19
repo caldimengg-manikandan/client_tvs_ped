@@ -2,23 +2,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 /* ============================================================
-   MfG FACTORY PORTAL — PREMIUM DESIGN SYSTEM v3.0
-   Palette: Deep Navy | Teal Accent | Amber Gold | Pearl White
+   TVS-PED PORTAL — PREMIUM DESIGN SYSTEM v4.0
+   Palette: TVS Brand Red | Teal Accent | Amber Gold | Pearl White
    ============================================================ */
 
 @theme {
-  /* Core Brand */
+  /* ── TVS Brand Primary Red ─────────────────────────────── */
+  --color-tvs-primary:       #CC1F1F;
+  --color-tvs-primary-hover: #B31818;
+  --color-tvs-primary-light: #E8413E;
+  --color-tvs-primary-pale:  #FFF0F0;
+  --color-tvs-primary-tint:  #F5D0D0;
+  --color-tvs-primary-text:  #991515;
+
+  /* Core Brand (kept for backward compat) */
   --color-tvs-red: #FA1102;
 
   /* NEW Primary Palette */
   --color-navy-950: #060D1F;
-  --color-navy-900: #0B1730;
-  --color-navy-800: #0F2040;
-  --color-navy-700: #152C55;
-  --color-navy-600: #1C3A6E;
-  --color-navy-500: #253C80;
-  /* TVS Blue kept as alias */
-  --color-tvs-blue: #253C80;
+  --color-navy-900: #7A0F0F;
+  --color-navy-800: #991515;
+  --color-navy-700: #991515;
+  --color-navy-600: #B31818;
+  --color-navy-500: #CC1F1F;
+  /* TVS Blue — kept as data-colour alias */
+  --color-tvs-blue: #CC1F1F;
 
   /* Teal Accent */
   --color-teal-500: #00C9A7;
@@ -67,6 +75,33 @@
   --font-dm: "DM Sans", sans-serif;
 }
 
+/* ── TVS Brand Red — component-level CSS custom properties ── */
+:root {
+  /* Sidebar */
+  --tvs-sidebar-bg:           #CC1F1F;
+  --tvs-sidebar-active:       rgba(255,255,255,0.15);
+  --tvs-sidebar-text:         rgba(255,255,255,0.85);
+  --tvs-sidebar-text-active:  #ffffff;
+  --tvs-sidebar-icon:         rgba(255,255,255,0.65);
+  --tvs-sidebar-icon-active:  #ffffff;
+  --tvs-sidebar-border:       rgba(255,255,255,0.12);
+  --tvs-sidebar-sub:          rgba(255,255,255,0.55);
+
+  /* Login panel */
+  --tvs-login-panel-bg:            #CC1F1F;
+  --tvs-login-panel-text:          #ffffff;
+  --tvs-login-panel-subtext:       rgba(255,255,255,0.65);
+  --tvs-login-panel-accent:        #FFCECE;
+  --tvs-login-panel-chip-bg:       rgba(0,0,0,0.15);
+  --tvs-login-panel-chip-border:   rgba(255,255,255,0.15);
+  --tvs-login-panel-line:          rgba(255,255,255,0.12);
+
+  /* Interactive */
+  --tvs-focus-ring:  rgba(204,31,31,0.25);
+  --tvs-link:        #CC1F1F;
+  --tvs-link-hover:  #B31818;
+}
+
 /* ====================== RESET & BASE ====================== */
 
 *,
@@ -94,7 +129,7 @@ body,
     /* Subtle grain texture via svg noise */
     background-image:
       radial-gradient(ellipse at 20% 0%, rgba(0, 201, 167, 0.06) 0px, transparent 55%),
-      radial-gradient(ellipse at 80% 100%, rgba(37, 60, 128, 0.07) 0px, transparent 55%);
+      radial-gradient(ellipse at 80% 100%, rgba(204, 31, 31, 0.07) 0px, transparent 55%);
   }
 
   h1,
@@ -141,7 +176,7 @@ body,
   --shadow-lg: 0 12px 40px rgba(13, 27, 62, 0.10), 0 4px 12px rgba(13, 27, 62, 0.06);
   --shadow-xl: 0 24px 64px rgba(13, 27, 62, 0.12), 0 8px 20px rgba(13, 27, 62, 0.08);
   --shadow-teal: 0 8px 24px rgba(0, 201, 167, 0.25);
-  --shadow-navy: 0 8px 24px rgba(37, 60, 128, 0.20);
+  --shadow-navy: 0 8px 24px rgba(204, 31, 31, 0.20);
 
   /* Radius */
   --radius-sm: 6px;
@@ -252,7 +287,7 @@ body,
   }
 
   .gradient-text-navy {
-    background: linear-gradient(135deg, #253C80, #1C3A6E);
+    background: linear-gradient(135deg, #CC1F1F, #B31818);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -387,7 +422,7 @@ body,
 
 /* Shared grid variables */
 .rdg-portal-grid {
-  --rdg-header-background-color: #0F2040;
+  --rdg-header-background-color: #991515;
   --rdg-background-color: #ffffff;
   --rdg-row-hover-background-color: #EEF4FF;
   --rdg-selection-color: rgba(0, 201, 167, 0.25);
@@ -401,7 +436,7 @@ body,
 .vendor-master-grid,
 .vendor-loading-grid,
 .vendor-scoring-grid {
-  --rdg-header-background-color: #0F2040;
+  --rdg-header-background-color: #991515;
   --rdg-background-color: #ffffff;
   --rdg-row-hover-background-color: #EEF4FF;
 }
@@ -440,7 +475,7 @@ body,
   text-transform: uppercase !important;
   border-right: 1px solid rgba(255,255,255,0.08) !important;
   border-bottom: none !important;
-  background: linear-gradient(180deg, #1C3266 0%, #0F2040 100%) !important;
+  background: linear-gradient(180deg, #8B1818 0%, #991515 100%) !important;
   color: rgba(255,255,255,0.92) !important;
 }
 
@@ -465,28 +500,61 @@ body,
 
 /* ====================== AG GRID — PREMIUM STYLING ====================== */
 
-.ag-theme-alpine {
-  --ag-header-background-color: #0F2040;
-  --ag-header-foreground-color: rgba(255, 255, 255, 0.92);
-  --ag-header-cell-font-weight: 700;
-  --ag-header-cell-font-size: 11px;
-  --ag-font-family: 'Inter', sans-serif;
-  --ag-font-size: 13px;
-  --ag-border-color: #E0E4EF;
-  --ag-row-border-color: #F0F3F9;
-  --ag-row-hover-color: #F5F9FF;
-  --ag-selected-row-background-color: #EFF9F7;
-  --ag-grid-size: 7px;
-  --ag-list-item-height: 38px;
+.ag-theme-alpine,
+.ag-theme-alpine-dark,
+.ag-theme-quartz,
+.ag-theme-quartz-dark,
+.ag-theme-balham {
+  /* ── Cell / row text — PRIMARY FIX ── */
+  --ag-foreground-color:           #1a1a1a;
+  --ag-data-color:                 #1a1a1a;
+  --ag-secondary-foreground-color: #4a4a4a;
+  --ag-disabled-foreground-color:  #b0bbd0;
+
+  /* ── Background ── */
+  --ag-background-color:              #ffffff;
+  --ag-odd-row-background-color:      #fafafa;
+
+  /* ── Header (keep red + white text) ── */
+  --ag-header-background-color:       #991515;
+  --ag-header-foreground-color:       rgba(255, 255, 255, 0.92);
+  --ag-header-cell-font-weight:       700;
+  --ag-header-cell-font-size:         11px;
+
+  /* ── Row states ── */
+  --ag-row-hover-color:               #FFF0F0;
+  --ag-selected-row-background-color: #FFF0F0;
+  --ag-range-selection-border-color:  #CC1F1F;
+
+  /* ── Borders ── */
+  --ag-border-color:     #e8e8e8;
+  --ag-row-border-color: #f0f0f0;
+
+  /* ── Inputs / checkboxes ── */
+  --ag-input-focus-border-color: #CC1F1F;
+  --ag-checkbox-checked-color:   #CC1F1F;
+
+  /* ── Filter / popup backgrounds ── */
   --ag-control-panel-background-color: #ffffff;
-  --ag-odd-row-background-color: #FAFBFE;
+  --ag-panel-background-color:         #ffffff;
+  --ag-menu-background-color:          #ffffff;
+  --ag-tooltip-background-color:       #ffffff;
+
+  /* ── Font ── */
+  --ag-font-family: 'Inter', sans-serif;
+  --ag-font-size:   13px;
+
+  /* ── Sizing ── */
+  --ag-grid-size:       7px;
+  --ag-list-item-height: 38px;
+
   width: 100% !important;
   height: auto !important;
   min-height: 200px;
 }
 
 .mh-tracker-grid {
-  --ag-header-background-color: #0F2040;
+  --ag-header-background-color: #991515;
   --ag-header-foreground-color: rgba(255, 255, 255, 0.92);
 }
 
@@ -502,7 +570,7 @@ body,
   border-bottom: 2px solid rgba(255, 255, 255, 0.07) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
-  background: #0F2040 !important;
+  background: #991515 !important;
 }
 
 .ag-theme-alpine .ag-header-row {
@@ -525,7 +593,7 @@ body,
 }
 
 .ag-theme-alpine .ag-row:hover {
-  background-color: #F5F9FF !important;
+  background-color: #FFF0F0 !important;
 }
 
 .ag-theme-alpine .ag-row:last-child {
@@ -536,12 +604,36 @@ body,
   padding-left: 16px !important;
   padding-right: 16px !important;
   border: none !important;
-  color: #1e2d4e !important;
+  color: #1a1a1a !important;
   white-space: normal !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   overflow: visible !important;
   line-height: 1.45 !important;
+}
+
+/* Hard overrides — ensure cell text is ALWAYS visible */
+.ag-theme-alpine .ag-row,
+.ag-theme-quartz .ag-row,
+.ag-row {
+  color: #1a1a1a !important;
+}
+
+.ag-theme-alpine .ag-header-cell-text,
+.ag-theme-quartz .ag-header-cell-text,
+.ag-header-cell-text {
+  font-weight: 600;
+}
+
+.ag-cell-value,
+.ag-group-value {
+  color: #1a1a1a !important;
+  overflow: visible !important;
+}
+
+/* Checkbox checked colour — TVS red */
+.ag-checkbox-input-wrapper.ag-checked::after {
+  color: #CC1F1F !important;
 }
 
 .ag-theme-alpine .ag-paging-panel {
@@ -567,9 +659,63 @@ body,
   color: #00C9A7 !important;
 }
 
-.ag-theme-alpine .ag-checkbox-input-wrapper,
+/* Hide row-selection checkboxes only — NOT filter checkboxes */
 .ag-theme-alpine .ag-selection-checkbox {
   display: none !important;
+}
+
+/* ── Filter popup — ensure text is always visible ── */
+.ag-theme-alpine .ag-filter-body-wrapper,
+.ag-theme-alpine .ag-filter-toolpanel-body,
+.ag-theme-alpine .ag-set-filter-list,
+.ag-theme-alpine .ag-filter-select,
+.ag-theme-alpine .ag-filter-condition,
+.ag-theme-alpine .ag-simple-filter-body-wrapper {
+  background-color: #ffffff !important;
+  color: #1e2d4e !important;
+}
+
+.ag-theme-alpine .ag-set-filter-item,
+.ag-theme-alpine .ag-set-filter-item-value,
+.ag-theme-alpine .ag-virtual-list-item {
+  color: #1e2d4e !important;
+  font-size: 13px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Floating filter row below header */
+.ag-theme-alpine .ag-floating-filter,
+.ag-theme-alpine .ag-floating-filter-input input,
+.ag-theme-alpine .ag-input-field-input {
+  background-color: #ffffff !important;
+  color: #1e2d4e !important;
+  font-size: 12px !important;
+}
+
+/* Filter popup container */
+.ag-theme-alpine .ag-popup,
+.ag-theme-alpine .ag-popup-editor,
+.ag-theme-alpine .ag-menu,
+.ag-theme-alpine .ag-filter {
+  background-color: #ffffff !important;
+  border: 1px solid #E0E4EF !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(13,27,62,0.12) !important;
+  color: #1e2d4e !important;
+}
+
+/* Filter search input inside popup */
+.ag-theme-alpine .ag-mini-filter input {
+  background-color: #f8fafc !important;
+  border: 1px solid #E0E4EF !important;
+  border-radius: 7px !important;
+  color: #1e2d4e !important;
+  font-size: 12px !important;
+}
+
+/* Filter checkboxes — restore visibility (only selection checkboxes are hidden above) */
+.ag-theme-alpine .ag-set-filter-item .ag-checkbox-input-wrapper {
+  display: inline-flex !important;
 }
 
 .tvs-ag-header-center .ag-header-cell-label {
@@ -718,7 +864,7 @@ body,
   font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
   /* Firefox */
   scrollbar-width: thin;
-  scrollbar-color: rgba(37,60,128,0.5) #dde5f7;
+  scrollbar-color: rgba(204,31,31,0.5) #dde5f7;
 }
 
 /* ── 2. Header cells — always visible, never clipped ────────────── */
@@ -785,138 +931,10 @@ body,
   border-radius: 10px;
 }
 .rdg::-webkit-scrollbar-thumb {
-  background: rgba(37, 60, 128, 0.50);
+  background: #c5cde0;
   border-radius: 10px;
   border: 2px solid #eef1f9;
 }
 .rdg::-webkit-scrollbar-thumb:hover {
-  background: rgba(37, 60, 128, 0.82);
-}
-.rdg::-webkit-scrollbar-corner { background: #eef1f9; }
-
-
-/* ====================== SMOOTH UX GLOBALS ====================== */
-
-/* 1. Smooth scroll everywhere */
-html {
-  scroll-behavior: smooth;
-}
-
-/* 2. GPU-accelerate all transitions */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* 3. Every interactive element gets a smooth transition base */
-button, a, input, select, textarea,
-[role="button"], [tabindex] {
-  transition: color 0.18s ease, background-color 0.18s ease,
-              border-color 0.18s ease, box-shadow 0.18s ease,
-              opacity 0.18s ease, transform 0.18s ease;
-}
-
-/* 4. Button press micro-animation */
-button:not(:disabled):active {
-  transform: scale(0.97);
-}
-
-/* 5. Focus-visible ring (keyboard nav) */
-:focus-visible {
-  outline: 2px solid #00C9A7;
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
-/* 6. Link hover */
-a:hover {
-  color: #00C9A7;
-}
-
-/* 7. Input focus ring — global */
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #00C9A7 !important;
-  box-shadow: 0 0 0 3px rgba(0, 201, 167, 0.13) !important;
-  outline: none;
-}
-
-/* 8. Table / grid row hover transition acceleration */
-.rdg-row,
-.ag-row,
-tr {
-  transition: background-color 0.13s ease !important;
-  will-change: background-color;
-}
-
-/* 9. Sidebar nav item smooth hover */
-.sidebar-nav-item {
-  transition: background 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
-}
-
-/* 10. Tooltip / popover fade-in utility */
-.tooltip-fade {
-  animation: tooltipFadeIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes tooltipFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* 11. Skeleton shimmer loader */
-.skeleton {
-  background: linear-gradient(90deg,
-    #f0f2f7 25%,
-    #e8ecf4 50%,
-    #f0f2f7 75%
-  );
-  background-size: 200% 100%;
-  animation: skeletonShimmer 1.4s ease-in-out infinite;
-  border-radius: 6px;
-}
-@keyframes skeletonShimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* 12. Smooth card lift on hover */
-.card-smooth {
-  transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
-  will-change: transform, box-shadow;
-}
-.card-smooth:hover {
-  box-shadow: 0 12px 40px rgba(13, 27, 62, 0.11), 0 4px 12px rgba(13, 27, 62, 0.06);
-  transform: translateY(-2px);
-  border-color: rgba(0, 201, 167, 0.22);
-}
-
-/* 13. Page-level fade-slide in */
-.page-enter {
-  animation: pageFadeIn 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* 14. Smooth modal/dialog overlay */
-.modal-overlay {
-  animation: overlayFade 0.2s ease forwards;
-}
-@keyframes overlayFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* 15. Better scrollbar — minimum friction */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(121, 134, 166, 0.22);
-  border-radius: 99px;
-  transition: background 0.2s;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 201, 167, 0.45);
+  background: #a0aec0;
 }

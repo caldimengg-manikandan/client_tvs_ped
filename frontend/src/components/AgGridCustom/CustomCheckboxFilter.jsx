@@ -238,7 +238,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                 <input
                     type="text"
                     placeholder="Search..."
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tvs-blue/50 focus:border-tvs-blue transition-all"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tvs-primary/50 focus:border-tvs-primary transition-all"
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
                 />
@@ -250,7 +250,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                 <label className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer transition-colors select-none">
                     <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue/50"
+                        className="w-4 h-4 rounded border-gray-300 text-tvs-primary focus:ring-tvs-primary/50"
                         checked={isSelectAllChecked}
                         onChange={handleSelectAllChange}
                     />
@@ -266,7 +266,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                         <label key={idx} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer transition-colors group select-none">
                             <input
                                 type="checkbox"
-                                className="w-4 h-4 rounded border-gray-300 text-tvs-blue focus:ring-tvs-blue/50 group-hover:border-tvs-blue"
+                                className="w-4 h-4 rounded border-gray-300 text-tvs-primary focus:ring-tvs-primary/50 group-hover:border-tvs-primary"
                                 checked={selectedKeys.has(option.key)}
                                 onChange={() => handleOptionChange(option.key)}
                             />
@@ -298,7 +298,7 @@ const CustomCheckboxFilter = forwardRef((props, ref) => {
                     <button
                         type="button"
                         onClick={handleApply}
-                        className="px-3 py-1 rounded bg-tvs-blue text-white text-[11px] font-semibold hover:bg-opacity-90"
+                        className="px-3 py-1 rounded bg-tvs-primary text-white text-[11px] font-semibold hover:bg-opacity-90"
                     >
                         Apply
                     </button>

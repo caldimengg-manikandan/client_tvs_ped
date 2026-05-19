@@ -10,7 +10,7 @@ const ARCH_ITEMS = [
     title: 'Asset Registration Node',
     desc: 'Robust entity creation binding metadata directly to verified entities. Intelligent Auto-Increment IDs eliminate naming collisions across multiple plants.',
     points: ['Auto-Gen AID', 'Vendor Scoring Synergy', 'Mandatory Field Guardrails'],
-    color: '#1B3A7A',
+    color: '#B31818',
   },
   {
     id: 'alloc-trace',

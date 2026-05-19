@@ -433,7 +433,7 @@ const VendorScoring = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -451,7 +451,7 @@ const VendorScoring = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -568,7 +568,7 @@ const VendorScoring = () => {
             width: 160,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <div className="bg-tvs-blue/10 text-tvs-blue font-black px-3 py-1 rounded-lg border border-tvs-blue/20 text-center">
+                <div className="bg-tvs-primary/10 text-tvs-primary font-black px-3 py-1 rounded-lg border border-tvs-primary/20 text-center">
                     {row.qcdScore}
                 </div>
             )
@@ -727,7 +727,7 @@ const VendorScoring = () => {
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleAddClick}
-                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-blue to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
+                            className="flex items-center gap-2 bg-gradient-to-r from-tvs-primary to-blue-600 px-6 py-3 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all"
                         >
                             <Plus size={20} /> Add Score
                         </button>
@@ -795,7 +795,7 @@ const VendorScoring = () => {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm">
                             <span className="text-gray-600">Showing</span>
-                            <span className="px-2.5 py-1 bg-tvs-blue/10 text-tvs-blue rounded-lg font-bold">{scores?.length || 0}</span>
+                            <span className="px-2.5 py-1 bg-tvs-primary/10 text-tvs-primary rounded-lg font-bold">{scores?.length || 0}</span>
                             <span className="text-gray-600">of</span>
                             <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg font-bold">{scores?.length || 0}</span>
                             <span className="text-gray-600">vendor scores</span>
@@ -808,7 +808,7 @@ const VendorScoring = () => {
             <Modal
                 title={
                     <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                        <Star size={20} className="text-tvs-blue" />
+                        <Star size={20} className="text-tvs-primary" />
                         <span className="text-xl font-bold text-gray-900">{editingScore ? 'Update Vendor Score' : 'Add Vendor Score'}</span>
                     </div>
                 }
@@ -820,7 +820,7 @@ const VendorScoring = () => {
                 width="95%"
                 style={{ maxWidth: '800px' }}
                 centered
-                okButtonProps={{ className: 'bg-tvs-blue hover:bg-tvs-blue/90' }}
+                okButtonProps={{ className: 'bg-tvs-primary hover:bg-tvs-primary/90' }}
             >
                 <Form
                     form={form}
@@ -962,7 +962,7 @@ const VendorScoring = () => {
                         <div className="mt-6 pt-6 border-t border-gray-200 flex items-center justify-between">
                             <div>
                                 <span className="text-xs font-bold text-gray-400 uppercase">Calculated QCD Score</span>
-                                <div className="text-3xl font-black text-tvs-blue mt-1">
+                                <div className="text-3xl font-black text-tvs-primary mt-1">
                                     {calculateQCD(tempScores.qsr, tempScores.cost, tempScores.delivery)}
                                 </div>
                             </div>
@@ -1336,7 +1336,7 @@ const VendorScoring = () => {
                     border: none;
                 }
                 .vendor-scoring-grid .rdg-header-row .rdg-cell {
-                    background-color: #253C80;
+                    background-color: #CC1F1F;
                     color: white;
                     font-weight: bold;
                     border-bottom: 2px solid #e2e8f0;

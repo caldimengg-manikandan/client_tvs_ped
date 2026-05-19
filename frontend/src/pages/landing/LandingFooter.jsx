@@ -25,7 +25,7 @@ const FooterLink = ({ to, children }) => {
         fontWeight: 500, marginBottom: 10, textDecoration: 'none', cursor: 'pointer',
         transition: 'color 0.15s',
       }}
-      onMouseEnter={e => (e.target.style.color = '#1B3A7A')}
+      onMouseEnter={e => (e.target.style.color = '#B31818')}
       onMouseLeave={e => (e.target.style.color = '#64748B')}
     >
       {children}
@@ -57,7 +57,7 @@ export default function LandingFooter() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{
                 width: 34, height: 34, borderRadius: 9,
-                background: 'linear-gradient(135deg, #1B3A7A, #253C80)',
+                background: 'linear-gradient(135deg, #B31818, #CC1F1F)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <LayoutDashboard size={18} color="#fff" />
@@ -136,13 +136,13 @@ export default function LandingFooter() {
               style={{
                 marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '9px 18px', borderRadius: 9, border: 'none',
-                background: '#1B3A7A', color: '#fff',
+                background: '#B31818', color: '#fff',
                 fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
                 fontFamily: 'inherit',
                 transition: 'background 0.18s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#253C80')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#1B3A7A')}
+              onMouseEnter={e => (e.currentTarget.style.background = '#CC1F1F')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#B31818')}
             >
               {isAuthenticated ? 'Dashboard' : 'Sign In'} <ArrowRight size={13} />
             </button>

@@ -14,13 +14,15 @@ export const defaultColDef = {
     sortable: true,              // ✅ MANDATORY: All columns sortable
     filter: true,                // ✅ MANDATORY: All columns filterable
     resizable: true,             // ✅ MANDATORY: All columns resizable
-    floatingFilter: false,       // Hide floating filters for cleaner UI
-    suppressHeaderMenuButton: true, // Updated for v31+ compatibility
-    minWidth: 120,               // Minimum column width to prevent clipping
+    floatingFilter: true,        // Show filter input row below column headers
+    suppressHeaderMenuButton: false, // Show column menu button (needed for filter access)
+    minWidth: 80,                // Minimum column width to prevent clipping
     flex: 1,                     // Distribute remaining space evenly
+    suppressSizeToFit: false,     // Allow sizeColumnsToFit to affect this column
     wrapText: true,              // Wrap long cell text
     autoHeight: true,            // Row height adapts to cell content
     cellStyle: {
+        color: '#1a1a1a',           // explicit — never inherits white from sidebar
         paddingLeft: '16px',
         paddingRight: '16px',
         lineHeight: '1.45',

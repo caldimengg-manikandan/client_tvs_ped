@@ -283,8 +283,8 @@ export default function HeroSection({ stats }) {
               }}
             >
               {isAuthenticated && user?.name
-                ? (<>Welcome back,<br /><span style={{ color: '#1B3A7A' }}>{user.name.split(' ')[0]}.</span></>)
-                : (<>Intelligent Factory <span style={{ color: '#1B3A7A' }}>Operations</span><br /><span style={{ color: '#1B3A7A' }}>Simplified</span></>)
+                ? (<>Welcome back,<br /><span style={{ color: '#B31818' }}>{user.name.split(' ')[0]}.</span></>)
+                : (<>Intelligent Factory <span style={{ color: '#B31818' }}>Operations</span><br /><span style={{ color: '#B31818' }}>Simplified</span></>)
               }
             </motion.h1>
 
@@ -316,7 +316,7 @@ export default function HeroSection({ stats }) {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 9,
                   padding: '12px 28px', borderRadius: 10, border: 'none',
-                  background: '#1B3A7A', color: '#fff', fontSize: 14.5,
+                  background: '#B31818', color: '#fff', fontSize: 14.5,
                   fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                   boxShadow: '0 4px 18px rgba(27,58,122,0.28)',
                 }}
@@ -355,8 +355,8 @@ export default function HeroSection({ stats }) {
                 <CheckCircle size={15} color="#4F46E5" /><span style={{ color: '#4F46E5' }}>RBAC Enabled</span>
               </div>
               {totalReqs !== null && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: '#1B3A7A' }}>
-                  <FileText size={14} color="#1B3A7A" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: '#B31818' }}>
+                  <FileText size={14} color="#B31818" />
                   {totalReqs.toLocaleString()}+ requests processed
                 </div>
               )}

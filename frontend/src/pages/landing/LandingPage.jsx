@@ -27,7 +27,7 @@ const SectionSkeleton = ({ height = 400, dark = false }) => (
     <div style={{
       width: 36, height: 36, borderRadius: '50%',
       border: `3px solid ${dark ? 'rgba(255,255,255,0.08)' : '#E8ECF4'}`,
-      borderTopColor: dark ? 'rgba(255,255,255,0.4)' : '#1B3A7A',
+      borderTopColor: dark ? 'rgba(255,255,255,0.4)' : '#B31818',
       animation: 'lp-spin 0.75s linear infinite',
     }} />
     <style>{`@keyframes lp-spin { to { transform: rotate(360deg); } }`}</style>

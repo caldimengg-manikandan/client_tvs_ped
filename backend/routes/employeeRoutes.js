@@ -15,6 +15,10 @@ router.route('/')
 router.get('/next-id', employeeController.getNextEmployeeId);
 router.post('/check-id', employeeController.checkEmployeeId);
 
+// Role-based lookup routes (must come before /:id to avoid conflicts)
+router.get('/ped-engineers', employeeController.getPedEngineers);
+router.get('/approvers', employeeController.getApprovers);
+
 // Generic employee routes (by MongoDB _id)
 router.route('/:id')
     .get(employeeController.getEmployee)

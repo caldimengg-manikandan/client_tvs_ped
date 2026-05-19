@@ -9,6 +9,7 @@ import 'react-data-grid/lib/styles.css';
 import FreezeToolbar from '../../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../../components/FrozenRowsDataGrid';
 import ColumnCustomizer from '../../components/ColumnCustomizer';
+import MHRequestSubPanel from './MHRequestSubPanel';
 
 const { Option } = Select;
 
@@ -26,6 +27,10 @@ const CreateMHRequestList = () => {
     const [mhListGridWidth, setMhListGridWidth] = useState(0);
     const [frozenKeys, setFrozenKeys] = useState(new Set());
     const [frozenRowCount, setFrozenRowCount] = useState(0);
+    // Sub-panel (detail drawer) state
+    const [subPanelRequestId, setSubPanelRequestId] = useState(null);
+    const [showSubPanel, setShowSubPanel] = useState(false);
+    // Legacy view modal (kept for reference, now replaced by sub-panel)
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [hiddenKeys, setHiddenKeys] = useState(new Set());
@@ -40,6 +45,7 @@ const CreateMHRequestList = () => {
 
     useEffect(() => {
         if (success && isModalOpen) {
+            const newReq = requests && requests.length > 0 ? requests[0] : null;
             message.success('MH Request created successfully');
             setIsModalOpen(false);
             form.resetFields();
@@ -53,12 +59,6 @@ const CreateMHRequestList = () => {
     }, [success, error, isModalOpen, form, dispatch]);
 
     const handleCreateClick = () => {
-        if (!user || !user.employeeId) {
-            message.error("Please add employee information first.");
-            navigate('/employee-master/add');
-            return;
-        }
-
         form.setFieldsValue({
             departmentName: user.department || 'N/A',
             location: user.location || 'N/A',
@@ -69,8 +69,15 @@ const CreateMHRequestList = () => {
     };
 
     const handleViewRequest = (row) => {
-        setSelectedRequest(row);
-        setIsViewModalOpen(true);
+        // Open detail sub-panel by MongoDB _id
+        if (row?._id) {
+            setSubPanelRequestId(row._id);
+            setShowSubPanel(true);
+        } else {
+            // Fallback to legacy view modal if no _id
+            setSelectedRequest(row);
+            setIsViewModalOpen(true);
+        }
     };
 
     const handleEditRequest = (row) => {
@@ -216,7 +223,7 @@ const CreateMHRequestList = () => {
                                 type="text"
                                 size="small"
                                 onClick={handleSelectAll}
-                                className="!text-[10px] !font-semibold !text-tvs-blue !px-0"
+                                className="!text-[10px] !font-semibold !text-tvs-primary !px-0"
                             >
                                 Select All
                             </Button>
@@ -235,7 +242,7 @@ const CreateMHRequestList = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -337,7 +344,7 @@ const CreateMHRequestList = () => {
             width: 150,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <span className="font-semibold text-tvs-blue">
+                <span className="font-semibold text-tvs-primary">
                     {(row.from || '') + ' \u2192 ' + (row.to || '')}
                 </span>
             )
@@ -512,7 +519,7 @@ const CreateMHRequestList = () => {
                             </button>
                             <button
                                 onClick={handleCreateClick}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-primary to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                             >
                                 <Plus size={20} strokeWidth={3} />
                                 <span>CREATE NEW REQUEST</span>
@@ -566,8 +573,8 @@ const CreateMHRequestList = () => {
             {/* Create MH Request Modal */}
             <AntModal
                 title={
-                    <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-tvs-blue/5 to-transparent rounded-t-3xl border-b border-gray-100">
-                        <div className="w-14 h-14 rounded-2xl bg-white border border-tvs-blue/10 flex items-center justify-center text-tvs-blue shadow-sm">
+                    <div className="flex items-center gap-5 p-4 bg-gradient-to-r from-tvs-primary/5 to-transparent rounded-t-3xl border-b border-gray-100">
+                        <div className="w-14 h-14 rounded-2xl bg-white border border-tvs-primary/10 flex items-center justify-center text-tvs-primary shadow-sm">
                             <Plus size={32} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -759,7 +766,7 @@ const CreateMHRequestList = () => {
                                 type="primary"
                                 htmlType="submit"
                                 loading={loading}
-                                className="h-12 px-10 rounded-2xl bg-tvs-blue hover:bg-blue-700 font-black tracking-widest shadow-lg shadow-blue-100 transition-all"
+                                className="h-12 px-10 rounded-2xl bg-tvs-primary hover:bg-blue-700 font-black tracking-widest shadow-lg shadow-blue-100 transition-all"
                             >
                                 SUBMIT MH REQUEST
                             </Button>
@@ -768,11 +775,20 @@ const CreateMHRequestList = () => {
                 </div>
             </AntModal>
 
-            {/* View Request Modal */}
+            {/* ── Detail Sub-Panel (Drawer with 3 tabs) ── */}
+            <MHRequestSubPanel
+                requestId={subPanelRequestId}
+                visible={showSubPanel}
+                onClose={() => { setShowSubPanel(false); setSubPanelRequestId(null); }}
+            />
+
+            
+
+            {/* Legacy View Request Modal — kept as fallback */}
             <AntModal
                 title={
                     <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                        <Eye size={20} className="text-tvs-blue" />
+                        <Eye size={20} className="text-tvs-primary" />
                         <span className="text-lg font-bold">Request Details - {selectedRequest?.mhRequestId}</span>
                     </div>
                 }
@@ -859,7 +875,7 @@ const CreateMHRequestList = () => {
                     border-bottom: 2px solid #e2e8f0;
                     position: relative;
                     font-size: 12px;
-                    background-color: #253C80;
+                    background-color: #CC1F1F;
                     color: #ffffff;
                 }
             `}</style>

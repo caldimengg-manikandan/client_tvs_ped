@@ -30,7 +30,7 @@ export default function ScrollToTop() {
           style={{
             position: 'fixed', bottom: 28, right: 28, zIndex: 9990,
             width: 48, height: 48, borderRadius: 14,
-            background: hovered ? '#0D1B3E' : '#1B3A7A',
+            background: hovered ? '#0D1B3E' : '#B31818',
             border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 8px 24px rgba(27,58,122,0.35)',

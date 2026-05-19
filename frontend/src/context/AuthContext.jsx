@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
     const [sessionId, setSessionId] = useState(sessionStorage.getItem('sessionId') || null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
+
     // Configure axios defaults
     useEffect(() => {
         if (token) {
@@ -29,7 +30,6 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     const res = await axios.get(`${API_BASE_URL}/api/auth/me`);
-
                     setUser(res.data);
                     setIsAuthenticated(true);
                 } catch (error) {
@@ -83,11 +83,30 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Check if the current user has a specific permission key.
+     * Admin role has all permissions by default.
+     */
     const hasPermission = (permissionKey) => {
         if (!user) return false;
         if (user.role === 'Admin') return true;
         return user.permissions && user.permissions[permissionKey] === true;
     };
+
+    /**
+     * Check if the current user has a specific role.
+     * @param {string|string[]} roles - Role or array of roles to check
+     */
+    const hasRole = (roles) => {
+        if (!user) return false;
+        if (Array.isArray(roles)) return roles.includes(user.role);
+        return user.role === roles;
+    };
+
+    /**
+     * The current user's role string (e.g. 'Admin', 'Employee', 'Approver', 'PED Engineer').
+     */
+    const role = user?.role || null;
 
     return (
         <AuthContext.Provider value={{
@@ -97,7 +116,9 @@ export const AuthProvider = ({ children }) => {
             loading,
             login,
             logout,
-            hasPermission
+            hasPermission,
+            hasRole,
+            role
         }}>
             {children}
         </AuthContext.Provider>

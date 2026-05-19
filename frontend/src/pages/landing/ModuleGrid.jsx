@@ -12,7 +12,7 @@ const MODULES = [
   {
     id: 'mh-requests',
     icon: FileText,
-    color: '#1B3A7A',
+    color: '#B31818',
     bg: '#EEF2FF',
     label: 'MH Request Management',
     desc: 'Multi-stage approval workflows with priority tagging and part-level tracking.',
@@ -152,7 +152,7 @@ export default function ModuleGrid() {
             initial={{ opacity: 0, y: 10 }} animate={inView ? { opacity: 1, y: 0 } : {}}
             style={{
               display: 'block', marginBottom: 14,
-              fontSize: 11, fontWeight: 800, color: '#1B3A7A',
+              fontSize: 11, fontWeight: 800, color: '#B31818',
               letterSpacing: '0.12em', textTransform: 'uppercase',
             }}
           >
@@ -167,7 +167,7 @@ export default function ModuleGrid() {
             }}
           >
             Everything Your Factory{' '}
-            <span style={{ color: '#1B3A7A' }}>Operations Needs</span>
+            <span style={{ color: '#B31818' }}>Operations Needs</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ delay: 0.15 }}
@@ -211,7 +211,7 @@ export default function ModuleGrid() {
               onClick={() => navigate('/login')}
               style={{
                 padding: '8px 20px', borderRadius: 8,
-                background: '#1B3A7A', border: 'none',
+                background: '#B31818', border: 'none',
                 color: '#fff', fontSize: 13, fontWeight: 700,
                 cursor: 'pointer', fontFamily: 'inherit',
               }}

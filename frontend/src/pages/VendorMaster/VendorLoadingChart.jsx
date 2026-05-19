@@ -348,7 +348,7 @@ const VendorLoadingChart = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -366,7 +366,7 @@ const VendorLoadingChart = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -526,7 +526,7 @@ const VendorLoadingChart = () => {
             renderCell: ({ row }) => (
                 <button
                     onClick={() => handleTotalProjectsClick(row)}
-                    className="w-full bg-tvs-blue text-white font-black px-3 py-1 rounded-lg shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-center"
+                    className="w-full bg-tvs-primary text-white font-black px-3 py-1 rounded-lg shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all text-center"
                 >
                     {row.totalProjects}
                 </button>
@@ -570,7 +570,7 @@ const VendorLoadingChart = () => {
                 <div className="flex justify-center">
                     <button
                         onClick={() => handleQcdEditClick(row)}
-                        className="p-2 text-tvs-blue hover:bg-tvs-blue/10 rounded-lg transition-all shadow-sm border border-tvs-blue/20"
+                        className="p-2 text-tvs-primary hover:bg-tvs-primary/10 rounded-lg transition-all shadow-sm border border-tvs-primary/20"
                         title="View/Update QCD Scores"
                     >
                         <Edit3 size={18} />
@@ -776,7 +776,7 @@ const VendorLoadingChart = () => {
             <Modal
                 title={
                     <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-                        <div className="p-2 bg-tvs-blue rounded-lg text-white">
+                        <div className="p-2 bg-tvs-primary rounded-lg text-white">
                             <Edit3 size={20} />
                         </div>
                         <div>

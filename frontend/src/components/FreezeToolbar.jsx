@@ -71,15 +71,15 @@ const FreezeToolbar = ({
                         flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold
                         transition-all duration-150 shadow-sm
                         ${colOpen
-                            ? 'bg-[#1a3c6e] text-white border-[#1a3c6e] shadow-md'
-                            : 'bg-white text-[#1a3c6e] border-[#c8d6e8] hover:bg-[#f0f5fb] hover:border-[#1a3c6e]'
+                            ? 'bg-[#B31818] text-white border-[#B31818] shadow-md'
+                            : 'bg-white text-[#B31818] border-[#c8d6e8] hover:bg-[#f0f5fb] hover:border-[#B31818]'
                         }
                     `}
                 >
                     <Columns3 size={16} strokeWidth={2.2} />
                     <span>Freeze Columns</span>
                     {frozenColCount > 0 && (
-                        <span className="ml-1 bg-[#1a3c6e] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
+                        <span className="ml-1 bg-[#B31818] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
                             {frozenColCount}
                         </span>
                     )}
@@ -90,7 +90,7 @@ const FreezeToolbar = ({
                         style={{ animation: 'fp-in 0.15s ease' }}>
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <div className="flex items-center gap-2 text-[#1a3c6e] font-bold text-sm">
+                            <div className="flex items-center gap-2 text-[#B31818] font-bold text-sm">
                                 <Columns3 size={15} strokeWidth={2.5} />
                                 <span>Freeze Columns</span>
                             </div>
@@ -105,7 +105,7 @@ const FreezeToolbar = ({
                         {/* Always-frozen S.No */}
                         <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50">
                             <label className="flex items-center gap-3 cursor-default">
-                                <div className="w-4 h-4 rounded border-2 border-[#1a3c6e] bg-[#1a3c6e] flex items-center justify-center flex-shrink-0">
+                                <div className="w-4 h-4 rounded border-2 border-[#B31818] bg-[#B31818] flex items-center justify-center flex-shrink-0">
                                     <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
                                         <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
@@ -123,7 +123,7 @@ const FreezeToolbar = ({
                                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#f4f8ff] cursor-pointer transition-colors"
                                         onClick={(e) => { e.preventDefault(); toggleDraft(col.key); }}>
                                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                                            ${checked ? 'bg-[#1a3c6e] border-[#1a3c6e]' : 'bg-white border-gray-300'}`}>
+                                            ${checked ? 'bg-[#B31818] border-[#B31818]' : 'bg-white border-gray-300'}`}>
                                             {checked && (
                                                 <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
                                                     <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -148,7 +148,7 @@ const FreezeToolbar = ({
                                 Clear All
                             </button>
                             <button type="button" onClick={handleColApply}
-                                className="text-[12px] font-black text-white bg-[#1a3c6e] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
+                                className="text-[12px] font-black text-white bg-[#B31818] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
                                 Apply
                             </button>
                         </div>
@@ -165,15 +165,15 @@ const FreezeToolbar = ({
                         flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold
                         transition-all duration-150 shadow-sm
                         ${rowOpen
-                            ? 'bg-[#1a3c6e] text-white border-[#1a3c6e] shadow-md'
-                            : 'bg-white text-[#1a3c6e] border-[#c8d6e8] hover:bg-[#f0f5fb] hover:border-[#1a3c6e]'
+                            ? 'bg-[#B31818] text-white border-[#B31818] shadow-md'
+                            : 'bg-white text-[#B31818] border-[#c8d6e8] hover:bg-[#f0f5fb] hover:border-[#B31818]'
                         }
                     `}
                 >
                     <Rows3 size={16} strokeWidth={2.2} />
                     <span>Freeze Rows</span>
                     {((typeof frozenRowCount === 'number' && frozenRowCount > 0) || (typeof frozenRowCount === 'object' && frozenRowCount !== null && frozenRowCount.end > 0)) && (
-                        <span className="ml-1 bg-[#1a3c6e] text-white text-[10px] font-black px-2 py-0.5 rounded-full leading-none">
+                        <span className="ml-1 bg-[#B31818] text-white text-[10px] font-black px-2 py-0.5 rounded-full leading-none">
                             {typeof frozenRowCount === 'number' ? frozenRowCount : `${frozenRowCount.start}-${frozenRowCount.end}`}
                         </span>
                     )}
@@ -234,7 +234,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
             
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center gap-2 text-[#1a3c6e] font-bold text-sm">
+                <div className="flex items-center gap-2 text-[#B31818] font-bold text-sm">
                     <Rows3 size={15} strokeWidth={2.5} />
                     <span>Freeze Rows</span>
                 </div>
@@ -251,14 +251,14 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                 <button 
                     onClick={() => setMode('top')}
                     className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all
-                        ${mode === 'top' ? 'bg-white text-[#1a3c6e] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                        ${mode === 'top' ? 'bg-white text-[#B31818] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     From Top
                 </button>
                 <button 
                     onClick={() => setMode('range')}
                     className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all
-                        ${mode === 'range' ? 'bg-white text-[#1a3c6e] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                        ${mode === 'range' ? 'bg-white text-[#B31818] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                     Specific Range
                 </button>
@@ -276,7 +276,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                                     type="number"
                                     value={topDraft}
                                     onChange={(e) => setTopDraft(e.target.value)}
-                                    className="w-32 h-14 text-center text-3xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-xl outline-none focus:border-[#1a3c6e] focus:ring-4 focus:ring-[#1a3c6e]/5 transition-all shadow-inner"
+                                    className="w-32 h-14 text-center text-3xl font-black text-[#B31818] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-xl outline-none focus:border-[#B31818] focus:ring-4 focus:ring-[#B31818]/5 transition-all shadow-inner"
                                     placeholder="0"
                                 />
                             </div>
@@ -286,7 +286,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                             {[0, 5, 10, 20, 50].filter(n => n <= maxRows).map(n => (
                                 <button key={n} type="button" onClick={() => setTopDraft(String(n))}
                                     className={`text-[11px] font-bold px-3 py-1 rounded-md border transition-all
-                                        ${topDraft === String(n) ? 'bg-[#1a3c6e] text-white border-[#1a3c6e]' : 'bg-white text-gray-500 border-gray-200 hover:border-[#1a3c6e]'}`}
+                                        ${topDraft === String(n) ? 'bg-[#B31818] text-white border-[#B31818]' : 'bg-white text-gray-500 border-gray-200 hover:border-[#B31818]'}`}
                                 >
                                     {n === 0 ? 'None' : n}
                                 </button>
@@ -305,7 +305,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                                     type="number"
                                     value={rangeStart}
                                     onChange={(e) => setRangeStart(e.target.value)}
-                                    className="w-20 h-12 text-center text-xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#1a3c6e] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
+                                    className="w-20 h-12 text-center text-xl font-black text-[#B31818] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#B31818] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
                                 />
                             </div>
                             <div className="pt-4 text-gray-300">
@@ -317,7 +317,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                                     type="number"
                                     value={rangeEnd}
                                     onChange={(e) => setRangeEnd(e.target.value)}
-                                    className="w-20 h-12 text-center text-xl font-black text-[#1a3c6e] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#1a3c6e] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
+                                    className="w-20 h-12 text-center text-xl font-black text-[#B31818] bg-[#f8fafc] border-2 border-[#cdd9e8] rounded-lg outline-none focus:border-[#B31818] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
                                 />
                             </div>
                         </div>
@@ -337,7 +337,7 @@ const FreezeRowDropdown = ({ initialValue, maxRows, onApply, onClose }) => {
                     Clear
                 </button>
                 <button type="button" onClick={handleApply}
-                    className="text-[12px] font-black text-white bg-[#1a3c6e] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
+                    className="text-[12px] font-black text-white bg-[#B31818] hover:bg-[#16325e] px-6 py-1.5 rounded-lg transition-all shadow-sm hover:shadow-md">
                     Apply
                 </button>
             </div>

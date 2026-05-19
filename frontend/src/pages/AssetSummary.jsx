@@ -146,7 +146,7 @@ const AssetSummary = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -164,7 +164,7 @@ const AssetSummary = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">

@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const VERCEL_URL = 'https://client-tvs-ped.vercel.app';
-
 const NAV_LINKS = [
   { label: 'Workflow',      href: '#process' },
   { label: 'Capabilities', href: '#architecture' },
@@ -64,7 +62,7 @@ export default function LandingNav() {
           >
             <div style={{
               width: 34, height: 34, borderRadius: 9,
-              background: 'linear-gradient(135deg, #1B3A7A, #253C80)',
+              background: 'linear-gradient(135deg, #B31818, #CC1F1F)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <LayoutDashboard size={18} color="#ffffff" />
@@ -91,7 +89,7 @@ export default function LandingNav() {
                   fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.color = '#1B3A7A';
+                  e.currentTarget.style.color = '#B31818';
                   e.currentTarget.style.background = '#F0F4FF';
                 }}
                 onMouseLeave={e => {
@@ -106,40 +104,32 @@ export default function LandingNav() {
 
           {/* Right CTAs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Sign In → Vercel live URL */}
-            <a
+            {/* Sign In → local login */}
+            <button
               id="nav-signin"
-              href={`${VERCEL_URL}/login`}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => navigate(isAuthenticated ? '/' : '/login')}
               className="lnav-desktop"
               style={{
                 padding: '8px 16px', fontSize: 14, fontWeight: 500,
-                color: '#4A5568', fontFamily: 'inherit',
-                textDecoration: 'none',
+                color: '#4A5568', fontFamily: 'inherit', background: 'none',
+                border: 'none', cursor: 'pointer',
                 transition: 'color 0.15s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#1B3A7A')}
+              onMouseEnter={e => (e.currentTarget.style.color = '#B31818')}
               onMouseLeave={e => (e.currentTarget.style.color = '#4A5568')}
             >
               Sign In
-            </a>
+            </button>
 
             <motion.button
               id="nav-dashboard"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                if (isAuthenticated) {
-                  navigate('/');
-                } else {
-                  window.open(`${VERCEL_URL}/login`, '_blank');
-                }
-              }}
+              onClick={() => navigate(isAuthenticated ? '/' : '/login')}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '9px 20px', borderRadius: 9, border: 'none',
-                background: '#1B3A7A', color: '#fff',
+                background: '#B31818', color: '#fff',
                 fontSize: 13.5, fontWeight: 700,
                 cursor: 'pointer', fontFamily: 'inherit',
                 letterSpacing: '0.01em',
@@ -195,19 +185,18 @@ export default function LandingNav() {
                 {label}
               </button>
             ))}
-            <a
-              href={`${VERCEL_URL}/login`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => { setMenuOpen(false); navigate(isAuthenticated ? '/' : '/login'); }}
               style={{
-                marginTop: 14, display: 'block', padding: '14px',
-                borderRadius: 10, background: '#1B3A7A',
+                marginTop: 14, display: 'block', width: '100%', padding: '14px',
+                borderRadius: 10, background: '#B31818',
                 color: '#fff', fontSize: 15, fontWeight: 700,
-                textAlign: 'center', textDecoration: 'none',
+                textAlign: 'center', border: 'none', cursor: 'pointer',
+                fontFamily: 'inherit',
               }}
             >
-              Sign In — Live App
-            </a>
+              Sign In
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

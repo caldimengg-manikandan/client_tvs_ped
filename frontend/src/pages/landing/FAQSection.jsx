@@ -61,7 +61,7 @@ const FAQItem = ({ item, isOpen, onToggle }) => (
         transition={{ duration: 0.22 }}
         style={{ flexShrink: 0 }}
       >
-        <ChevronDown size={18} color={isOpen ? '#1B3A7A' : '#94A3B8'} />
+        <ChevronDown size={18} color={isOpen ? '#B31818' : '#94A3B8'} />
       </motion.div>
     </button>
     <AnimatePresence initial={false}>

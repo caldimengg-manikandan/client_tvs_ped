@@ -18,7 +18,7 @@ const ITEMS = [
 export default function MarqueeStrip() {
   return (
     <div style={{
-      background: '#1B3A7A',
+      background: '#B31818',
       borderTop: '1px solid #162E63',
       borderBottom: '1px solid #162E63',
       overflow: 'hidden',
@@ -28,12 +28,12 @@ export default function MarqueeStrip() {
       {/* Fade edges */}
       <div style={{
         position: 'absolute', left: 0, top: 0, bottom: 0, width: 100, zIndex: 2,
-        background: 'linear-gradient(to right, #1B3A7A, transparent)',
+        background: 'linear-gradient(to right, #B31818, transparent)',
         pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, zIndex: 2,
-        background: 'linear-gradient(to left, #1B3A7A, transparent)',
+        background: 'linear-gradient(to left, #B31818, transparent)',
         pointerEvents: 'none',
       }} />
 

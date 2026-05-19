@@ -38,7 +38,8 @@ const EmployeeForm = ({ mode = 'add' }) => {
         employeeName: '',
         departmentName: '',
         plantLocation: '',
-        accessLevel: 'Employee',
+        role: 'Employee',
+        accessLevel: 'Employee',   // kept for backend compatibility, synced from role
         mailId: '',
         password: '',
         confirmPassword: '',
@@ -108,6 +109,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         departmentName: currentItem.departmentName,
                         plantLocation: currentItem.plantLocation,
                         accessLevel: currentItem.accessLevel,
+                        role: currentItem.role || 'Employee',
                         mailId: currentItem.mailId,
                         password: '', // Kept empty
                         confirmPassword: '',
@@ -121,6 +123,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         departmentName: currentItem.departmentName,
                         plantLocation: currentItem.plantLocation,
                         accessLevel: currentItem.accessLevel,
+                        role: currentItem.role || 'Employee',
                         mailId: currentItem.mailId,
                         password: '',
                         confirmPassword: '',
@@ -223,6 +226,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
             departmentName: formData.departmentName,
             plantLocation: formData.plantLocation,
             accessLevel: formData.accessLevel,
+            role: formData.role,
             mailId: formData.mailId,
             status: formData.status,
             permissions: permissions
@@ -261,7 +265,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
     if (loading && mode === 'edit' && !currentItem) {
         return (
             <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-blue mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-primary mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading employee data...</p>
             </div>
         );
@@ -388,23 +392,39 @@ const EmployeeForm = ({ mode = 'add' }) => {
                             />
                         </div>
 
-                        {/* Access Level */}
+                        {/* Role (replaces legacy Access Level) */}
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                Access Level
+                                Role
                             </label>
                             <select
-                                name="accessLevel"
-                                value={formData.accessLevel}
-                                onChange={handleChange}
+                                name="role"
+                                value={formData.role}
+                                onChange={(e) => {
+                                    // Keep accessLevel in sync so legacy backend code stays happy
+                                    const val = e.target.value;
+                                    const legacyMap = {
+                                        'Admin': 'Admin',
+                                        'Approver': 'Manager',
+                                        'PED Engineer': 'Manager',
+                                        'Employee': 'Employee'
+                                    };
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        role: val,
+                                        accessLevel: legacyMap[val] || 'Employee'
+                                    }));
+                                }}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="Employee">Employee</option>
-                                <option value="Viewer">Viewer</option>
-                                <option value="Manager">Manager</option>
+                                <option value="Approver">Approver</option>
+                                <option value="PED Engineer">PED Engineer</option>
                                 <option value="Admin">Admin</option>
-                                <option value="Super Admin">Super Admin</option>
                             </select>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Approver — receives MH request emails &nbsp;|&nbsp; PED Engineer — gets assigned to requests
+                            </p>
                         </div>
 
                         {/* Password Section */}
@@ -563,7 +583,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                                     Permissions Summary:
                                 </span>
                             </div>
-                            <span className="font-semibold text-tvs-blue">
+                            <span className="font-semibold text-tvs-primary">
                                 {Object.values(permissions).filter(Boolean).length} of {permissionList.length} permissions granted
                             </span>
                         </div>
@@ -583,7 +603,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex items-center bg-tvs-blue !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                        className="flex items-center bg-tvs-primary !text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                     >
                         <Save size={18} style={{ marginRight: '0.5rem' }} />
                         {loading ? 'Saving...' : (mode === 'edit' ? 'Update Employee' : 'Save Employee')}

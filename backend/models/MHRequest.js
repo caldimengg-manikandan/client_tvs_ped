@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const emailLogEntrySchema = new mongoose.Schema({
+    sentAt: { type: Date, default: Date.now },
+    to: { type: String, default: '' },
+    cc: { type: String, default: '' },
+    subject: { type: String, default: '' },
+    body: { type: String, default: '' },
+    status: { type: String, enum: ['Delivered', 'Failed'], default: 'Delivered' }
+}, { _id: true });
+
 const mhRequestSchema = new mongoose.Schema({
     mhRequestId: {
         type: String,
@@ -21,7 +30,7 @@ const mhRequestSchema = new mongoose.Schema({
     requestType: {
         type: String,
         required: true,
-        enum: ['New Project', 'Upgrade', 'Refresh', 'Capacity', 'Special Improvements']
+        enum: ['New Project', 'Modification', 'Replacement', 'Upgrade', 'Refresh', 'Capacity', 'Special Improvements']
     },
     productModel: {
         type: String,
@@ -70,6 +79,7 @@ const mhRequestSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    // ── Existing acceptance workflow status ─────────────────────────────────
     status: {
         type: String,
         default: 'Active',
@@ -80,6 +90,38 @@ const mhRequestSchema = new mongoose.Schema({
         default: 'Initial',
         enum: ['Initial', 'Design', 'Design Approved', 'Production', 'Implementation']
     },
+    // ── New email & assignment workflow status ───────────────────────────────
+    workflowStatus: {
+        type: String,
+        enum: ['Pending', 'Notified', 'Assigned', 'Rejected', 'In Progress', 'Completed'],
+        default: 'Pending'
+    },
+    // ── Assignment tracking ─────────────────────────────────────────────────
+    assignedEngineer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Employee',
+        default: null
+    },
+    assignedAt: {
+        type: Date,
+        default: null
+    },
+    // ── Approver tracking ───────────────────────────────────────────────────
+    approver: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Employee',
+        default: null
+    },
+    approverEmail: {
+        type: String,
+        default: ''
+    },
+    // ── Email log ───────────────────────────────────────────────────────────
+    emailLog: {
+        type: [emailLogEntrySchema],
+        default: []
+    },
+    // ── Existing fields ─────────────────────────────────────────────────────
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -123,11 +165,8 @@ const mhRequestSchema = new mongoose.Schema({
         default: true
     },
     history: [{
-        action: String, // 'Created', 'Updated', 'Deleted', 'Restored'
-        date: {
-            type: Date,
-            default: Date.now
-        },
+        action: String,
+        date: { type: Date, default: Date.now },
         details: String
     }]
 }, {

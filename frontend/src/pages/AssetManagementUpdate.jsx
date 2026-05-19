@@ -451,7 +451,7 @@ const AssetManagementUpdate = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -469,7 +469,7 @@ const AssetManagementUpdate = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -661,7 +661,7 @@ const AssetManagementUpdate = () => {
                         <div>
                             <button
                                 onClick={openAddModal}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-blue to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-tvs-primary to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-semibold text-sm transform hover:scale-105 active:scale-95"
                             >
                                 <Plus size={18} />
                                 Add Asset
@@ -738,7 +738,7 @@ const AssetManagementUpdate = () => {
                                             <select
                                                 value={selectedRequestId}
                                                 onChange={(e) => handleAcceptedRequestChange(e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-tvs-blue bg-white"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-tvs-primary bg-white"
                                             >
                                                 <option value="">Select Accepted Request</option>
                                                 {acceptedRequests.map(request => (
@@ -938,7 +938,7 @@ const AssetManagementUpdate = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2.5 bg-tvs-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-semibold shadow-sm"
+                                    className="px-6 py-2.5 bg-tvs-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-semibold shadow-sm"
                                 >
                                     {editMode ? 'Update' : 'Create'} Asset
                                 </button>
@@ -973,7 +973,7 @@ const AssetManagementUpdate = () => {
                     border-bottom: 2px solid #e2e8f0;
                     position: relative;
                     font-size: 12px;
-                    background-color: #253C80;
+                    background-color: #CC1F1F;
                     color: #ffffff;
                 }
             `}</style>

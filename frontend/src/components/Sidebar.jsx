@@ -6,6 +6,7 @@ import {
     Type, Layout as LayoutIcon, Check
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Tooltip } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,8 +16,8 @@ import { useAuth } from '../context/AuthContext';
 const COLOR_THEMES = [
     {
         key: 'navy', label: 'Navy',
-        bg: 'linear-gradient(180deg,#0B1730 0%,#0F2040 60%,#091526 100%)',
-        accent: '#00C9A7', preview: '#0F2040', isLight: false,
+        bg: 'linear-gradient(180deg,#7A0F0F 0%,#991515 60%,#091526 100%)',
+        accent: '#00C9A7', preview: '#991515', isLight: false,
     },
     {
         key: 'slate', label: 'Slate',
@@ -47,7 +48,12 @@ const COLOR_THEMES = [
     {
         key: 'white', label: 'White',
         bg: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 60%,#f1f5f9 100%)',
-        accent: '#253C80', preview: '#f8fafc', isLight: true,
+        accent: '#CC1F1F', preview: '#f8fafc', isLight: true,
+    },
+    {
+        key: 'tvs-red', label: 'TVS Red',
+        bg: '#CC1F1F',
+        accent: '#ffffff', preview: '#CC1F1F', isLight: false,
     },
     {
         key: 'black', label: 'Black',
@@ -81,10 +87,9 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const location = useLocation();
     const navigate  = useNavigate();
 
-    const [openGroups,    setOpenGroups]    = React.useState({ vendorManagement: true });
     const [showCustomize, setShowCustomize] = useState(false);
 
-    const [activeTheme,  setActiveTheme]  = useState(() => load('sb_theme',  'navy'));
+    const [activeTheme,  setActiveTheme]  = useState(() => load('sb_theme',  'tvs-red'));
     const [activeFont,   setActiveFont]   = useState(() => load('sb_font',   'inter'));
     const [activeLayout, setActiveLayout] = useState(() => load('sb_layout', 'normal'));
 
@@ -113,25 +118,27 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const applyFont   = k => { setActiveFont(k);   save('sb_font',   k); };
     const applyLayout = k => { setActiveLayout(k); save('sb_layout', k); };
 
-    const isVendorGroupActive = location.pathname.startsWith('/vendor-master');
-    React.useEffect(() => {
-        if (isVendorGroupActive) setOpenGroups(p => ({ ...p, vendorManagement: true }));
-    }, [isVendorGroupActive]);
 
-    const navItems = [
-        { name: 'Dashboard',        icon: Home,          path: '/',                        permission: 'dashboard' },
-        { name: 'Employee Master',  icon: Users,         path: '/employee-master',         permission: 'employeeMaster' },
-        { name: 'MH Requests',      icon: FileText,      path: '/mh-requests',            permission: 'assetRequest' },
-        { name: 'Request Tracker',  icon: ClipboardList, path: '/request-tracker',        permission: 'requestTracker' },
-        { name: 'MH Dev Tracker',   icon: TrendingUp,    path: '/mh-development-tracker', permission: 'mhDevelopmentTracker' },
-        { name: 'Project Plan',     icon: BarChart2,     path: '/project-plan-model',     permission: 'mhDevelopmentTracker', isSubItem: true },
-        { name: 'Vendor Management',icon: Shield,        path: '#',                       permission: 'vendorMaster', isHeader: true, groupKey: 'vendorManagement' },
-        { name: 'Vendor Master',    icon: Layers,        path: '/vendor-master',          permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
-        { name: 'Vendor Scoring',   icon: PieChart,      path: '/vendor-master/scoring',  permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
-        { name: 'Loading Chart',    icon: BarChart2,     path: '/vendor-master/loading',  permission: 'vendorMaster', isSubItem: true, groupKey: 'vendorManagement' },
-        { name: 'Asset Management', icon: Package,       path: '/asset-management-update',permission: 'assetSummary' },
-        { name: 'Asset Summary',    icon: ClipboardList, path: '/asset-summary',          permission: 'assetSummary' },
-        { name: 'Settings',         icon: Settings,      path: '/settings',               permission: 'settings' },
+    const NAV_SECTIONS = [
+        { label: 'OPERATIONS', items: [
+            { name: 'Dashboard',        short: 'Dashboard',  icon: Home,          path: '/',                        permission: 'dashboard' },
+            { name: 'MH Request',       short: 'MH Request', icon: FileText,      path: '/mh-requests',             permission: 'assetRequest' },
+            { name: 'Request Tracker',  short: 'Tracker',    icon: ClipboardList, path: '/request-tracker',         permission: 'requestTracker' },
+            { name: 'MH Development',   short: 'MH Dev',     icon: TrendingUp,    path: '/mh-development-tracker',  permission: 'mhDevelopmentTracker' },
+        ]},
+        { label: 'ASSETS', items: [
+            { name: 'Asset Management', short: 'Assets',     icon: Package,       path: '/asset-management-update', permission: 'assetSummary' },
+            { name: 'Asset Summary',    short: 'Summary',    icon: ClipboardList, path: '/asset-summary',           permission: 'assetSummary' },
+        ]},
+        { label: 'MANAGEMENT', items: [
+            { name: 'Employee Master',  short: 'Employees',  icon: Users,         path: '/employee-master',         permission: 'employeeMaster' },
+            { name: 'Vendor Master',    short: 'Vendors',    icon: Layers,        path: '/vendor-master',           permission: 'vendorMaster' },
+            { name: 'Vendor Scoring',   short: 'Scoring',    icon: PieChart,      path: '/vendor-master/scoring',   permission: 'vendorMaster' },
+            { name: 'Vendor Loading',   short: 'Loading',    icon: BarChart2,     path: '/vendor-master/loading',   permission: 'vendorMaster' },
+        ]},
+        { label: 'SYSTEM', items: [
+            { name: 'Settings',         short: 'Settings',   icon: Settings,      path: '/settings',                permission: 'settings' },
+        ]},
     ];
 
     const panelV = {
@@ -163,7 +170,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 transition={{ type: 'spring', stiffness: 280, damping: 32 }}
                 className="h-screen fixed left-0 top-0 z-sidebar flex flex-col overflow-hidden"
                 style={{
-                    width: isSidebarOpen ? 272 : 72,
+                    width: isSidebarOpen ? 220 : 64,
                     transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
                     background: theme.bg,
                     fontFamily: font.style,
@@ -174,57 +181,59 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 }}
             >
                 {/* ══ Logo area ══ */}
-                <div className="flex items-center justify-between px-4 py-3 border-b"
-                    style={{ borderColor: tc.border }}>
-                    <div className="flex flex-col items-center gap-1.5 flex-1 overflow-hidden">
-                        <motion.div
-                            whileHover={{ scale: 1.05, rotate: 5 }}
-                            className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen ? 'h-13 w-13 mb-1' : 'h-10 w-10'} rounded-2xl`}
-                            style={{
-                                background: `linear-gradient(135deg,${theme.accent}26,${theme.accent}0d)`,
-                                border: `1px solid ${theme.accent}4d`,
-                                boxShadow: `0 0 20px ${theme.accent}26`,
+                <div style={{ borderColor: tc.border, borderBottomWidth: 1, borderBottomStyle: 'solid' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding:'12px 8px 0 12px' }}>
+                        {isSidebarOpen ? (
+                            /* Expanded: full logo, tight white pill, no border */
+                            <div style={{
+                                flex:1, marginRight:8,
+                                background:'#ffffff',
+                                borderRadius:7,
+                                padding:'6px 10px',
+                                display:'inline-flex',
+                                alignItems:'center',
+                                justifyContent:'center',
+                                overflow:'hidden',
+                                maxWidth:148,
                             }}>
-                            <Factory size={isSidebarOpen ? 26 : 20} style={{ color: theme.accent }} />
-                        </motion.div>
-
-                        <AnimatePresence>
-                            {isSidebarOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ duration: 0.28 }}
-                                    className="text-center"
-                                >
-                                    <h1 className="flex flex-col items-center">
-                                        <span className="text-[14px] font-black tracking-[0.2em] whitespace-nowrap"
-                                            style={{ color: tc.text, textShadow: lx ? 'none' : `0 0 10px ${theme.accent}66` }}>
-                                            <span style={{ color: theme.accent }}>MfG</span> FACTORY
-                                        </span>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <div style={{ width: 16, height: 1, background: lx ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }} />
-                                            <span className="text-[8px] font-bold tracking-[0.3em] uppercase" style={{ color: tc.muted }}>
-                                                Manufacturing Portal
-                                            </span>
-                                            <div style={{ width: 16, height: 1, background: lx ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }} />
-                                        </div>
-                                    </h1>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                <img
+                                    src="/tvslogo.jpg"
+                                    alt="TVS Logo"
+                                    style={{ height:30, width:'auto', objectFit:'contain', display:'block' }}
+                                />
+                            </div>
+                        ) : (
+                            /* Collapsed: logo scaled to fit the 64px sidebar width */
+                            <div style={{
+                                width:46,
+                                height:20,
+                                background:'#ffffff',
+                                borderRadius:5,
+                                overflow:'hidden',
+                                flexShrink:0,
+                                display:'flex',
+                                alignItems:'center',
+                                justifyContent:'center',
+                            }}>
+                                <img
+                                    src="/tvslogo.jpg"
+                                    alt="TVS"
+                                    style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
+                                />
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="hidden lg:inline-flex p-2 rounded-lg transition-colors flex-shrink-0"
+                            style={{ color: tc.muted }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = lx ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            {isSidebarOpen ? <ChevronLeft size={16} /> : <Menu size={16} />}
+                        </button>
                     </div>
-
-                    <button
-                        type="button"
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="hidden lg:inline-flex p-2 rounded-lg transition-colors ml-1 flex-shrink-0"
-                        style={{ color: tc.muted }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = lx ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                        {isSidebarOpen ? <ChevronLeft size={16} /> : <Menu size={16} />}
-                    </button>
+                    <div style={{ borderBottom:`1px solid ${tc.border}`, margin:'12px 0 8px 0' }} />
                 </div>
 
                 {/* ══ Customize Button ══ */}
@@ -320,7 +329,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: t.accent }} />
                                                     {activeTheme === t.key && (
                                                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Check size={9} color={t.isLight ? '#253C80' : '#fff'} strokeWidth={3} />
+                                                            <Check size={9} color={t.isLight ? '#CC1F1F' : '#fff'} strokeWidth={3} />
                                                         </div>
                                                     )}
                                                 </div>
@@ -390,161 +399,113 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                 </AnimatePresence>
 
                 {/* ══ Navigation ══ */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 sidebar-scrollbar">
-                    <AnimatePresence>
-                        {isSidebarOpen && (
-                            <motion.p
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="px-5 mb-2 text-[9px] font-bold uppercase tracking-[0.2em]"
-                                style={{ color: tc.label }}
-                            >
-                                Main Menu
-                            </motion.p>
-                        )}
-                    </AnimatePresence>
-
-                    <ul style={{ listStyle: 'none', margin: 0 }}
-                        className={`${isSidebarOpen ? 'px-3' : 'px-2'} relative`}
-                    >
-                        {navItems.map((item, index) => {
-                            if (item.permission && !hasPermission(item.permission)) return null;
-                            if (!isSidebarOpen && (item.isHeader || item.isSubItem)) return null;
-                            if (item.groupKey && !item.isHeader && openGroups[item.groupKey] === false) return null;
-
-                            const isActive = location.pathname === item.path
-                                || (item.path !== '/' && item.path !== '#' && location.pathname.startsWith(item.path));
-
-                            /* ── Group header ── */
-                            if (item.isHeader) {
-                                const isGroupActive = item.groupKey === 'vendorManagement' && isVendorGroupActive;
-                                return (
-                                    <li key={item.name} style={{ paddingTop: 12, paddingBottom: 4 }}>
-                                        <motion.button
-                                            whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}
-                                            type="button"
-                                            onClick={() => {
-                                                if (item.groupKey) setOpenGroups(p => ({ ...p, [item.groupKey]: !p[item.groupKey] }));
-                                                navigate('/vendor-master');
-                                            }}
-                                            className="w-full flex items-center justify-between px-3 rounded-2xl transition-all border border-transparent"
-                                            style={{
-                                                paddingTop: layout.itemPY, paddingBottom: layout.itemPY,
-                                                color: isGroupActive ? theme.accent : tc.muted,
-                                                background: isGroupActive ? `${theme.accent}14` : 'transparent',
-                                                borderColor: isGroupActive ? `${theme.accent}26` : 'transparent',
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex items-center justify-center rounded-xl"
-                                                    style={{
-                                                        width: layout.iconSize, height: layout.iconSize,
-                                                        background: isGroupActive ? `linear-gradient(135deg,${theme.accent},${theme.accent}aa)` : tc.iconBg,
-                                                        boxShadow: isGroupActive ? `0 4px 12px ${theme.accent}4d` : 'none',
-                                                    }}>
-                                                    <item.icon size={15} color={isGroupActive ? '#fff' : tc.muted} />
-                                                </div>
-                                                {isSidebarOpen && (
-                                                    <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: isGroupActive ? theme.accent : tc.muted }}>
-                                                        {item.name}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {item.groupKey && isSidebarOpen && (
-                                                <ChevronDown size={13}
-                                                    style={{ color: tc.muted }}
-                                                    className={`transition-transform duration-300 ${openGroups[item.groupKey] ? 'rotate-180' : ''}`} />
-                                            )}
-                                        </motion.button>
-                                    </li>
-                                );
-                            }
-
-                            /* ── Regular nav item ── */
-                            return (
-                                <motion.li
-                                    key={item.name}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.32, delay: index * 0.04, type: 'spring', damping: 22 }}
-                                    style={{ marginBottom: 4 }}
-                                >
-                                    <NavLink to={item.path} end={item.path === '/'} className="block outline-none">
-                                        {({ isActive }) => (
-                                            <motion.div
-                                                whileHover={{ x: isSidebarOpen ? 5 : 0, scale: isSidebarOpen ? 1 : 1.08 }}
-                                                whileTap={{ scale: 0.96 }}
-                                                className={`flex items-center ${isSidebarOpen ? 'justify-start' : 'justify-center'} px-3 rounded-2xl transition-all group relative overflow-hidden`}
-                                                style={{
-                                                    paddingTop: layout.itemPY,
-                                                    paddingBottom: layout.itemPY,
-                                                    background: isActive ? `${theme.accent}12` : 'transparent',
-                                                }}
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 sidebar-scrollbar">
+                    {NAV_SECTIONS.map(section => {
+                        const visibleItems = section.items.filter(item =>
+                            !item.permission || hasPermission(item.permission)
+                        );
+                        if (visibleItems.length === 0) return null;
+                        return (
+                            <div key={section.label}>
+                                {/* Section header — hidden in collapsed mode */}
+                                {isSidebarOpen && (
+                                    <div style={{
+                                        fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                                        color: tc.label, padding: '16px 16px 4px 16px', marginTop: 4,
+                                    }}>
+                                        {section.label}
+                                    </div>
+                                )}
+                                <ul style={{ listStyle:'none', margin:0, padding: isSidebarOpen ? '0 8px' : '0 4px' }}>
+                                    {visibleItems.map((item, idx) => {
+                                        const isActive = location.pathname === item.path
+                                            || (item.path !== '/' && location.pathname.startsWith(item.path));
+                                        const navItem = (
+                                            <motion.li
+                                                key={item.path}
+                                                initial={{ opacity:0, x:-8 }}
+                                                animate={{ opacity:1, x:0 }}
+                                                transition={{ duration:0.28, delay: idx * 0.03 }}
+                                                style={{ marginBottom: isSidebarOpen ? 2 : 0 }}
                                             >
-                                                {/* Active floating pill */}
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="floatingPill"
-                                                        className="absolute inset-0 rounded-2xl z-0"
-                                                        style={{
-                                                            background: `linear-gradient(90deg,${theme.accent}1a,transparent)`,
-                                                            border: `1px solid ${theme.accent}33`,
-                                                        }}
-                                                        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                                                    />
-                                                )}
-
-                                                <div className="flex items-center gap-3.5 z-10">
-                                                    {/* Icon */}
-                                                    <div className="flex items-center justify-center rounded-xl relative group-hover:rotate-[5deg] transition-transform duration-300"
-                                                        style={{
-                                                            width: layout.iconSize, height: layout.iconSize,
-                                                            background: isActive ? `linear-gradient(135deg,${theme.accent},${theme.accent}aa)` : tc.iconBg,
-                                                            boxShadow: isActive ? `0 6px 16px ${theme.accent}4d` : 'none',
-                                                        }}>
-                                                        <item.icon
-                                                            size={layout.iconSize <= 30 ? 14 : 16}
-                                                            color={isActive ? '#ffffff' : tc.muted}
-                                                            className="group-hover:scale-110 transition-transform"
-                                                        />
-                                                        {isActive && <div className="absolute inset-0 bg-white/20 rounded-xl blur-md opacity-50" />}
-                                                    </div>
-
-                                                    {/* Label */}
-                                                    {isSidebarOpen && (
-                                                        <span style={{
-                                                            fontSize: 12, fontWeight: isActive ? 800 : 600,
-                                                            color: isActive ? tc.text : tc.muted,
-                                                            fontFamily: font.style,
-                                                            transition: 'color 0.18s ease',
-                                                        }}
-                                                            className="group-hover:!text-opacity-100"
-                                                            onMouseEnter={e => { if (!isActive) e.target.style.color = tc.text80; }}
-                                                            onMouseLeave={e => { if (!isActive) e.target.style.color = tc.muted; }}
-                                                        >
-                                                            {item.name}
-                                                        </span>
+                                                <NavLink to={item.path} end={item.path === '/'} className="block outline-none">
+                                                    {({ isActive: navActive }) => (
+                                                        isSidebarOpen ? (
+                                                            /* ── EXPANDED item ── */
+                                                            <motion.div
+                                                                whileHover={{ x: 3 }}
+                                                                whileTap={{ scale: 0.97 }}
+                                                                style={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    padding: '10px 14px',
+                                                                    borderRadius: 10,
+                                                                    borderLeft: navActive ? '3px solid #fff' : '3px solid transparent',
+                                                                    background: navActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.18s ease',
+                                                                }}
+                                                                onMouseEnter={e => { if (!navActive) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+                                                                onMouseLeave={e => { if (!navActive) e.currentTarget.style.background = 'transparent'; }}
+                                                            >
+                                                                <item.icon
+                                                                    size={20}
+                                                                    style={{ marginRight:12, flexShrink:0, color: navActive ? tc.text : tc.muted }}
+                                                                />
+                                                                <span style={{
+                                                                    fontSize: 13,
+                                                                    fontWeight: navActive ? 500 : 400,
+                                                                    color: navActive ? tc.text : tc.muted,
+                                                                    fontFamily: font.style,
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                }}>
+                                                                    {item.name}
+                                                                </span>
+                                                            </motion.div>
+                                                        ) : (
+                                                            /* ── COLLAPSED item: icon tile + label below ── */
+                                                            <div style={{
+                                                                display: 'flex', flexDirection: 'column',
+                                                                alignItems: 'center', justifyContent: 'center',
+                                                                padding: '8px 0', width: '100%',
+                                                            }}>
+                                                                <div style={{
+                                                                    width: 36, height: 36, borderRadius: 8,
+                                                                    background: navActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.10)',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                    transition: 'background 0.18s ease',
+                                                                }}>
+                                                                    <item.icon size={18} color={navActive ? '#ffffff' : 'rgba(255,255,255,0.75)'} />
+                                                                </div>
+                                                                <div style={{
+                                                                    fontSize: 9, color: navActive ? '#ffffff' : 'rgba(255,255,255,0.65)',
+                                                                    marginTop: 4, textAlign: 'center', lineHeight: 1.2,
+                                                                    maxWidth: 56, whiteSpace: 'normal',
+                                                                }}>
+                                                                    {item.short}
+                                                                </div>
+                                                            </div>
+                                                        )
                                                     )}
-                                                </div>
-
-                                                {/* Active dot */}
-                                                {isActive && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, scale: 0 }}
-                                                        animate={{ opacity: 1, scale: 1 }}
-                                                        className="ml-auto w-1.5 h-1.5 rounded-full z-10"
-                                                        style={{ background: theme.accent, boxShadow: `0 0 10px ${theme.accent}cc` }}
-                                                    />
-                                                )}
-                                            </motion.div>
-                                        )}
-                                    </NavLink>
-                                </motion.li>
-                            );
-                        })}
-                    </ul>
+                                                </NavLink>
+                                            </motion.li>
+                                        );
+                                        /* Wrap collapsed items with Ant Design Tooltip */
+                                        return isSidebarOpen ? navItem : (
+                                            <Tooltip key={item.path} title={item.name} placement="right">
+                                                {navItem}
+                                            </Tooltip>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        );
+                    })}
                 </nav>
 
-                {/* ══ Footer ══ */}
+                                {/* ══ Footer ══ */}
                 <div className="p-3 border-t" style={{ borderColor: tc.border }}>
                     <div
                         className={`rounded-xl transition-all duration-300 ${isSidebarOpen ? 'p-3' : 'p-2 flex justify-center'}`}

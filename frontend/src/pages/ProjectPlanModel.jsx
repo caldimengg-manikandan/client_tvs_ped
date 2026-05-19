@@ -114,7 +114,7 @@ const ProjectPlanModel = () => {
     };
 
     const CustomHeaderCell = ({ column }) => (
-        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#253C80' }}>
+        <div className="h-full w-full flex items-center px-4 text-white" style={{ backgroundColor: '#CC1F1F' }}>
             <span className="font-bold text-[11px] leading-tight tracking-wide uppercase">{column.name}</span>
         </div>
     );
@@ -193,7 +193,7 @@ const ProjectPlanModel = () => {
         const hasFilter = rawSelected !== undefined;
 
         return (
-            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#253C80' }}>
+            <div className="relative h-full w-full flex items-center justify-between px-4 text-xs gap-1 text-white" style={{ backgroundColor: '#CC1F1F' }}>
                 <div className="flex-1 min-w-0">
                     <span className="font-bold text-[11px] leading-tight tracking-wide uppercase truncate">{column.name}</span>
                 </div>
@@ -213,7 +213,7 @@ const ProjectPlanModel = () => {
                             <button
                                 type="button"
                                 onClick={handleSelectAll}
-                                className="text-[10px] font-semibold text-tvs-blue"
+                                className="text-[10px] font-semibold text-tvs-primary"
                             >
                                 Select All
                             </button>
@@ -233,7 +233,7 @@ const ProjectPlanModel = () => {
                                     setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))
                                 }
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -430,7 +430,7 @@ const ProjectPlanModel = () => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 background: 'rgba(255,255,255,0.6)', zIndex: 20, pointerEvents: 'none'
                             }}>
-                                <div className="w-8 h-8 border-4 border-tvs-blue/20 border-t-tvs-blue rounded-full animate-spin" />
+                                <div className="w-8 h-8 border-4 border-tvs-primary/20 border-t-tvs-primary rounded-full animate-spin" />
                             </div>
                         )}
                     </div>
@@ -573,7 +573,7 @@ const ProjectPlanModel = () => {
                     border-bottom: 2px solid #e2e8f0;
                     position: relative;
                     font-size: 11px;
-                    background-color: #253C80;
+                    background-color: #CC1F1F;
                     color: #ffffff;
                     text-transform: uppercase;
                 }

@@ -13,7 +13,7 @@ const ACTION_MAP = {
   'Asset Request Updated':   { icon: RefreshCw,     color: '#0D9488', bg: '#F0FDFA' },
   'Asset Request Accepted':  { icon: CheckCircle2,  color: '#38A169', bg: '#F0FFF4' },
   'Asset Request Rejected':  { icon: AlertTriangle, color: '#E53E3E', bg: '#FFF5F5' },
-  'Asset Implemented':       { icon: Package,       color: '#1B3A7A', bg: '#EEF2FF' },
+  'Asset Implemented':       { icon: Package,       color: '#B31818', bg: '#EEF2FF' },
   'New Employee Added':      { icon: Users,         color: '#7C3AED', bg: '#FAF5FF' },
   'Vendor Updated':          { icon: TrendingUp,    color: '#D97706', bg: '#FFFBEB' },
   default:                   { icon: Activity,      color: '#94A3B8', bg: '#F8FAFD' },
@@ -140,7 +140,7 @@ export default function SmartInsightsSection({ liveStats }) {
   const stats = [
     { icon: FileText,      value: liveStats?.totalRequests?.toLocaleString(), label: 'Total Requests',  color: '#4F46E5' },
     { icon: CheckCircle2,  value: liveStats?.accepted?.toLocaleString(),      label: 'Accepted',        color: '#38A169' },
-    { icon: Package,       value: liveStats?.implemented?.toLocaleString(),   label: 'Implemented',     color: '#1B3A7A' },
+    { icon: Package,       value: liveStats?.implemented?.toLocaleString(),   label: 'Implemented',     color: '#B31818' },
     { icon: AlertTriangle, value: liveStats?.rejected?.toLocaleString(),      label: 'Rejected',        color: '#E53E3E' },
   ];
 

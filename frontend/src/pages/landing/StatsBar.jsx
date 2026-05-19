@@ -62,7 +62,7 @@ export default function StatsBar({ publicStats }) {
       value:  isLoading ? null : publicStats?.totalRequests,
       suffix: '+',
       label:  'MH Requests Processed',
-      color:  '#1B3A7A',
+      color:  '#B31818',
     },
     {
       value:  isLoading ? null : publicStats?.implemented,

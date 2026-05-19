@@ -336,7 +336,7 @@ const MHDevelopmentTracker = () => {
                 {activeFilterKey === key && (
                     <div className="absolute z-50 top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-2">
                         <div className="flex items-center justify-between mb-2">
-                            <button type="button" onClick={handleSelectAll} className="text-[10px] font-semibold text-tvs-blue">Select All</button>
+                            <button type="button" onClick={handleSelectAll} className="text-[10px] font-semibold text-tvs-primary">Select All</button>
                             <button type="button" onClick={handleClear} className="text-[10px] font-semibold text-gray-500">Clear</button>
                         </div>
                         <div className="mb-2">
@@ -345,7 +345,7 @@ const MHDevelopmentTracker = () => {
                                 value={searchValue}
                                 onChange={(e) => setFilterSearchText(prev => ({ ...prev, [key]: e.target.value }))}
                                 placeholder="Search..."
-                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-blue"
+                                className="w-full border border-gray-200 rounded px-1.5 py-1 text-[10px] outline-none focus:ring-1 focus:ring-tvs-primary"
                             />
                         </div>
                         <div className="max-h-40 overflow-auto space-y-1">
@@ -460,11 +460,11 @@ const MHDevelopmentTracker = () => {
                 <div className="flex items-center gap-2 py-1">
                     {row.vendorCode ? (
                         <>
-                            <span className="text-xs font-bold text-tvs-blue min-w-[60px]">{row.vendorCode}</span>
+                            <span className="text-xs font-bold text-tvs-primary min-w-[60px]">{row.vendorCode}</span>
                             <button
                                 type="button"
                                 onClick={() => handleVendorSelect(row._id, row.plantLocation)}
-                                className="p-1 rounded-md bg-gray-50 text-gray-400 hover:text-tvs-blue hover:bg-blue-50 transition-all border border-gray-100"
+                                className="p-1 rounded-md bg-gray-50 text-gray-400 hover:text-tvs-primary hover:bg-blue-50 transition-all border border-gray-100"
                                 title="Change Vendor"
                             >
                                 <Edit size={12} />
@@ -474,7 +474,7 @@ const MHDevelopmentTracker = () => {
                         <Button
                             size="small"
                             type="primary"
-                            className="bg-tvs-blue text-[10px] h-6"
+                            className="bg-tvs-primary text-[10px] h-6"
                             onClick={() => handleVendorSelect(row._id, row.plantLocation)}
                             disabled={!row.plantLocation}
                             title={!row.plantLocation ? 'Please set Plant Location first' : ''}
@@ -582,7 +582,7 @@ const MHDevelopmentTracker = () => {
                         <Button
                             size="small"
                             icon={<Download size={14} />}
-                            className="text-tvs-blue text-[10px]"
+                            className="text-tvs-primary text-[10px]"
                             onClick={() => handleDownloadDrawing(row.drawingUrl, row.drawingFileName)}
                         >
                             Download
@@ -738,7 +738,7 @@ const MHDevelopmentTracker = () => {
             <Modal
                 title={
                     <div className="flex items-center gap-3 pb-4 border-b">
-                        <div className="p-2 bg-tvs-blue/10 rounded-lg text-tvs-blue">
+                        <div className="p-2 bg-tvs-primary/10 rounded-lg text-tvs-primary">
                             <Edit size={20} />
                         </div>
                         <span className="text-xl font-bold">Update Tracker</span>

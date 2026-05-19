@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, FileText, Users, Save, Check, Search } from 'lucide-react';
-import { message } from 'antd';
+import { Calendar, FileText, Users, Save, Check, Search, Shield } from 'lucide-react';
+import { message, Select, Tag, Spin, Tooltip } from 'antd';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+const ROLE_OPTIONS = [
+    { value: 'Employee',     label: 'Employee',     color: 'blue' },
+    { value: 'Approver',     label: 'Approver',     color: 'green' },
+    { value: 'PED Engineer', label: 'PED Engineer', color: 'purple' },
+];
 
 const Settings = () => {
     const [loading, setLoading] = useState(true);
@@ -17,9 +23,16 @@ const Settings = () => {
     const [reportType, setReportType] = useState('Progress Report of MH Requests');
     const [selectedEmployees, setSelectedEmployees] = useState([]);
 
+    // User Management State
+    const [users, setUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [roleUpdating, setRoleUpdating] = useState({});
+
     useEffect(() => {
         fetchEmployees();
         fetchExistingSettings();
+        fetchUsers();
     }, []);
 
     const fetchExistingSettings = async () => {
@@ -47,6 +60,35 @@ const Settings = () => {
             console.error('Error fetching employees:', error);
             message.error('Failed to load employees');
             setLoading(false);
+        }
+    };
+
+    const fetchUsers = async () => {
+        setUsersLoading(true);
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/users`);
+            if (response.data.success) {
+                setUsers(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setUsersLoading(false);
+        }
+    };
+
+    const handleRoleChange = async (userId, newRole) => {
+        setRoleUpdating(prev => ({ ...prev, [userId]: true }));
+        try {
+            const response = await axios.patch(`${API_BASE_URL}/api/users/${userId}/role`, { role: newRole });
+            if (response.data.success) {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u));
+                message.success(`Role updated to "${newRole}" successfully`);
+            }
+        } catch (error) {
+            message.error(error.response?.data?.message || 'Failed to update role');
+        } finally {
+            setRoleUpdating(prev => ({ ...prev, [userId]: false }));
         }
     };
 
@@ -194,7 +236,7 @@ const Settings = () => {
     if (loading && employees.length === 0) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-blue"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tvs-primary"></div>
             </div>
         );
     }
@@ -244,7 +286,7 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Frequency Settings */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center space-x-3 mb-4 text-tvs-blue">
+                    <div className="flex items-center space-x-3 mb-4 text-tvs-primary">
                         <Calendar className="w-6 h-6" />
                         <h2 className="text-lg font-semibold">Frequency</h2>
                     </div>
@@ -254,7 +296,7 @@ const Settings = () => {
                                 key={freq}
                                 onClick={() => setFrequency(freq)}
                                 className={`w-full p-4 text-left rounded-lg border transition-all ${frequency === freq
-                                    ? 'border-tvs-blue bg-blue-50 text-tvs-blue ring-1 ring-blue-200'
+                                    ? 'border-tvs-primary bg-blue-50 text-tvs-primary ring-1 ring-blue-200'
                                     : 'border-gray-200 hover:border-blue-300'
                                     }`}
                             >
@@ -269,7 +311,7 @@ const Settings = () => {
 
                 {/* Report Type Settings */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center space-x-3 mb-4 text-tvs-blue">
+                    <div className="flex items-center space-x-3 mb-4 text-tvs-primary">
                         <FileText className="w-6 h-6" />
                         <h2 className="text-lg font-semibold">Report Type</h2>
                     </div>
@@ -279,7 +321,7 @@ const Settings = () => {
                                 key={type}
                                 onClick={() => setReportType(type)}
                                 className={`w-full p-4 text-left rounded-lg border transition-all ${reportType === type
-                                    ? 'border-tvs-blue bg-blue-50 text-tvs-blue ring-1 ring-blue-200'
+                                    ? 'border-tvs-primary bg-blue-50 text-tvs-primary ring-1 ring-blue-200'
                                     : 'border-gray-200 hover:border-blue-300'
                                     }`}
                             >
@@ -294,7 +336,7 @@ const Settings = () => {
 
                 {/* Recipients Settings */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-[500px]">
-                    <div className="flex items-center space-x-3 mb-4 text-tvs-blue">
+                    <div className="flex items-center space-x-3 mb-4 text-tvs-primary">
                         <Users className="w-6 h-6" />
                         <h2 className="text-lg font-semibold">Recipients</h2>
                     </div>
@@ -304,7 +346,7 @@ const Settings = () => {
                         <input
                             type="text"
                             placeholder="Search employees..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tvs-blue"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tvs-primary"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -316,13 +358,13 @@ const Settings = () => {
                                 key={emp._id}
                                 onClick={() => handleEmployeeToggle(emp.mailId)}
                                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${selectedEmployees.includes(emp.mailId)
-                                    ? 'border-tvs-blue bg-blue-50'
+                                    ? 'border-tvs-primary bg-blue-50'
                                     : 'border-gray-100 hover:bg-gray-50'
                                     }`}
                             >
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${selectedEmployees.includes(emp.mailId)
-                                        ? 'bg-blue-200 text-tvs-blue'
+                                        ? 'bg-blue-200 text-tvs-primary'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}>
                                         {(emp.employeeName || '?').charAt(0)}
@@ -332,7 +374,7 @@ const Settings = () => {
                                         <p className="text-xs text-gray-500 truncate">{emp.mailId || 'No Email'}</p>
                                     </div>
                                     {selectedEmployees.includes(emp.mailId) && (
-                                        <Check size={16} className="text-tvs-blue" />
+                                        <Check size={16} className="text-tvs-primary" />
                                     )}
                                 </div>
                             </div>
@@ -341,7 +383,7 @@ const Settings = () => {
 
                     <div className="mt-4 pt-4 border-t border-gray-100">
                         <div className="text-sm text-gray-500 mb-2">
-                            Selected: <span className="font-bold text-tvs-blue">{selectedEmployees.length}</span> recipients
+                            Selected: <span className="font-bold text-tvs-primary">{selectedEmployees.length}</span> recipients
                         </div>
                     </div>
                 </div>
@@ -353,11 +395,115 @@ const Settings = () => {
                     onClick={handleSave}
                     disabled={loading}
                     style={{ color: '#fff' }}
-                    className="flex items-center bg-tvs-blue px-8 py-3 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer text-white disabled:opacity-50 disabled:cursor-not-allowed space-x-2"
+                    className="flex items-center bg-tvs-primary px-8 py-3 rounded-lg font-medium shadow-sm hover:bg-opacity-90 transform active:scale-95 transition-all cursor-pointer text-white disabled:opacity-50 disabled:cursor-not-allowed space-x-2"
                 >
                     <Save size={20} color="#fff" />
                     <span>{loading ? 'Saving...' : 'Save Changes'}</span>
                 </button>
+            </div>
+
+            {/* ─── User Management Section ─────────────────────────────────────── */}
+            <div className="mt-10">
+                <div className="mb-4 flex items-center gap-3">
+                    <Shield className="w-6 h-6 text-tvs-primary" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+                        <p className="text-gray-600 text-sm">Assign access levels to portal users</p>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {/* Search */}
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search by name, email or department..."
+                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tvs-primary"
+                                value={userSearchTerm}
+                                onChange={e => setUserSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <span className="text-xs text-gray-400 font-medium">
+                            {users.filter(u => u.role !== 'Admin').length} non-admin user(s)
+                        </span>
+                    </div>
+
+                    {/* Table */}
+                    {usersLoading ? (
+                        <div className="flex justify-center items-center h-32">
+                            <Spin size="large" />
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-100">
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Employee</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Department</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Current Role</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-52">Access Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {users
+                                        .filter(u => {
+                                            if (u.role === 'Admin') return false; // Admin managed separately
+                                            const term = userSearchTerm.toLowerCase();
+                                            if (!term) return true;
+                                            const emp = u.employeeId;
+                                            return (
+                                                (emp?.employeeName || '').toLowerCase().includes(term) ||
+                                                (u.email || '').toLowerCase().includes(term) ||
+                                                (emp?.departmentName || '').toLowerCase().includes(term)
+                                            );
+                                        })
+                                        .map(user => {
+                                            const emp = user.employeeId;
+                                            const roleColor = ROLE_OPTIONS.find(r => r.value === user.role)?.color || 'default';
+                                            return (
+                                                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 rounded-full bg-tvs-primary/10 flex items-center justify-center text-tvs-primary font-bold text-sm">
+                                                                {(emp?.employeeName || user.email || '?').charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-semibold text-gray-800">{emp?.employeeName || '—'}</p>
+                                                                <p className="text-xs text-gray-400">{emp?.employeeId || user.userId}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-3 text-gray-600">{user.email}</td>
+                                                    <td className="px-6 py-3 text-gray-600">{emp?.departmentName || '—'}</td>
+                                                    <td className="px-6 py-3">
+                                                        <Tag color={roleColor}>{user.role}</Tag>
+                                                    </td>
+                                                    <td className="px-6 py-3">
+                                                        <Tooltip title="Change access level">
+                                                            <Select
+                                                                value={user.role}
+                                                                loading={roleUpdating[user._id]}
+                                                                size="small"
+                                                                style={{ width: '100%' }}
+                                                                onChange={val => handleRoleChange(user._id, val)}
+                                                                options={ROLE_OPTIONS.map(r => ({ value: r.value, label: r.label }))}
+                                                            />
+                                                        </Tooltip>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                </tbody>
+                            </table>
+                            {users.filter(u => u.role !== 'Admin').length === 0 && !usersLoading && (
+                                <div className="text-center py-10 text-gray-400">No users found</div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
