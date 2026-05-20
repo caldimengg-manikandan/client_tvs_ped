@@ -8,53 +8,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
-      chunkSizeWarningLimit: 1500,
+      // Bundle all node_modules into a single vendor chunk.
+      // This prevents cross-chunk React dependency errors (createContext, memo, etc.)
+      // that occur when React-dependent packages land in a different chunk from React.
+      chunkSizeWarningLimit: 4000,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (!id.includes('node_modules')) return;
-
-            // Every package that calls React APIs (createContext, memo, etc.)
-            // MUST be in the same chunk as React itself.
-            // '/react' (no trailing slash) catches: react, react-dom, react-router,
-            // react-router-dom, react-is, react-countup, react-chartjs-2, etc.
-            // rc-* and @ant-design/* are Ant Design internals that also call React APIs.
-            if (
-              id.includes('/react') ||
-              id.includes('/antd/') ||
-              id.includes('/@ant-design/') ||
-              id.includes('/rc-') ||
-              id.includes('/scheduler/') ||
-              id.includes('/use-count-up/') ||
-              id.includes('/countup.js/')
-            ) {
-              return 'vendor-react-ui';
+            if (id.includes('node_modules')) {
+              return 'vendor';
             }
-
-            if (id.includes('/ag-grid')) {
-              return 'vendor-aggrid';
-            }
-            if (
-              id.includes('/chart.js') ||
-              id.includes('/chartjs-')
-            ) {
-              return 'vendor-charts';
-            }
-            if (id.includes('/framer-motion/')) {
-              return 'vendor-motion';
-            }
-            if (id.includes('/lucide-react/')) {
-              return 'vendor-icons';
-            }
-            if (
-              id.includes('/xlsx/') ||
-              id.includes('/jspdf') ||
-              id.includes('/pptxgenjs/')
-            ) {
-              return 'vendor-export';
-            }
-
-            return 'vendor-misc';
           }
         }
       }
