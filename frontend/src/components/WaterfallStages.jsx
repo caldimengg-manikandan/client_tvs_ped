@@ -4,9 +4,6 @@ import { CheckCircle, Clock, Settings, Package, Rocket, ChevronRight } from 'luc
 
 
 
-
-
-
 const WaterfallStages = ({ stats }) => {
     const stages = [
         {
