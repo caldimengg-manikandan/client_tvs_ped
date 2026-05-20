@@ -14,19 +14,19 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
 
-            // React + Ant Design + all rc-* internals MUST share one chunk.
-            // Splitting them causes "Cannot read properties of undefined
-            // (reading 'createContext')" in production because rc-* packages
-            // resolve React from a different chunk that may not yet be evaluated.
+            // Every package that calls React APIs (createContext, memo, etc.)
+            // MUST be in the same chunk as React itself.
+            // '/react' (no trailing slash) catches: react, react-dom, react-router,
+            // react-router-dom, react-is, react-countup, react-chartjs-2, etc.
+            // rc-* and @ant-design/* are Ant Design internals that also call React APIs.
             if (
-              id.includes('/react/') ||
-              id.includes('/react-dom/') ||
-              id.includes('/react-router') ||
+              id.includes('/react') ||
               id.includes('/antd/') ||
               id.includes('/@ant-design/') ||
               id.includes('/rc-') ||
-              id.includes('/react-is/') ||
-              id.includes('/scheduler/')
+              id.includes('/scheduler/') ||
+              id.includes('/use-count-up/') ||
+              id.includes('/countup.js/')
             ) {
               return 'vendor-react-ui';
             }
@@ -36,7 +36,6 @@ export default defineConfig(({ mode }) => {
             }
             if (
               id.includes('/chart.js') ||
-              id.includes('/react-chartjs-2') ||
               id.includes('/chartjs-')
             ) {
               return 'vendor-charts';
