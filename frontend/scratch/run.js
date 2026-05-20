@@ -27,7 +27,7 @@ import puppeteer from 'puppeteer';
             }
         });
 
-        console.log('Navigating to http://localhost:4173/ ...');
+        console.log('Navigating to https://client-tvs-ped.vercel.app/ ...');
         await page.goto('http://localhost:4173/', { waitUntil: 'networkidle0' });
         
         console.log('Waiting for a few seconds to let errors propagate...');
