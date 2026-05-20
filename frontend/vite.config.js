@@ -7,10 +7,22 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+
+    // Force all React-family imports to resolve to a single instance.
+    // Without this, nested node_modules may pull in a second copy of React
+    // that has no active dispatcher, causing "First argument must be a
+    // function" and similar runtime crashes in the production bundle.
+    resolve: {
+      dedupe: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'scheduler',
+      ],
+    },
+
     build: {
-      // Bundle all node_modules into a single vendor chunk.
-      // This prevents cross-chunk React dependency errors (createContext, memo, etc.)
-      // that occur when React-dependent packages land in a different chunk from React.
       chunkSizeWarningLimit: 4000,
       rollupOptions: {
         output: {
@@ -18,10 +30,11 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules')) {
               return 'vendor';
             }
-          }
-        }
-      }
+          },
+        },
+      },
     },
+
     server: {
       proxy: {
         '/api': {
@@ -31,7 +44,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+
     esbuild: {
+      // drop console/debugger only in production to keep bundle clean
       drop: isProduction ? ['console', 'debugger'] : [],
     },
   };
