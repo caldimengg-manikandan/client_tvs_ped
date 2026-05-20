@@ -70,7 +70,7 @@ const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange,
                 <div>
                     <div className="flex items-center gap-2">
                         <h1 className="text-xl font-bold text-txt-1 font-outfit m-0">
-                            Factory Command Centre
+                            PLANT ENGINEERING -MATERIAL HANDLING ASSESTS DASHBOARD
                         </h1>
                         {/* Live pulsing dot */}
                         <span className="relative flex h-2.5 w-2.5">

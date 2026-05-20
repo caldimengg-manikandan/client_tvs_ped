@@ -21,6 +21,8 @@ import ActivityFeed from './ActivityFeed';
 import AssetBreakdownChart from './AssetBreakdownChart';
 import DevTrackerFunnel from './DevTrackerFunnel';
 import RoleGuard from './RoleGuard';
+import PhaseDetailModal from './PhaseDetailModal';
+import KPIDetailModal from './KPIDetailModal';
 
 const POLL_INTERVAL = 30000; // 30 s
 
@@ -57,6 +59,8 @@ const Dashboard = () => {
     const [dateRange, setDateRange] = useState({ from: null, to: null });
     const pollRef = useRef(null);
     const tickRef = useRef(null);
+    const [phaseModal, setPhaseModal] = useState({ visible: false, stage: null, colour: null });
+    const [kpiModal,   setKpiModal]   = useState({ visible: false, type: null, title: '' });
 
     const fetchData = useCallback(async (isManual = false) => {
         if (isManual) setRefreshing(true);
@@ -152,7 +156,13 @@ const Dashboard = () => {
                 />
 
                 {/* Row 1: KPI Cards */}
-                <KPIGrid data={data} loading={loading} user={user} />
+                <KPIGrid
+                    data={data}
+                    loading={loading}
+                    user={user}
+                    onPhaseClick={(stage, colour) => setPhaseModal({ visible: true, stage, colour })}
+                    onKpiClick={(type, title) => setKpiModal({ visible: true, type, title })}
+                />
 
                 {/* Row 2: MH Trend + Status Donut */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -187,6 +197,21 @@ const Dashboard = () => {
                     </div>
                 </div>
 
+                {/* Phase Detail Modal */}
+                <PhaseDetailModal
+                    visible={phaseModal.visible}
+                    onClose={() => setPhaseModal({ visible: false, stage: null, colour: null })}
+                    stage={phaseModal.stage}
+                    stageColour={phaseModal.colour}
+                />
+
+                {/* KPI Detail Modal */}
+                <KPIDetailModal
+                    visible={kpiModal.visible}
+                    onClose={() => setKpiModal({ visible: false, type: null, title: '' })}
+                    type={kpiModal.type}
+                    title={kpiModal.title}
+                />
             </div>
         </ErrorBoundary>
     );

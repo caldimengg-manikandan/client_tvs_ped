@@ -6,7 +6,8 @@ const {
     getRecentActivity,
     getTrends,
     fixDataDates,
-    getDashboardData
+    getDashboardData,
+    dashboardPhaseItems
 } = require('../controllers/dashboardController');
 
 router.use(protect);
@@ -20,5 +21,6 @@ router.get('/stats', getStats);
 router.get('/recent-activity', getRecentActivity);
 router.get('/trends', getTrends);
 router.get('/fix-data-dates', fixDataDates);
+router.get('/phase-items', dashboardPhaseItems);
 
 module.exports = router;

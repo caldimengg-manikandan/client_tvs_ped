@@ -182,45 +182,71 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             >
                 {/* ══ Logo area ══ */}
                 <div style={{ borderColor: tc.border, borderBottomWidth: 1, borderBottomStyle: 'solid' }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding:'12px 8px 0 12px' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding: isSidebarOpen ? '12px 8px 0 12px' : '12px 0 0 0' }}>
                         {isSidebarOpen ? (
-                            /* Expanded: full logo, tight white pill, no border */
-                            <div style={{
-                                flex:1, marginRight:8,
-                                background:'#ffffff',
-                                borderRadius:7,
-                                padding:'6px 10px',
-                                display:'inline-flex',
-                                alignItems:'center',
-                                justifyContent:'center',
-                                overflow:'hidden',
-                                maxWidth:148,
-                            }}>
+                            /* Expanded: full logo, tight white pill, zoomable on hover */
+                            <motion.div
+                                whileHover={{ 
+                                    scale: 1.15,
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                    y: -1
+                                }}
+                                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                                onClick={() => navigate('/')}
+                                style={{
+                                    flex:1, marginRight:8,
+                                    background:'#ffffff',
+                                    borderRadius:8,
+                                    padding:'6px 12px',
+                                    display:'inline-flex',
+                                    alignItems:'center',
+                                    justifyContent:'center',
+                                    overflow:'hidden',
+                                    maxWidth:154,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                                    transformOrigin: 'left center',
+                                    zIndex: 10,
+                                }}
+                            >
                                 <img
                                     src="/tvslogo.jpg"
                                     alt="TVS Logo"
-                                    style={{ height:30, width:'auto', objectFit:'contain', display:'block' }}
+                                    style={{ height:38, width:'auto', objectFit:'contain', display:'block' }}
                                 />
-                            </div>
+                            </motion.div>
                         ) : (
-                            /* Collapsed: logo scaled to fit the 64px sidebar width */
-                            <div style={{
-                                width:46,
-                                height:20,
-                                background:'#ffffff',
-                                borderRadius:5,
-                                overflow:'hidden',
-                                flexShrink:0,
-                                display:'flex',
-                                alignItems:'center',
-                                justifyContent:'center',
-                            }}>
+                            /* Collapsed: logo centered, zoomable on hover, opens sidebar on click */
+                            <motion.div
+                                whileHover={{ 
+                                    scale: 1.4,
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                                    y: -1
+                                }}
+                                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                                onClick={() => setIsSidebarOpen(true)}
+                                style={{
+                                    width:42,
+                                    height:22,
+                                    background:'#ffffff',
+                                    borderRadius:5,
+                                    overflow:'hidden',
+                                    flexShrink:0,
+                                    display:'flex',
+                                    alignItems:'center',
+                                    justifyContent:'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                    transformOrigin: 'center center',
+                                    zIndex: 50,
+                                }}
+                            >
                                 <img
                                     src="/tvslogo.jpg"
                                     alt="TVS"
-                                    style={{ width:'100%', height:'100%', objectFit:'contain', display:'block' }}
+                                    style={{ width:'90%', height:'90%', objectFit:'contain', display:'block' }}
                                 />
-                            </div>
+                            </motion.div>
                         )}
                         <button
                             type="button"

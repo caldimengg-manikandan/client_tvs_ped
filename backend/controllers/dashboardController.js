@@ -138,7 +138,8 @@ const getDashboardData = async (req, res) => {
             activityDocs,
             totalEmployeesCount,
             activeVendorCount,
-            emailLogCount
+            emailLogCount,
+            mhDevPhasesRaw
         ] = await Promise.all([
             // 1. mhSummary aggregation
             MHRequest.aggregate([
@@ -247,6 +248,12 @@ const getDashboardData = async (req, res) => {
             MHRequest.aggregate([
                 { $project: { emailCount: { $size: { $ifNull: ['$emailLog', []] } } } },
                 { $group: { _id: null, total: { $sum: '$emailCount' } } }
+            ]),
+
+            // 15. MH Development phase counts (by currentStage)
+            MHDevelopmentTracker.aggregate([
+                { $match: dateFilter },
+                { $group: { _id: '$currentStage', count: { $sum: 1 } } }
             ])
         ]);
 
@@ -427,7 +434,33 @@ const getDashboardData = async (req, res) => {
         feedEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const activityFeed = feedEvents.slice(0, 20);
 
-        // ── Top stats ──
+        // ── MH Development phase counts ──
+        const STAGE_DISPLAY_MAP = {
+            'Not Started':       'Initiated',
+            'Design':            'Design',
+            'PR/PO':             'PR/PO',
+            'Sample Production': 'Sample Prod.',
+            'Production Ready':  'Prod. Ready',
+            'Completed':         'Released',
+        };
+        const phaseCountMap = {
+            'Initiated':    0,
+            'Design':       0,
+            'PR/PO':        0,
+            'Sample Prod.': 0,
+            'Prod. Ready':  0,
+            'Released':     0,
+        };
+        mhDevPhasesRaw.forEach(p => {
+            const displayStage = STAGE_DISPLAY_MAP[p._id];
+            if (displayStage && phaseCountMap.hasOwnProperty(displayStage)) {
+                phaseCountMap[displayStage] = p.count;
+            }
+        });
+        const mhDevPhases = Object.entries(phaseCountMap).map(([stage, count]) => ({ stage, count }));
+        const mhDevTotal  = mhDevPhases.reduce((sum, p) => sum + p.count, 0);
+
+                // ── Top stats ──
         const topStats = {
             activeVendors: activeVendorCount || 0,
             activePEDEngineers: pedEngineers.length,
@@ -445,6 +478,8 @@ const getDashboardData = async (req, res) => {
             vendorPerformance,
             assetSummary,
             mhDevTrackerFunnel,
+            mhDevPhases,
+            mhDevTotal,
             recentRequests,
             activityFeed,
             topStats
@@ -456,10 +491,64 @@ const getDashboardData = async (req, res) => {
     }
 };
 
+
+/* ─────────────────────────────────────────────────────────────
+   PHASE ITEMS ENDPOINT
+   GET /api/dashboard/phase-items?stage=Design
+───────────────────────────────────────────────────────────── */
+const DISPLAY_TO_DB_STAGE = {
+    'Initiated':    'Not Started',
+    'Design':       'Design',
+    'PR/PO':        'PR/PO',
+    'Sample Prod.': 'Sample Production',
+    'Prod. Ready':  'Production Ready',
+    'Released':     'Completed',
+};
+
+const dashboardPhaseItems = async (req, res) => {
+    try {
+        const displayStage = req.query.stage || '';
+        const dbStage      = DISPLAY_TO_DB_STAGE[displayStage] || displayStage;
+
+        const items = await MHDevelopmentTracker
+            .find({ currentStage: dbStage })
+            .populate('vendorId', 'vendorName vendorCode vendorLocation')
+            .sort({ updatedAt: -1 })
+            .lean();
+
+        const mapped = items.map(item => ({
+            _id:                    item._id,
+            assetRequestId:         item.assetRequestId,
+            productModel:           item.productModel,
+            materialHandlingEquipment: item.materialHandlingEquipment,
+            departmentName:         item.departmentName,
+            userName:               item.userName,
+            requestType:            item.requestType,
+            plantLocation:          item.plantLocation,
+            vendorName:             item.vendorId?.vendorName || item.vendorName || '—',
+            vendorCode:             item.vendorId?.vendorCode || item.vendorCode || '—',
+            status:                 item.status,
+            currentStage:           item.currentStage,
+            displayStage,
+            implementationTarget:   item.implementationTarget,
+            remarks:                item.remarks,
+            drawingUrl:             item.drawingUrl,
+            createdAt:              item.createdAt,
+            updatedAt:              item.updatedAt,
+        }));
+
+        res.json({ stage: displayStage, total: mapped.length, items: mapped });
+    } catch (err) {
+        console.error('[dashboardPhaseItems]', err);
+        res.status(500).json({ message: 'Phase items error', error: err.message });
+    }
+};
+
 module.exports = {
     getStats,
     getRecentActivity,
     getTrends,
     fixDataDates,
-    getDashboardData
+    getDashboardData,
+    dashboardPhaseItems
 };
