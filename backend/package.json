@@ -1,7 +1,7 @@
 {
   "name": "tvs-ped-portal-backend",
   "version": "1.0.0",
-  "description": "TVS-PED Manufacturing Operations Portal \u2014 Backend API",
+  "description": "TVS-PED Manufacturing Operations Portal — Backend API",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -25,7 +25,8 @@
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.11",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "tvs-ped-portal": "file:.."
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

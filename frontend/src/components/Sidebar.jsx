@@ -182,72 +182,49 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             >
                 {/* ══ Logo area ══ */}
                 <div style={{ borderColor: tc.border, borderBottomWidth: 1, borderBottomStyle: 'solid' }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding: isSidebarOpen ? '12px 8px 0 12px' : '12px 0 0 0' }}>
-                        {isSidebarOpen ? (
-                            /* Expanded: full logo, tight white pill, zoomable on hover */
-                            <motion.div
-                                whileHover={{ 
-                                    scale: 1.15,
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                    y: -1
-                                }}
-                                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                                onClick={() => navigate('/')}
-                                style={{
-                                    flex:1, marginRight:8,
-                                    background:'#ffffff',
-                                    borderRadius:8,
-                                    padding:'6px 12px',
-                                    display:'inline-flex',
-                                    alignItems:'center',
-                                    justifyContent:'center',
-                                    overflow:'hidden',
-                                    maxWidth:154,
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                                    transformOrigin: 'left center',
-                                    zIndex: 10,
-                                }}
-                            >
+                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding: isSidebarOpen ? '8px 8px 0 8px' : '8px 0 0 0' }}>
+                        {/* ── Logo badge — always visible, no text ── */}
+                        <div
+                            onClick={() => isSidebarOpen ? navigate('/') : setIsSidebarOpen(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flex: isSidebarOpen ? 1 : '0 0 auto',
+                                marginRight: isSidebarOpen ? 8 : 0,
+                                minHeight: 64,
+                                cursor: 'pointer',
+                                /* No overflow:hidden — avoids clipping logo edges */
+                                transition: 'flex 0.3s cubic-bezier(0.4,0,0.2,1)',
+                            }}
+                        >
+                            {/* Colored TVS logo — always shown */}
+                            <div style={{
+                                background: '#ffffff',
+                                borderRadius: 10,
+                                /* Smaller padding when collapsed so badge fits 64px sidebar */
+                                padding: isSidebarOpen ? '6px 12px' : '5px 6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                                transition: 'padding 0.3s cubic-bezier(0.4,0,0.2,1)',
+                            }}>
                                 <img
-                                    src="/tvslogo.jpg"
-                                    alt="TVS Logo"
-                                    style={{ height:38, width:'auto', objectFit:'contain', display:'block' }}
-                                />
-                            </motion.div>
-                        ) : (
-                            /* Collapsed: logo centered, zoomable on hover, opens sidebar on click */
-                            <motion.div
-                                whileHover={{ 
-                                    scale: 1.4,
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                                    y: -1
-                                }}
-                                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                                onClick={() => setIsSidebarOpen(true)}
-                                style={{
-                                    width:42,
-                                    height:22,
-                                    background:'#ffffff',
-                                    borderRadius:5,
-                                    overflow:'hidden',
-                                    flexShrink:0,
-                                    display:'flex',
-                                    alignItems:'center',
-                                    justifyContent:'center',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                                    transformOrigin: 'center center',
-                                    zIndex: 50,
-                                }}
-                            >
-                                <img
-                                    src="/tvslogo.jpg"
+                                    src="/tvs_logo_clean.png"
                                     alt="TVS"
-                                    style={{ width:'90%', height:'90%', objectFit:'contain', display:'block' }}
+                                    style={{
+                                        /* 120px expanded, 40px collapsed — fits within 64px sidebar */
+                                        width: isSidebarOpen ? 120 : 40,
+                                        height: 'auto',
+                                        objectFit: 'contain',
+                                        display: 'block',
+                                        transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
+                                    }}
                                 />
-                            </motion.div>
-                        )}
+                            </div>
+                        </div>
                         <button
                             type="button"
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -499,14 +476,17 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                             }}>
                                                                 <div style={{
                                                                     width: 36, height: 36, borderRadius: 8,
-                                                                    background: navActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.10)',
+                                                                    /* Use theme tokens — works on both dark AND light/white sidebars */
+                                                                    background: navActive ? `${theme.accent}33` : tc.iconBg,
                                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                                     transition: 'background 0.18s ease',
                                                                 }}>
-                                                                    <item.icon size={18} color={navActive ? '#ffffff' : 'rgba(255,255,255,0.75)'} />
+                                                                    <item.icon size={18} color={navActive ? theme.accent : tc.text80} />
                                                                 </div>
                                                                 <div style={{
-                                                                    fontSize: 9, color: navActive ? '#ffffff' : 'rgba(255,255,255,0.65)',
+                                                                    fontSize: 9,
+                                                                    /* Theme-aware text color — visible on white sidebar too */
+                                                                    color: navActive ? theme.accent : tc.muted,
                                                                     marginTop: 4, textAlign: 'center', lineHeight: 1.2,
                                                                     maxWidth: 56, whiteSpace: 'normal',
                                                                 }}>

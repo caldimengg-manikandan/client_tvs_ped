@@ -1,10 +1,21 @@
 const express = require('express');
 const router  = express.Router();
+const mongoose = require('mongoose');
 const MHRequest        = require('../models/MHRequest');
 const Vendor           = require('../models/Vendor');
 const VendorScoring    = require('../models/VendorScoring');
 const EmployeeModel    = require('../models/EmployeeModel');
 const AssetManagement  = require('../models/AssetManagement');
+
+/**
+ * @route   GET /api/public/status
+ * @desc    Get database connection status
+ * @access  Public (no auth required)
+ */
+router.get('/status', (req, res) => {
+    const isConnected = mongoose.connection.readyState === 1;
+    res.json({ connected: isConnected });
+});
 
 /**
  * @route   GET /api/public/stats
@@ -55,3 +66,4 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
