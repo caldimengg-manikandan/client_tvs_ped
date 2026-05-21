@@ -95,7 +95,7 @@ const Layout = () => {
 
                 <main
                     ref={mainRef}
-                    className={`flex-1 relative z-10 custom-scrollbar flex flex-col ${isFullPage ? 'p-4 md:p-5' : 'p-4 sm:p-6 lg:p-7'}`}
+                    className={`flex-1 relative z-10 custom-scrollbar flex flex-col p-3 md:p-5 lg:p-6`}
                     style={{ marginTop: 68, overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth' }}
                 >
                     <AnimatePresence mode="wait" initial={false}>
@@ -106,7 +106,7 @@ const Layout = () => {
                             animate="animate"
                             exit="exit"
                             transition={pageTransition}
-                            className={isFullPage ? 'w-full flex-1 flex flex-col' : 'w-full max-w-[1600px] mx-auto'}
+                            className="w-full flex-1 flex flex-col"
                         >
                             <Outlet />
                         </motion.div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Modal, Form, Input, DatePicker, Button, Tooltip } from 'antd';
 import { ClipboardList, Trash2, Calendar, User, FileText, MessageSquare } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -32,6 +32,7 @@ const PlainHeaderCell = ({ column }) => (
 
 const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, assetRequestId }) => {
     const [form] = Form.useForm();
+    const gridRef = useRef(null);
 
     useEffect(() => {
         if (visible) {
@@ -132,8 +133,6 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                     <Form.Item name={[row.name, 'activity']} rules={[{ required: true }]} className="m-0 w-full">
                         <Input bordered={false} className="text-[13px] font-semibold w-full bg-transparent text-gray-800 p-0 focus:bg-indigo-50/50 rounded transition-all" placeholder="Activity Name" />
                     </Form.Item>
-                    <Form.Item name={[row.name, 'actualStart']} hidden><Input /></Form.Item>
-                    <Form.Item name={[row.name, 'actualEnd']} hidden><Input /></Form.Item>
                 </div>
             )
         },
@@ -194,9 +193,78 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             )
         },
         {
+            key: 'actualStart',
+            name: 'ACTUAL : START DATE',
+            width: 180,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="flex items-center h-full px-4 w-full border-r border-gray-100 bg-emerald-50/10 transition-colors">
+                    <Form.Item name={[row.name, 'actualStart']} className="m-0 w-full">
+                        <DatePicker 
+                            bordered={false}
+                            popupClassName="premium-datepicker-popup"
+                            className="w-full text-[12px] font-bold text-emerald-700 hover:scale-[1.02] transform transition-all duration-200"
+                            format="DD-MMM-YYYY"
+                            placeholder="Select Date"
+                            suffixIcon={<Calendar size={14} className="text-emerald-400/40" />}
+                        />
+                    </Form.Item>
+                </div>
+            )
+        },
+        {
+            key: 'actualEnd',
+            name: 'ACTUAL : END DATE',
+            width: 180,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => (
+                <div className="flex items-center h-full px-4 w-full border-r border-gray-100 bg-orange-50/10 transition-colors">
+                    <Form.Item name={[row.name, 'actualEnd']} className="m-0 w-full">
+                        <DatePicker 
+                            bordered={false}
+                            popupClassName="premium-datepicker-popup"
+                            className="w-full text-[12px] font-bold text-orange-700 hover:scale-[1.02] transform transition-all duration-200"
+                            format="DD-MMM-YYYY"
+                            placeholder="Select Date"
+                            suffixIcon={<Calendar size={14} className="text-orange-400/40" />}
+                        />
+                    </Form.Item>
+                </div>
+            )
+        },
+        {
+            key: 'delayInDays',
+            name: 'DELAY (DAYS)',
+            width: 130,
+            renderHeaderCell: PlainHeaderCell,
+            renderCell: ({ row }) => {
+                const planEnd   = form.getFieldValue(['milestones', row.name, 'planEnd']);
+                const actualEnd = form.getFieldValue(['milestones', row.name, 'actualEnd']);
+
+                if (!planEnd) return <span className="text-[11px] text-gray-400 px-2">-</span>;
+
+                const today = dayjs().startOf('day');
+                const end   = actualEnd ? dayjs(actualEnd).startOf('day') : today;
+                const plan  = dayjs(planEnd).startOf('day');
+                const diff  = end.diff(plan, 'day');
+
+                if (!actualEnd && diff <= 0) {
+                    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border text-green-700 bg-green-50 border-green-200">On Time</span>;
+                }
+                if (diff <= 0) {
+                    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border text-green-700 bg-green-50 border-green-200">On Time</span>;
+                }
+                return (
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border text-red-700 bg-red-50 border-red-200">
+                        +{diff}d
+                    </span>
+                );
+            }
+        },
+        {
             key: 'remarks',
             name: 'REMARKS',
-            width: 230,
+            // removed fixed width to allow this column to grow and fill empty space
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center h-full px-4 w-full border-r border-gray-100 group">
@@ -253,43 +321,71 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             open={visible}
             onCancel={onCancel}
             onOk={handleSubmit}
-            width="95%"
-            style={{ maxWidth: '1200px' }}
+            width="100vw"
+            style={{ top: 0, padding: 0, margin: 0, maxWidth: '100vw', height: '100vh' }}
             okText="Save Tracking Data"
-            centered
+            centered={false}
             okButtonProps={{ 
                 className: 'bg-indigo-600 hover:bg-indigo-700 h-10 px-8 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all border-none' 
             }}
             cancelButtonProps={{
                 className: 'h-10 px-8 rounded-xl font-bold border-gray-200 hover:border-indigo-400'
             }}
-            className="custom-modal-premium"
+            className="custom-modal-premium-fullscreen"
         >
-            <Form form={form} layout="vertical" className="mt-6">
-                <Form.List name="milestones">
-                    {(fields, { remove }) => {
-                        const columns = getColumns(remove);
-                        return (
-                            <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100">
-                                <DataGrid
-                                    columns={columns}
-                                    rows={fields}
-                                    rowKeyGetter={(row) => row.key}
-                                    className="rdg-light mh-development-grid"
-                                    style={{ blockSize: 'auto', minHeight: '400px' }}
-                                    rowHeight={60}
-                                    headerRowHeight={52}
-                                    defaultColumnOptions={{ resizable: true, minWidth: 100 }}
-                                />
-                            </div>
-                        );
-                    }}
-                </Form.List>
+            <Form form={form} layout="vertical" className="mt-6 flex flex-col h-[calc(100vh-200px)]">
+                <div className="flex-1 overflow-hidden flex flex-col">
+                    <Form.List name="milestones">
+                        {(fields, { remove, add }) => {
+                            const columns = getColumns(remove);
+                            return (
+                                <div className="flex-1 border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col">
+                                    <div className="flex-1 min-h-[400px]">
+                                        <DataGrid
+                                            ref={gridRef}
+                                            columns={columns}
+                                            rows={fields}
+                                            rowKeyGetter={(row) => row.key}
+                                            className="rdg-light mh-development-grid h-full w-full"
+                                            style={{ blockSize: '100%' }}
+                                            rowHeight={60}
+                                            headerRowHeight={52}
+                                            defaultColumnOptions={{ resizable: true, minWidth: 100 }}
+                                        />
+                                    </div>
+                                    <div className="p-3 bg-gray-50 border-t border-gray-200">
+                                        <Button
+                                            type="dashed"
+                                            onClick={() => {
+                                                add({ sNo: fields.length + 1, activity: '' });
+                                                // Use the official DataGrid imperative API to scroll to the new row
+                                                setTimeout(() => {
+                                                    if (gridRef.current && gridRef.current.scrollToCell) {
+                                                        gridRef.current.scrollToCell({ idx: 1, rowIdx: fields.length });
+                                                    } else {
+                                                        // Fallback
+                                                        const grid = document.querySelector('.mh-development-grid');
+                                                        if (grid) grid.scrollTop = 999999;
+                                                    }
+                                                }, 50);
+                                            }}
+                                            block
+                                            className="h-10 border-indigo-200 hover:border-indigo-500 hover:text-indigo-600 font-medium bg-white"
+                                        >
+                                            + Add New Milestone
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    </Form.List>
+                </div>
 
-                <div className="mt-8 p-6 bg-gray-50/50 rounded-2xl border border-gray-100">
+                <div className="mt-6 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex-shrink-0">
                     <Form.Item 
                         name="remarks" 
                         label={<span className="text-gray-600 font-bold text-xs uppercase tracking-wider flex items-center gap-2"><MessageSquare size={14} className="text-indigo-400" /> Overall Remarks</span>}
+                        className="mb-0"
                     >
                         <TextArea 
                             rows={3} 
@@ -301,11 +397,19 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             </Form>
 
             <style>{`
-                .custom-modal-premium .ant-modal-content {
-                    border-radius: 24px;
+                .custom-modal-premium-fullscreen .ant-modal-content {
+                    border-radius: 0;
                     padding: 24px;
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
                 }
-                .custom-modal-premium .ant-modal-header {
+                .custom-modal-premium-fullscreen .ant-modal-body {
+                    flex: 1;
+                    overflow: hidden;
+                }
+                .custom-modal-premium-fullscreen .ant-modal-header {
                     margin-bottom: 0;
                 }
                 .mh-development-grid {

@@ -125,6 +125,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             { name: 'MH Request',       short: 'MH Request', icon: FileText,      path: '/mh-requests',             permission: 'assetRequest' },
             { name: 'Request Tracker',  short: 'Tracker',    icon: ClipboardList, path: '/request-tracker',         permission: 'requestTracker' },
             { name: 'MH Development',   short: 'MH Dev',     icon: TrendingUp,    path: '/mh-development-tracker',  permission: 'mhDevelopmentTracker' },
+            { name: 'Project Plan Tracking', short: 'Plan Track', icon: LayoutIcon, path: '/project-plan-model', permission: 'mhDevelopmentTracker' },
         ]},
         { label: 'ASSETS', items: [
             { name: 'Asset Management', short: 'Assets',     icon: Package,       path: '/asset-management-update', permission: 'assetSummary' },
@@ -421,8 +422,15 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                 )}
                                 <ul style={{ listStyle:'none', margin:0, padding: isSidebarOpen ? '0 8px' : '0 4px' }}>
                                     {visibleItems.map((item, idx) => {
-                                        const isActive = location.pathname === item.path
-                                            || (item.path !== '/' && location.pathname.startsWith(item.path));
+                                        const isActive = location.pathname === item.path || (
+                                            item.path !== '/' && 
+                                            location.pathname.startsWith(item.path) && 
+                                            !NAV_SECTIONS.some(sec => sec.items.some(other => 
+                                                other !== item && 
+                                                location.pathname.startsWith(other.path) && 
+                                                other.path.length > item.path.length
+                                            ))
+                                        );
                                         const navItem = (
                                             <motion.li
                                                 key={item.path}
