@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, Clock, Settings, Package, Rocket, ChevronRight } from 'lucide-react';
 
+
+
 const WaterfallStages = ({ stats }) => {
     const stages = [
         {

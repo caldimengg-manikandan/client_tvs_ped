@@ -5,6 +5,9 @@ require('dotenv').config();
 const VendorScoring = require('./models/VendorScoring');
 const Vendor = require('./models/Vendor');
 
+
+
+
 const checkData = async () => {
     try {
         await mongoose.connect(process.env.ATLAS_URI || process.env.MONGO_URI);

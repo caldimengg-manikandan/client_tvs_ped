@@ -183,59 +183,30 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             >
                 {/* ══ Logo area ══ */}
                 <div style={{ borderColor: tc.border, borderBottomWidth: 1, borderBottomStyle: 'solid' }}>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent: isSidebarOpen ? 'space-between' : 'center', padding: isSidebarOpen ? '8px 8px 0 8px' : '8px 0 0 0' }}>
-                        {/* ── Logo badge — always visible, no text ── */}
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:'8px 0 0 0' }}>
+                        {/* ── Logo — no white badge, natural TVS colours ── */}
                         <div
                             onClick={() => isSidebarOpen ? navigate('/') : setIsSidebarOpen(true)}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                flex: isSidebarOpen ? 1 : '0 0 auto',
-                                marginRight: isSidebarOpen ? 8 : 0,
                                 minHeight: 64,
                                 cursor: 'pointer',
-                                /* No overflow:hidden — avoids clipping logo edges */
-                                transition: 'flex 0.3s cubic-bezier(0.4,0,0.2,1)',
                             }}
                         >
-                            {/* Colored TVS logo — always shown */}
-                            <div style={{
-                                background: '#ffffff',
-                                borderRadius: 10,
-                                /* Smaller padding when collapsed so badge fits 64px sidebar */
-                                padding: isSidebarOpen ? '6px 12px' : '5px 6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
-                                transition: 'padding 0.3s cubic-bezier(0.4,0,0.2,1)',
-                            }}>
-                                <img
-                                    src="/tvs_logo_clean.png"
-                                    alt="TVS"
-                                    style={{
-                                        /* 120px expanded, 40px collapsed — fits within 64px sidebar */
-                                        width: isSidebarOpen ? 120 : 40,
-                                        height: 'auto',
-                                        objectFit: 'contain',
-                                        display: 'block',
-                                        transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
-                                    }}
-                                />
-                            </div>
+                            <img
+                                src="/tvs_logo_clean.png"
+                                alt="TVS"
+                                style={{
+                                    width: isSidebarOpen ? 120 : 40,
+                                    height: 'auto',
+                                    objectFit: 'contain',
+                                    display: 'block',
+                                    transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
+                                }}
+                            />
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="hidden lg:inline-flex p-2 rounded-lg transition-colors flex-shrink-0"
-                            style={{ color: tc.muted }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = lx ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                            {isSidebarOpen ? <ChevronLeft size={16} /> : <Menu size={16} />}
-                        </button>
                     </div>
                     <div style={{ borderBottom:`1px solid ${tc.border}`, margin:'12px 0 8px 0' }} />
                 </div>
@@ -521,6 +492,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
 
                                 {/* ══ Footer ══ */}
                 <div className="p-3 border-t" style={{ borderColor: tc.border }}>
+                    {/* System Online indicator */}
                     <div
                         className={`rounded-xl transition-all duration-300 ${isSidebarOpen ? 'p-3' : 'p-2 flex justify-center'}`}
                         style={{ background: `${theme.accent}0f`, border: `1px solid ${theme.accent}1f` }}
@@ -536,6 +508,30 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: theme.accent }} />
                         )}
                     </div>
+
+                    {/* Toggle open/collapse — anchored at the very bottom */}
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="hidden lg:flex w-full items-center mt-2 rounded-xl transition-all duration-200"
+                        style={{
+                            justifyContent: isSidebarOpen ? 'flex-start' : 'center',
+                            padding: isSidebarOpen ? '8px 12px' : '8px',
+                            gap: 8,
+                            color: tc.muted,
+                            background: 'transparent',
+                            border: `1px solid ${tc.border}`,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = lx ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                        {isSidebarOpen ? <ChevronLeft size={15} /> : <Menu size={15} />}
+                        {isSidebarOpen && (
+                            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: tc.muted }}>
+                                Collapse
+                            </span>
+                        )}
+                    </button>
                 </div>
             </motion.aside>
         </>

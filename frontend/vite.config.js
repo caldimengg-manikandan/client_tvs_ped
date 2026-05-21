@@ -1,36 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const isProduction = mode === 'production';
-
+export default defineConfig(() => {
   return {
     plugins: [react()],
+
+    // Force all React imports to resolve to a single copy.
+    resolve: {
+      dedupe: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'scheduler'],
+    },
+
     build: {
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 4000,
+      // All node_modules in one chunk — eliminates cross-chunk React errors
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'vendor-react';
-              }
-              if (id.includes('antd') || id.includes('@ant-design')) {
-                return 'vendor-antd';
-              }
-              if (id.includes('framer-motion')) {
-                return 'vendor-motion';
-              }
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              return 'vendor-core';
-            }
-          }
-        }
-      }
+            if (id.includes('node_modules')) return 'vendor';
+          },
+        },
+      },
     },
+
     server: {
       proxy: {
         '/api': {
@@ -39,9 +30,6 @@ export default defineConfig(({ mode }) => {
           secure: false,
         },
       },
-    },
-    esbuild: {
-      drop: isProduction ? ['console', 'debugger'] : [],
     },
   };
 })
