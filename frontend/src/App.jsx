@@ -53,7 +53,7 @@ function App() {
 
   return (
     <ConfigProvider theme={antdTheme}>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.DEV ? '/' : '/Tvs'}>
       <AuthProvider>
         <Routes>
           {/* ── Public landing page (no auth required) ── */}
