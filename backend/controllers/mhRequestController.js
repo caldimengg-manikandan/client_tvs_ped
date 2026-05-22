@@ -104,7 +104,7 @@ async function sendAutoApproverEmail(savedRequest) {
         const subject = `[Action Required] MH Request ${savedRequest.mhRequestId} — ${savedRequest.handlingPartName}`;
 
         await transporter.sendMail({
-            from: `"TVS-PED Manufacturing Portal" <${process.env.SMTP_USER}>`,
+            from: process.env.SMTP_USER,
             to: approver.mailId,
             subject,
             html
@@ -633,7 +633,7 @@ const assignEngineer = async (req, res) => {
                         </table>
                         <p style="color:#64748b;font-size:13px;">Regards,<br>TVS-PED Portal</p>
                     </div></div>`;
-                await transporter.sendMail({ from: `"TVS-PED Manufacturing Portal" <${process.env.SMTP_USER}>`, to: engineer.mailId, subject, html });
+                await transporter.sendMail({ from: process.env.SMTP_USER, to: engineer.mailId, subject, html });
                 request.emailLog.push({ sentAt: new Date(), to: engineer.mailId, cc: '', subject, body: html, status: 'Delivered' });
                 await request.save();
             } catch (emailErr) {
@@ -740,7 +740,7 @@ a{background:#B31818;color:#fff;padding:12px 28px;border-radius:8px;text-decorat
                 <p style="margin-top:24px;color:#64748b;font-size:13px;">Regards,<br>TVS-PED Portal</p>
               </div></div>`;
 
-            transporter.sendMail({ from: `"TVS-PED Manufacturing Portal" <${process.env.SMTP_USER}>`, to: engineer.mailId, subject, html })
+            transporter.sendMail({ from: process.env.SMTP_USER, to: engineer.mailId, subject, html })
                 .then(() => MHRequest.findByIdAndUpdate(id, { $push: { emailLog: { sentAt: new Date(), to: engineer.mailId, cc: '', subject, body: html, status: 'Delivered' } } }).catch(() => {}))
                 .catch(e => console.error('[AssignLink] Engineer email failed:', e.message));
         }

@@ -41,7 +41,7 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
     // ─── MODE 1: Generic email from MailComposer ───────────────────────────
     if (to && subject && body) {
         const mailOptions = {
-            from: `"TVS-PED Manufacturing Portal" <${process.env.SMTP_USER}>`,
+            from: process.env.SMTP_USER,
             to,
             subject,
             html: body,
@@ -155,7 +155,7 @@ const sendRequestEmail = asyncHandler(async (req, res) => {
     </body></html>`;
 
     const info = await transporter.sendMail({
-        from: `"MH Request Tracker" <${process.env.SMTP_USER}>`,
+        from: process.env.SMTP_USER,
         to: recipients,
         subject: `MH Request Notification - ${requestId}`,
         html: htmlContent,
@@ -187,7 +187,7 @@ const sendVendorAllocationEmail = asyncHandler(async (vendorEmail, projectDetail
     </body></html>`;
     try {
         await transporter.sendMail({
-            from: `"TVS MH Selection" <${process.env.SMTP_USER}>`,
+            from: process.env.SMTP_USER,
             to: vendorEmail,
             subject: `New Project Allocated - ${projectId}`,
             html: htmlContent

@@ -43,7 +43,7 @@ async function testEmail() {
 
         console.log('\nStep 2: Sending Test Email to', config.user, '...');
         const info = await transporter.sendMail({
-            from: `"MH System Test" <${process.env.SMTP_USER}>`,
+            from: process.env.SMTP_USER,
             to: process.env.SMTP_USER, // Send to self
             subject: "TVS MH Request - System Test Email",
             html: `
