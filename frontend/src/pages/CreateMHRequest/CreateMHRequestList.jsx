@@ -432,7 +432,11 @@ const CreateMHRequestList = () => {
 
     useEffect(() => {
         if (!mhListGridContainerRef.current) return;
-        const updateWidth = () => setMhListGridWidth(mhListGridContainerRef.current.clientWidth);
+        const updateWidth = () => {
+            if (mhListGridContainerRef.current) {
+                setMhListGridWidth(mhListGridContainerRef.current.clientWidth);
+            }
+        };
         updateWidth();
         const observer = new ResizeObserver(updateWidth);
         observer.observe(mhListGridContainerRef.current);

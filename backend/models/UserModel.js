@@ -84,7 +84,7 @@ const userSchema = mongoose.Schema({
  * Uses async style (Mongoose 9 recommended — no next() callback needed).
  */
 userSchema.pre('save', async function () {
-    if (this.isNew || this.isModified('role')) {
+    if (this.isNew || (this.isModified('role') && !this.isModified('permissions'))) {
         const perms = ROLE_PERMISSIONS[this.role];
         if (perms) {
             Object.keys(perms).forEach(function(key) {

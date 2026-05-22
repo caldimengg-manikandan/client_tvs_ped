@@ -237,13 +237,18 @@ const updateEmployee = asyncHandler(async (req, res) => {
                 update.passwordHash = await bcrypt.hash(password, salt);
             }
             if (Object.keys(update).length > 0) {
-                if (update.role) {
-                    // Use .save() to trigger pre-save hook for permissions
-                    const userDoc = await User.findById(user._id);
-                    Object.assign(userDoc, update);
+                const userDoc = await User.findById(user._id);
+                if (userDoc) {
+                    if (update.email) userDoc.email = update.email;
+                    if (update.role) userDoc.role = update.role;
+                    if (update.passwordHash) userDoc.passwordHash = update.passwordHash;
+                    if (update.permissions) {
+                        Object.keys(update.permissions).forEach(key => {
+                            userDoc.permissions[key] = update.permissions[key];
+                        });
+                        userDoc.markModified('permissions');
+                    }
                     await userDoc.save();
-                } else {
-                    await User.findByIdAndUpdate(user._id, update);
                 }
             }
         } else if (mailId) {
