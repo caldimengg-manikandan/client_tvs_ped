@@ -30,13 +30,8 @@ const AssetSummary = () => {
 
     const fetchAssets = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/asset-request`);
-            // Requirement: show records until reached Implementation Status (Accepted or Rejected)
-            const summaryAssets = response.data.filter(req =>
-                (req.status === 'Accepted' || req.status === 'Rejected') &&
-                req.progressStatus === 'Implementation'
-            );
-            setAssets(summaryAssets);
+            const response = await axios.get(`${API_BASE_URL}/api/asset-management`);
+            setAssets(response.data);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching assets:', error);
@@ -204,24 +199,24 @@ const AssetSummary = () => {
             )
         },
         {
-            key: 'mhId',
-            name: 'MH ID',
+            key: 'assetId',
+            name: 'ASSET ID',
             width: 150,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
-                const value = row.allocationAssetId || row.mhRequestId || '-';
+                const value = row.assetId || '-';
                 return (
                     <span className="font-semibold text-gray-900">{value}</span>
                 );
             }
         },
         {
-            key: 'handlingPartName',
-            name: 'PART NAME',
+            key: 'assetName',
+            name: 'ASSET NAME',
             width: 200,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => (
-                <span>{row.handlingPartName || '-'}</span>
+                <span>{row.assetName || '-'}</span>
             )
         },
         {
@@ -230,23 +225,7 @@ const AssetSummary = () => {
             width: 200,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
-                const vendor = row.assignedVendor;
-                const value = (typeof vendor === 'object' && vendor !== null)
-                    ? vendor.vendorName
-                    : (vendor || '-');
-                return <span>{value}</span>;
-            }
-        },
-        {
-            key: 'poPrice',
-            name: 'PO PRICE',
-            width: 150,
-            renderHeaderCell: FilterHeaderCell,
-            renderCell: ({ row }) => {
-                const value = row.poPrice;
-                if (!value) return <span>-</span>;
-                const formatted = `₹ ${Number(value).toLocaleString()}`;
-                return <span>{formatted}</span>;
+                return <span>{row.vendorName || '-'}</span>;
             }
         },
         {
@@ -256,19 +235,18 @@ const AssetSummary = () => {
             renderHeaderCell: FilterHeaderCell
         },
         {
-            key: 'location',
+            key: 'plantLocation',
             name: 'PLANT LOCATION',
             width: 160,
             renderHeaderCell: FilterHeaderCell
         },
         {
-            key: 'handlingLocation',
-            name: 'HANDLING LOCATION',
+            key: 'assetLocation',
+            name: 'ASSET LOCATION',
             width: 200,
             renderHeaderCell: FilterHeaderCell,
             renderCell: ({ row }) => {
-                const value = row.assetLocation || row.materialHandlingLocation || '-';
-                return <span>{value}</span>;
+                return <span>{row.assetLocation || '-'}</span>;
             }
         }
     ];
@@ -360,7 +338,7 @@ const AssetSummary = () => {
                         <FrozenRowsDataGrid
                             columns={autoFitColumns}
                             rows={paginatedRows}
-                            rowKeyGetter={(row) => row._id || row.mhRequestId || row.allocationAssetId}
+                            rowKeyGetter={(row) => row._id || row.assetId}
                             className="rdg-light asset-summary-grid"
                             style={{ flex: 1, width: "100%", height: "100%", minHeight: 0 }}
                             rowHeight={rowHeight}
