@@ -28,7 +28,6 @@ import VendorLoadingChart from './pages/VendorMaster/VendorLoadingChart';
 import VendorForm from './pages/VendorMaster/VendorForm';
 import VendorView from './pages/VendorMaster/VendorView';
 
-import AssetSummary from './pages/AssetSummary';
 import AssetManagementUpdate from './pages/AssetManagementUpdate';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -113,11 +112,6 @@ function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="asset-summary" element={
-              <ProtectedRoute permission="assetSummary">
-                <AssetSummary />
-              </ProtectedRoute>
-            } />
 
             {/* Placeholder routes for other links in Sidebar */}
             <Route path="orders" element={

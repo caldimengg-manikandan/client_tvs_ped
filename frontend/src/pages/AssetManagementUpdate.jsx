@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2, Upload, FileText, X, Download, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, FileText, X, Download, Filter, Eye } from 'lucide-react';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useAuth } from '../context/AuthContext';
@@ -16,8 +16,10 @@ const AssetManagementUpdate = () => {
     const [loading, setLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
+    const [showViewModal, setShowViewModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentAsset, setCurrentAsset] = useState(null);
+    const [currentViewAsset, setCurrentViewAsset] = useState(null);
     const [vendors, setVendors] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [columnFilters, setColumnFilters] = useState({});
@@ -213,6 +215,11 @@ const AssetManagementUpdate = () => {
         setSignOffDocument(null);
         setDrawing(null);
         setShowModal(true);
+    };
+
+    const openViewModal = (asset) => {
+        setCurrentViewAsset(asset);
+        setShowViewModal(true);
     };
 
     const handleSubmit = async (e) => {
@@ -572,6 +579,13 @@ const AssetManagementUpdate = () => {
             renderHeaderCell: PlainHeaderCell,
             renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => openViewModal(row)}
+                        className="p-1.5 rounded-lg hover:bg-green-100 transition-colors text-green-600"
+                        title="View"
+                    >
+                        <Eye size={16} />
+                    </button>
                     <button
                         onClick={() => openEditModal(row)}
                         className="p-1.5 rounded-lg hover:bg-blue-100 transition-colors text-blue-600"
@@ -987,6 +1001,98 @@ const AssetManagementUpdate = () => {
                     </div>
                 </div>
             )}
+
+            {/* View Modal */}
+            {showViewModal && currentViewAsset && (
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all">
+                        <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-gray-200 flex justify-between items-center z-10">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Asset Details</h2>
+                                <p className="text-xs text-gray-500 mt-1">ID: {currentViewAsset.assetId}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowViewModal(false)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                            >
+                                <X size={20} className="text-gray-500 group-hover:text-gray-800" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor Name</label>
+                                    <div className="font-medium text-gray-900">{currentViewAsset.vendorName || '-'}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</label>
+                                    <div className="font-medium text-gray-900">{currentViewAsset.departmentName || '-'}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Plant Location</label>
+                                    <div className="font-medium text-gray-900">{currentViewAsset.plantLocation || '-'}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Asset Location</label>
+                                    <div className="font-medium text-gray-900">{currentViewAsset.assetLocation || '-'}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Asset Name</label>
+                                    <div className="font-medium text-gray-900">{currentViewAsset.assetName || '-'}</div>
+                                </div>
+                            </div>
+                            <div className="mt-8 pt-6 border-t border-gray-100">
+                                <h3 className="text-sm font-semibold text-gray-800 mb-4">Attachments</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sign-Off Document</div>
+                                        <div className="mt-1">
+                                            {currentViewAsset.signOffDocument?.filename ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-gray-800 truncate" title={currentViewAsset.signOffDocument.filename}>
+                                                        {currentViewAsset.signOffDocument.filename}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => downloadFile(currentViewAsset.signOffDocument.path, currentViewAsset.signOffDocument.filename)}
+                                                        className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+                                                        title="Download"
+                                                    >
+                                                        <Download size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-gray-400">No file attached</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Drawing</div>
+                                        <div className="mt-1">
+                                            {currentViewAsset.drawing?.filename ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-gray-800 truncate" title={currentViewAsset.drawing.filename}>
+                                                        {currentViewAsset.drawing.filename}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => downloadFile(currentViewAsset.drawing.path, currentViewAsset.drawing.filename)}
+                                                        className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors"
+                                                        title="Download"
+                                                    >
+                                                        <Download size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-gray-400">No file attached</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 .asset-management-grid.rdg-light {
                     width: 100%;

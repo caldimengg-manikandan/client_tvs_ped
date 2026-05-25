@@ -711,9 +711,9 @@ const CreateMHRequestList = () => {
                                         <Select className="custom-select h-12 rounded-2xl overflow-hidden border-gray-100">
                                             <Option value="Hosur Plant 1 (TN)">Hosur Plant 1 (TN)</Option>
                                             <Option value="Hosur Plant 2 (TN)">Hosur Plant 2 (TN)</Option>
-                                            <Option value="Mysore Plant (KA)">Mysore Plant (KA)</Option>
-                                            <Option value="Nalagarh Plant (HP)">Nalagarh Plant (HP)</Option>
-                                            <Option value="Karawang Plant (Indonesia)">Karawang Plant (Indonesia)</Option>
+                                            <Option value="Hosur Plant 3 (TN)">Hosur Plant 3 (TN)</Option>
+                                            <Option value="Mysore (KA)">Mysore (KA)</Option>
+                                            <Option value="Nalagarh (HP)">Nalagarh (HP)</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>

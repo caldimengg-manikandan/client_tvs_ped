@@ -270,6 +270,7 @@ const createMHRequest = async (req, res) => {
             to,
             volumePerDay: Number(volumePerDay),
             mailId: sanitizedData.mailId || req.user.email,
+            drawingFile: req.file ? req.file.path.replace(/\\/g, '/') : null,
             user: req.user.id,
             history: [{
                 action: 'Created',
@@ -476,6 +477,7 @@ const updateMHRequest = async (req, res) => {
             volumePerDay: volumePerDay ? Number(volumePerDay) : existingRequest.volumePerDay,
             status: status || existingRequest.status,
             remark: remark ?? existingRequest.remark,
+            drawingFile: req.file ? req.file.path.replace(/\\/g, '/') : existingRequest.drawingFile,
             designReceiptFromVendor: isDesignReceipt,
             designApproval: isDesignApproval,
             production: isProduction,
@@ -563,16 +565,12 @@ const updateMHRequest = async (req, res) => {
     }
 };
 
-// @desc    Soft delete MH request
+// @desc    Delete MH request
 // @route   DELETE /api/asset-request/:id
 // @access  Public
 const deleteMHRequest = async (req, res) => {
     try {
-        const request = await MHRequest.findByIdAndUpdate(
-            req.params.id,
-            { $set: { activeStatus: false } },
-            { new: true }
-        );
+        const request = await MHRequest.findByIdAndDelete(req.params.id);
         if (!request) return res.status(404).json({ message: 'Request not found' });
         res.json({ message: 'MH Request deleted successfully', request });
     } catch (err) {

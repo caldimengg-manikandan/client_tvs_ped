@@ -40,16 +40,6 @@ const MODULES = [
     permission: 'employeeMaster',
   },
   {
-    id: 'asset-summary',
-    icon: Package,
-    color: '#D97706',
-    bg: '#FFFBEB',
-    label: 'Asset Summary',
-    desc: 'Browse and filter the full asset registry with status, location, and document links.',
-    href: '/asset-summary',
-    permission: 'assetSummary',
-  },
-  {
     id: 'dashboard',
     icon: BarChart3,
     color: '#E53E3E',

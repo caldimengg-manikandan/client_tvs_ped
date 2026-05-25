@@ -5,10 +5,16 @@ const path = require('path');
 const { protect, checkPermission } = require('../middleware/authMiddleware');
 const mhRequestController = require('../controllers/mhRequestController');
 
+const fs = require('fs');
+
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/AssetRequest/');
+        const dir = 'uploads/AssetRequest/';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
     },
     filename: function (req, file, cb) {
         // Generate unique filename: timestamp-originalName
