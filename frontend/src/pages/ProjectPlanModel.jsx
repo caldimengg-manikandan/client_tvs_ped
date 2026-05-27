@@ -45,19 +45,18 @@ const ProjectPlanModel = () => {
     const milestoneRows = useMemo(() => {
         const rows = [];
         (trackers || []).forEach(t => {
+            let planStart = null;
+            let planEnd = null;
+            let actualStart = null;
+            let actualEnd = null;
+            let delayInDays = 0;
+
             if (
                 t.projectPlan &&
                 Array.isArray(t.projectPlan.milestones) &&
                 t.projectPlan.milestones.length > 0
             ) {
                 const milestones = t.projectPlan.milestones;
-
-                let planStart = null;
-                let planEnd = null;
-                let actualStart = null;
-                let actualEnd = null;
-                let delayInDays = 0;
-
                 milestones.forEach(m => {
                     if (m.planStart) {
                         if (!planStart || dayjs(m.planStart).isBefore(dayjs(planStart))) {
@@ -85,17 +84,17 @@ const ProjectPlanModel = () => {
                         }
                     }
                 });
-
-                rows.push({
-                    trackerId: t._id,
-                    assetRequestId: t.assetRequestId,
-                    planStart,
-                    planEnd,
-                    actualStart,
-                    actualEnd,
-                    delayInDays
-                });
             }
+
+            rows.push({
+                trackerId: t._id,
+                assetRequestId: t.assetRequestId || 'Unknown',
+                planStart,
+                planEnd,
+                actualStart,
+                actualEnd,
+                delayInDays
+            });
         });
         return rows;
     }, [trackers]);

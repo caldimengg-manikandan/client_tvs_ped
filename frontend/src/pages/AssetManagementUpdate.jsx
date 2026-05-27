@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Edit2, Trash2, Upload, FileText, X, Download, Filter, Eye } from 'lucide-react';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import FreezeToolbar from '../components/FreezeToolbar';
 import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
@@ -238,27 +239,35 @@ const AssetManagementUpdate = () => {
         }
 
         try {
+            let response;
             if (editMode) {
-                await axios.put(`${API_BASE_URL}/api/asset-management/${currentAsset._id}`, formDataToSend, {
+                response = await axios.put(`${API_BASE_URL}/api/asset-management/${currentAsset._id}`, formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             } else {
-                await axios.post(`${API_BASE_URL}/api/asset-management`, formDataToSend, {
+                response = await axios.post(`${API_BASE_URL}/api/asset-management`, formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             }
 
             fetchAssets();
             setShowModal(false);
+            
+            const returnedAssetId = response?.data?.assetId || '';
+            if (returnedAssetId) {
+                toast.success(`Asset ID ${returnedAssetId} ${editMode ? 'updated' : 'created'} successfully`);
+            } else {
+                toast.success(editMode ? 'Asset updated successfully' : 'Asset created successfully');
+            }
         } catch (error) {
             console.error('Error saving asset:', error);
-            alert(error.response?.data?.message || 'Error saving asset');
+            toast.error(error.response?.data?.message || 'Error saving asset');
         }
     };
 
     const handleGenerateFromRequest = async () => {
         if (!selectedRequestId) {
-            alert('Please select an accepted request');
+            toast.error('Please select an accepted request');
             return;
         }
 
@@ -275,13 +284,13 @@ const AssetManagementUpdate = () => {
             await fetchAssets();
             await fetchAcceptedRequests();
             if (allocationId) {
-                alert(`Asset ID ${allocationId} generated successfully`);
+                toast.success(`Asset ID ${allocationId} generated successfully`);
             } else {
-                alert('Asset ID generated successfully');
+                toast.success('Asset ID generated successfully');
             }
         } catch (error) {
             console.error('Error generating asset from request:', error);
-            alert(error.response?.data?.message || 'Error generating asset from request');
+            toast.error(error.response?.data?.message || 'Error generating asset from request');
         } finally {
             setGenerating(false);
         }
@@ -293,9 +302,10 @@ const AssetManagementUpdate = () => {
         try {
             await axios.delete(`${API_BASE_URL}/api/asset-management/${asset._id}`);
             fetchAssets();
+            toast.success('Asset deleted successfully');
         } catch (error) {
             console.error('Error deleting asset:', error);
-            alert('Error deleting asset');
+            toast.error('Error deleting asset');
         }
     };
 
@@ -305,9 +315,10 @@ const AssetManagementUpdate = () => {
         try {
             await axios.delete(`${API_BASE_URL}/api/asset-management/${asset._id}/file/${fileType}`);
             fetchAssets();
+            toast.success('File deleted successfully');
         } catch (error) {
             console.error('Error deleting file:', error);
-            alert('Error deleting file');
+            toast.error('Error deleting file');
         }
     };
 
