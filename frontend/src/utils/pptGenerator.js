@@ -80,9 +80,10 @@ class PPTGenerator {
       x: 0, y: 1.5, w: 0.15, h: 2.2, fill: { color: this.colors.accent }, line: { width: 0 }
     });
 
-    slide.addText('TVS MOTOR COMPANY', {
-      x: 0.6, y: 1.5, w: 5, h: 0.3,
-      fontSize: 12, bold: true, color: this.colors.white, fontFace: this.fonts.header, letterSpacing: 2
+    slide.addImage({
+      path: '/tvs_logo_white.png',
+      x: 0.6, y: 1.3, w: 1.8, h: 0.5,
+      sizing: { type: 'contain' }
     });
 
     slide.addText('EXECUTIVE\nOPERATIONS\nREVIEW', { 
@@ -114,8 +115,13 @@ class PPTGenerator {
     slide.addShape(this.ppt.ShapeType.rect, {
       x: 0, y: 0.3, w: '100%', h: 0.03, fill: { color: this.colors.accent }, line: { width: 0 }
     });
-    slide.addText('TVS MOTOR COMPANY  |  PLANT ENGINEERING DIVISION', {
-      x: 0.2, y: 0, w: 6, h: 0.3, fontSize: 8, color: this.colors.white, fontFace: this.fonts.header, bold: true, valign: 'middle', letterSpacing: 1
+    slide.addImage({
+      path: '/tvs_logo_white.png',
+      x: 0.2, y: 0.05, w: 1.0, h: 0.2,
+      sizing: { type: 'contain' }
+    });
+    slide.addText('PLANT ENGINEERING DIVISION', {
+      x: 1.3, y: 0, w: 6, h: 0.3, fontSize: 8, color: this.colors.white, fontFace: this.fonts.header, bold: true, valign: 'middle', letterSpacing: 1
     });
 
     // 2. Slide Title with Accent
