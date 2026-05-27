@@ -748,7 +748,11 @@ const MHDevelopmentTracker = () => {
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
-        const updateWidth = () => setGridWidth(gridContainerRef.current.clientWidth);
+        const updateWidth = () => {
+            if (gridContainerRef.current) {
+                setGridWidth(gridContainerRef.current.clientWidth);
+            }
+        };
         updateWidth();
         const observer = new ResizeObserver(updateWidth);
         observer.observe(gridContainerRef.current);

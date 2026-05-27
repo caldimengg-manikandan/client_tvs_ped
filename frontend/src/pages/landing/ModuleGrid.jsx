@@ -40,16 +40,6 @@ const MODULES = [
     permission: 'employeeMaster',
   },
   {
-    id: 'asset-summary',
-    icon: Package,
-    color: '#D97706',
-    bg: '#FFFBEB',
-    label: 'Asset Summary',
-    desc: 'Browse and filter the full asset registry with status, location, and document links.',
-    href: '/asset-summary',
-    permission: 'assetSummary',
-  },
-  {
     id: 'dashboard',
     icon: BarChart3,
     color: '#E53E3E',
@@ -68,6 +58,16 @@ const MODULES = [
     desc: 'Configure automated report delivery, manage report settings and schedules.',
     href: '/settings',
     permission: null,
+  },
+  {
+    id: 'asset-summary',
+    icon: FileText,
+    color: '#0369A1',
+    bg: '#F0F9FF',
+    label: 'Asset Summary',
+    desc: 'Track and summarize all registered assets and equipment across plants.',
+    href: '/asset-summary',
+    permission: 'assetSummary',
   },
 ];
 

@@ -378,7 +378,9 @@ const ProjectPlanModel = () => {
         if (!gridContainerRef.current) return;
 
         const updateWidth = () => {
-            setGridWidth(gridContainerRef.current.clientWidth);
+            if (gridContainerRef.current) {
+                setGridWidth(gridContainerRef.current.clientWidth);
+            }
         };
 
         updateWidth();

@@ -18,7 +18,7 @@ const routeNameMap = {
     'settings':              'Settings',
     'scoring':               'Vendor Scoring',
     'loading':               'Loading Chart',
-    'asset-management-update':'Management Update',
+    'asset-management-update': 'Asset Management',
     'asset-summary':         'Asset Summary',
     'project-plan-model':    'Project Plan',
     'add':                   'Create New',

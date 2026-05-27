@@ -613,7 +613,9 @@ const VendorLoadingChart = () => {
         if (!gridContainerRef.current) return;
 
         const updateWidth = () => {
-            setGridWidth(gridContainerRef.current.clientWidth);
+            if (gridContainerRef.current) {
+                setGridWidth(gridContainerRef.current.clientWidth);
+            }
         };
 
         updateWidth();
@@ -630,7 +632,9 @@ const VendorLoadingChart = () => {
         if (!isProjectModalVisible || !popupGridContainerRef.current) return;
 
         const updateWidth = () => {
-            setPopupGridWidth(popupGridContainerRef.current.clientWidth);
+            if (popupGridContainerRef.current) {
+                setPopupGridWidth(popupGridContainerRef.current.clientWidth);
+            }
         };
 
         updateWidth();

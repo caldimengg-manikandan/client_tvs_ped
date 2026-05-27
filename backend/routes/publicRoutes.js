@@ -65,5 +65,24 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+/**
+ * @route   GET /api/public/recent-activity
+ * @desc    Recent MH requests for public feed
+ * @access  Public (no auth required)
+ */
+router.get('/recent-activity', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const recentRequests = await MHRequest.find({ activeStatus: true })
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .select('mhRequestId userName departmentName status progressStatus createdAt');
+        res.json(recentRequests);
+    } catch (err) {
+        console.error('[public/recent-activity] error:', err.message);
+        res.status(500).json({ message: 'Server Error', error: err.message });
+    }
+});
+
 module.exports = router;
 

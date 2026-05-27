@@ -102,7 +102,11 @@ const EmployeeMaster = () => {
 
     useEffect(() => {
         if (!gridContainerRef.current) return;
-        const updateWidth = () => setGridWidth(gridContainerRef.current.clientWidth);
+        const updateWidth = () => {
+            if (gridContainerRef.current) {
+                setGridWidth(gridContainerRef.current.clientWidth);
+            }
+        };
         updateWidth();
         const observer = new ResizeObserver(updateWidth);
         observer.observe(gridContainerRef.current);
@@ -587,7 +591,9 @@ const EmployeeMaster = () => {
         if (!gridContainerRef.current) return;
 
         const updateWidth = () => {
-            setGridWidth(gridContainerRef.current.clientWidth);
+            if (gridContainerRef.current) {
+                setGridWidth(gridContainerRef.current.clientWidth);
+            }
         };
 
         updateWidth();

@@ -29,6 +29,7 @@
     "tvs-ped-portal": "file:.."
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.1.0",
     "nodemon": "^3.1.11"
   }
 }

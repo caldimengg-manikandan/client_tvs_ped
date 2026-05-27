@@ -79,6 +79,10 @@ const mhRequestSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    drawingFile: {
+        type: String,
+        default: null
+    },
     // ── Existing acceptance workflow status ─────────────────────────────────
     status: {
         type: String,

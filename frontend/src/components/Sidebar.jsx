@@ -196,7 +196,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             }}
                         >
                             <img
-                                src="/tvs_logo_clean.png"
+                                src={`${import.meta.env.BASE_URL || '/'}tvs_logo_clean.png`}
                                 alt="TVS"
                                 style={{
                                     width: isSidebarOpen ? 120 : 40,

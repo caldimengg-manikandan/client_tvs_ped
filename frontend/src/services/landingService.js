@@ -41,10 +41,10 @@ export const fetchLandingStats = async () => {
   }
 };
 
-/** Recent activity feed (protected) */
+/** Recent activity feed (public) */
 export const fetchRecentActivity = async () => {
   try {
-    const res   = await api.get('/dashboard/recent-activity');
+    const res   = await api.get('/public/recent-activity');
     const items = Array.isArray(res.data) ? res.data : res.data?.data || [];
     return { data: items, error: null };
   } catch {
