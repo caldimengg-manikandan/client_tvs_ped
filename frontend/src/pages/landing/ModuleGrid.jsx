@@ -59,6 +59,16 @@ const MODULES = [
     href: '/settings',
     permission: null,
   },
+  {
+    id: 'asset-summary',
+    icon: FileText,
+    color: '#0369A1',
+    bg: '#F0F9FF',
+    label: 'Asset Summary',
+    desc: 'Track and summarize all registered assets and equipment across plants.',
+    href: '/asset-summary',
+    permission: 'assetSummary',
+  },
 ];
 
 const ModuleCard = ({ mod, index, onNavigate }) => {
