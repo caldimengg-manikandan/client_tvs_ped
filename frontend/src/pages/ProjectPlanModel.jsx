@@ -8,6 +8,8 @@ import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import ProjectPlanActualModal from './ProjectPlanActualModal';
 import { toast } from 'react-hot-toast';
+import { Segmented } from 'antd';
+import ProjectGanttChart from '../components/ProjectGanttChart';
 
 const ProjectPlanModel = () => {
     const dispatch = useDispatch();
@@ -16,6 +18,7 @@ const ProjectPlanModel = () => {
     const [selectedTrackerId, setSelectedTrackerId] = useState(null);
     const [viewPlanVisible, setViewPlanVisible] = useState(false);
     const [viewTrackerId, setViewTrackerId] = useState(null);
+    const [modalViewType, setModalViewType] = useState('Gantt');
     const [columnFilters, setColumnFilters] = useState({});
     const [activeFilterKey, setActiveFilterKey] = useState(null);
     const [filterSearchText, setFilterSearchText] = useState({});
@@ -443,8 +446,10 @@ const ProjectPlanModel = () => {
                     setViewTrackerId(null);
                 }}
                 footer={null}
-                width="95%"
-                style={{ maxWidth: '900px' }}
+                width="92vw"
+                centered
+                style={{ maxWidth: '1600px' }}
+                className="project-plan-premium-modal shadow-2xl"
                 title={
                     <div className="flex flex-col">
                         <span className="text-lg font-bold">
@@ -458,78 +463,60 @@ const ProjectPlanModel = () => {
                                 Asset Request ID: {selectedViewTracker.assetRequestId || '-'}
                             </span>
                         )}
+                        {viewMilestones && viewMilestones.length > 0 && (
+                            <div className="mt-4">
+                                <Segmented 
+                                    options={['Gantt', 'List']} 
+                                    value={modalViewType} 
+                                    onChange={setModalViewType} 
+                                />
+                            </div>
+                        )}
                     </div>
                 }
             >
-                <div className="overflow-x-auto">
+                <div className="overflow-hidden min-h-[500px] flex-1 flex flex-col h-[75vh]">
                     {viewMilestones && viewMilestones.length > 0 ? (
-                        <table className="min-w-full border border-gray-200 rounded-xl text-xs">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Phase
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Task
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Responsible Person
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Plan Start
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Plan End
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Actual Start
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Actual End
-                                    </th>
-                                    <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">
-                                        Delay
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {viewMilestones.map(m => {
-                                    const planStart = m.planStart ? dayjs(m.planStart) : null;
-                                    const planEnd = m.planEnd ? dayjs(m.planEnd) : null;
-                                    const actualStart = m.actualStart ? dayjs(m.actualStart) : null;
-                                    const actualEnd = m.actualEnd ? dayjs(m.actualEnd) : null;
-
-                                    return (
-                                        <tr key={m.sNo || m.activity} className="border-b border-gray-100">
-                                            <td className="px-3 py-2 text-gray-800">
-                                                {m.activity || '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {m.remarks || '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {m.responsibility || '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {planStart ? planStart.format('DD-MMM-YYYY') : '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {planEnd ? planEnd.format('DD-MMM-YYYY') : '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {actualStart ? actualStart.format('DD-MMM-YYYY') : '-'}
-                                            </td>
-                                            <td className="px-3 py-2 text-gray-700">
-                                                {actualEnd ? actualEnd.format('DD-MMM-YYYY') : '-'}
-                                            </td>
-                                            <td className={`px-3 py-2 font-medium ${m.delayInDays > 0 ? 'text-red-600' : 'text-gray-700'}`}>
-                                                {m.delayInDays > 0 ? `${m.delayInDays} days` : '-'}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                        modalViewType === 'List' ? (
+                            <table className="min-w-full border border-gray-200 rounded-xl text-xs">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Phase</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Task</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Responsible Person</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Plan Start</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Plan End</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Actual Start</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Actual End</th>
+                                        <th className="px-3 py-2 text-left border-b border-gray-200 font-semibold text-gray-600">Delay</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {viewMilestones.map(m => {
+                                        const planStart = m.planStart ? dayjs(m.planStart) : null;
+                                        const planEnd = m.planEnd ? dayjs(m.planEnd) : null;
+                                        const actualStart = m.actualStart ? dayjs(m.actualStart) : null;
+                                        const actualEnd = m.actualEnd ? dayjs(m.actualEnd) : null;
+                                        return (
+                                            <tr key={m.sNo || m.activity} className="border-b border-gray-100">
+                                                <td className="px-3 py-2 text-gray-800">{m.activity || '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{m.remarks || '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{m.responsibility || '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{planStart ? planStart.format('DD-MMM-YYYY') : '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{planEnd ? planEnd.format('DD-MMM-YYYY') : '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{actualStart ? actualStart.format('DD-MMM-YYYY') : '-'}</td>
+                                                <td className="px-3 py-2 text-gray-700">{actualEnd ? actualEnd.format('DD-MMM-YYYY') : '-'}</td>
+                                                <td className={`px-3 py-2 font-medium ${m.delayInDays > 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                                                    {m.delayInDays > 0 ? `${m.delayInDays} days` : '-'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <ProjectGanttChart milestones={viewMilestones} />
+                        )
                     ) : (
                         <div className="py-8 text-center text-gray-400 text-sm">
                             No project plan phases available for this tracker.
@@ -538,6 +525,15 @@ const ProjectPlanModel = () => {
                 </div>
             </Modal>
             <style>{`
+                .project-plan-premium-modal .ant-modal-content {
+                    border-radius: 24px;
+                    padding: 32px;
+                    overflow: hidden;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                }
+                .project-plan-premium-modal .ant-modal-body {
+                    margin-top: 16px;
+                }
                 .project-plan-grid.rdg-light {
                     width: 100%;
                     height: 100%;

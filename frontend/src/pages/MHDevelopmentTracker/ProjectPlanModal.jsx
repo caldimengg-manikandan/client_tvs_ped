@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Form, Input, DatePicker, Button, Tooltip } from 'antd';
 import { ClipboardList, Trash2, Calendar, User, FileText, MessageSquare } from 'lucide-react';
 import dayjs from 'dayjs';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import { Segmented } from 'antd';
+import ProjectGanttChart from '../../components/ProjectGanttChart';
 
 const { TextArea } = Input;
 
@@ -33,6 +35,7 @@ const PlainHeaderCell = ({ column }) => (
 const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, assetRequestId }) => {
     const [form] = Form.useForm();
     const gridRef = useRef(null);
+    const [modalViewType, setModalViewType] = useState('Editor');
 
     useEffect(() => {
         if (visible) {
@@ -315,6 +318,14 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                                 <span className="text-[10px] text-gray-400 font-medium">Standardize project execution timelines</span>
                             </div>
                         </div>
+                        <div className="flex items-center">
+                            <Segmented 
+                                options={['Editor', 'Timeline']} 
+                                value={modalViewType} 
+                                onChange={setModalViewType}
+                                className="bg-white/50 border border-gray-200 shadow-sm font-bold"
+                            />
+                        </div>
                     </div>
                 </div>
             }
@@ -335,50 +346,59 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
         >
             <Form form={form} layout="vertical" className="mt-6 flex flex-col h-[calc(100vh-200px)]">
                 <div className="flex-1 overflow-hidden flex flex-col">
-                    <Form.List name="milestones">
-                        {(fields, { remove, add }) => {
-                            const columns = getColumns(remove);
-                            return (
-                                <div className="flex-1 border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col">
-                                    <div className="flex-1 min-h-[400px]">
-                                        <DataGrid
-                                            ref={gridRef}
-                                            columns={columns}
-                                            rows={fields}
-                                            rowKeyGetter={(row) => row.key}
-                                            className="rdg-light mh-development-grid h-full w-full"
-                                            style={{ blockSize: '100%' }}
-                                            rowHeight={60}
-                                            headerRowHeight={52}
-                                            defaultColumnOptions={{ resizable: true, minWidth: 100 }}
-                                        />
+                    {modalViewType === 'Editor' ? (
+                        <Form.List name="milestones">
+                            {(fields, { remove, add }) => {
+                                const columns = getColumns(remove);
+                                return (
+                                    <div className="flex-1 border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col">
+                                        <div className="flex-1 min-h-[400px]">
+                                            <DataGrid
+                                                ref={gridRef}
+                                                columns={columns}
+                                                rows={fields}
+                                                rowKeyGetter={(row) => row.key}
+                                                className="rdg-light mh-development-grid h-full w-full"
+                                                style={{ blockSize: '100%' }}
+                                                rowHeight={60}
+                                                headerRowHeight={52}
+                                                defaultColumnOptions={{ resizable: true, minWidth: 100 }}
+                                            />
+                                        </div>
+                                        <div className="p-3 bg-gray-50 border-t border-gray-200">
+                                            <Button
+                                                type="dashed"
+                                                onClick={() => {
+                                                    add({ sNo: fields.length + 1, activity: '' });
+                                                    setTimeout(() => {
+                                                        if (gridRef.current && gridRef.current.scrollToCell) {
+                                                            gridRef.current.scrollToCell({ idx: 1, rowIdx: fields.length });
+                                                        } else {
+                                                            const grid = document.querySelector('.mh-development-grid');
+                                                            if (grid) grid.scrollTop = 999999;
+                                                        }
+                                                    }, 50);
+                                                }}
+                                                block
+                                                className="h-10 border-indigo-200 hover:border-indigo-500 hover:text-indigo-600 font-medium bg-white"
+                                            >
+                                                + Add New Milestone
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="p-3 bg-gray-50 border-t border-gray-200">
-                                        <Button
-                                            type="dashed"
-                                            onClick={() => {
-                                                add({ sNo: fields.length + 1, activity: '' });
-                                                // Use the official DataGrid imperative API to scroll to the new row
-                                                setTimeout(() => {
-                                                    if (gridRef.current && gridRef.current.scrollToCell) {
-                                                        gridRef.current.scrollToCell({ idx: 1, rowIdx: fields.length });
-                                                    } else {
-                                                        // Fallback
-                                                        const grid = document.querySelector('.mh-development-grid');
-                                                        if (grid) grid.scrollTop = 999999;
-                                                    }
-                                                }, 50);
-                                            }}
-                                            block
-                                            className="h-10 border-indigo-200 hover:border-indigo-500 hover:text-indigo-600 font-medium bg-white"
-                                        >
-                                            + Add New Milestone
-                                        </Button>
-                                    </div>
-                                </div>
-                            );
-                        }}
-                    </Form.List>
+                                );
+                            }}
+                        </Form.List>
+                    ) : (
+                        <div className="flex-1 overflow-hidden flex flex-col h-full">
+                            <Form.Item shouldUpdate className="h-full mb-0 flex-1 flex flex-col [&>.ant-form-item-control]:h-full [&>.ant-form-item-control>.ant-form-item-control-input]:h-full [&>.ant-form-item-control>.ant-form-item-control-input>.ant-form-item-control-input-content]:h-full">
+                                {() => {
+                                    const currentMilestones = form.getFieldValue('milestones') || [];
+                                    return <ProjectGanttChart milestones={currentMilestones} />;
+                                }}
+                            </Form.Item>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-6 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex-shrink-0">

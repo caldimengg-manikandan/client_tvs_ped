@@ -1,0 +1,11 @@
+const fs = require('fs');
+const file = 'frontend/src/pages/Dashboard/exportUtils.js';
+const lines = fs.readFileSync(file, 'utf8').split('\n');
+const pIndex = lines.findIndex(l => l.includes('export async function exportDashboardPPTX'));
+const newLines = lines.slice(0, pIndex);
+newLines.push('export async function exportDashboardPPTX(dashboardData) {');
+newLines.push('    const { pptGenerator } = await import("../../utils/pptGenerator");');
+newLines.push('    await pptGenerator.generateDashboardPPT(dashboardData);');
+newLines.push('}');
+fs.writeFileSync(file, newLines.join('\n'));
+console.log('Successfully updated exportUtils.js');

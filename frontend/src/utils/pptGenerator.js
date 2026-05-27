@@ -1,73 +1,57 @@
 import PptxGenJS from 'pptxgenjs';
 
 /**
- * Designer-Grade PPT Generator Utility
- * Implements sophisticated master templates, high-fidelity visualizations, 
- * and strategic storytelling patterns for board-level reviews.
+ * Ultra-Professional Consultant-Grade PPT Generator
+ * Adheres strictly to high-end corporate presentation standards:
+ * - Minimalist, high data-ink ratio
+ * - Action-driven titles
+ * - Elegant typography and geometric hierarchy
+ * - Strict adherence to TVS Corporate branding (Navy & Red)
  */
-
 class PPTGenerator {
   constructor() {
     this.ppt = new PptxGenJS();
-    // CalTIMS Master Palette (Designer Curated)
+    
+    // Premium Corporate Palette
     this.colors = {
-      primary: '1E293B',    // Slate Dark (Modern Base)
-      tvsBlue: '253C80',    // CalTIMS Deep Blue
-      tvsRed: 'FA1102',     // CalTIMS Racing Red
-      accentGold: 'F59E0B', // Strategic Gold
-      surfaceHigh: 'F1F5F9',// Surface Background
-      textHeavy: '0F172A',  // Midnight Text
-      textLight: '64748B',  // Muted Tech Slate
-      success: '10B981',    // Emerald Green
-      warning: 'F59E0B',    // Amber
-      danger: 'EF4444',     // Red
-      white: 'FFFFFF'
+      primary: '0B1A30',     // Deep Corporate Navy
+      secondary: '2D3748',   // Slate Dark
+      accent: 'D32F2F',      // Corporate Red Highlight
+      bgLight: 'F8FAFC',     // Ultra-light slate (not stark white)
+      white: 'FFFFFF',
+      textMain: '1A202C',    // Charcoal for readability
+      textMuted: '718096',   // Muted slate
+      border: 'E2E8F0',      // Soft borders
+      success: '2E7D32',     // Professional Green
+      warning: 'F57C00',     // Professional Orange
+      chartLight: 'CBD5E0'   // For inactive/background chart elements
     };
 
-    this.margin = 0.5;
-    this.ppt.title = 'CalTIMS PED | Executive Strategic Analytics';
-    this.ppt.layout = 'LAYOUT_16x9';
+    this.fonts = {
+      header: 'Arial',
+      body: 'Arial',
+      bold: 'Arial Black'
+    };
   }
 
-  /**
-   * Main Generation Lifecycle
-   */
   async generateDashboardPPT(dashboardData) {
     try {
       this.ppt = new PptxGenJS();
       this.ppt.layout = 'LAYOUT_16x9';
+      this.ppt.title = 'TVS PED Executive Analytics';
 
-      // 1. MASTER BRANDING COVER
-      this.addSlideCover();
+      const data = dashboardData || {};
 
-      // 2. EXECUTIVE KPI BENTO 2.0 (Gradients + Icons)
-      this.addSlideKPIBento(dashboardData.stats);
+      this.addCoverSlide();
+      this.addExecutiveSummary(data);
+      this.addPipelineVelocity(data);
+      this.addVendorPerformance(data);
+      this.addStrategicPortfolio(data);
+      this.addStakeholderLoad(data);
+      this.addRecentOperations(data);
+      this.addConclusionSlide();
 
-      // 3. PORTFOLIO COMPOSITION (Sunburst-style Pie)
-      this.addSlidePortfolioAnalytics(dashboardData.stats);
-
-      // 4. PIPELINE LIFECYCLE (Horizontal Process Flow)
-      this.addSlideProcessFlow(dashboardData.stats);
-
-      // 5. OPERATIONAL VELOCITY (Meter Charts)
-      this.addSlideEfficiencyMetrics(dashboardData.stats);
-
-      // 6. GROWTH TRAJECTORY (Spline Trends)
-      this.addSlideHistoricalTrends(dashboardData.trends);
-
-      // 7. STAKEHOLDER HEATMAP
-      this.addSlideLoadHeatmap(dashboardData.stats);
-
-      // 8. PRIORITY RADAR (Action Table)
-      this.addSlidePriorityActions(dashboardData.stats.stageMetrics);
-
-      // 9. RECENT MILESTONES (Zebra Table + Badges)
-      this.addSlideMilestones(dashboardData.recentActivity);
-
-      // 10. STRATEGIC VISION & CLOSURE
-      this.addSlideRoadmap();
-
-      const fileName = `CalTIMS_Executive_Strategy_V3_${new Date().toISOString().split('T')[0]}.pptx`;
+      const fileName = `TVS_Executive_Report_${new Date().toISOString().split('T')[0]}.pptx`;
       await this.ppt.writeFile({ fileName });
 
       return { success: true, fileName };
@@ -77,311 +61,351 @@ class PPTGenerator {
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────────
+  // SLIDE TEMPLATES
+  // ────────────────────────────────────────────────────────────────────────
+
   /**
-   * Slide 1: High-Impact Master Cover
+   * Slide 1: High-End Cover
    */
-  addSlideCover() {
+  addCoverSlide() {
     const slide = this.ppt.addSlide();
+    slide.background = { color: this.colors.primary };
 
-    // Background Split
-    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 0, w: '40%', h: '100%', fill: { color: this.colors.tvsBlue } });
-    slide.addShape(this.ppt.ShapeType.rect, { x: '40%', y: 0, w: '60%', h: '100%', fill: { color: 'F8FAFC' } });
-
-    // Design Elements
-    slide.addShape(this.ppt.ShapeType.rtTriangle, { x: 3, y: 0, w: 2, h: '100%', fill: { color: this.colors.tvsBlue }, opacity: 20 });
-
-    // Title Branding
-    slide.addText('CalTIMS', {
-      x: 0.5, y: 1.0, w: 3, fontSize: 14, bold: true, color: this.colors.white, letterSpacing: 3, align: 'left'
+    // Geometric Abstraction (Consulting firm style)
+    slide.addShape(this.ppt.ShapeType.rtTriangle, {
+      x: 6.5, y: -0.5, w: 4, h: 6.5, fill: { color: this.colors.white, transparency: 95 }, flipV: true, line: { width: 0 }
+    });
+    slide.addShape(this.ppt.ShapeType.rect, {
+      x: 0, y: 1.5, w: 0.15, h: 2.2, fill: { color: this.colors.accent }, line: { width: 0 }
     });
 
-    slide.addText([
-      { text: 'PED EXECUTIVE\n', options: { fontSize: 44, bold: true, color: this.colors.textHeavy, breakLine: true } },
-      { text: 'STRATEGIC DASHBOARD', options: { fontSize: 24, bold: false, color: this.colors.tvsBlue } }
-    ], { x: 4.5, y: 1.8, w: 5, h: 2, fontFace: 'Arial', align: 'left' });
+    slide.addText('TVS MOTOR COMPANY', {
+      x: 0.6, y: 1.5, w: 5, h: 0.3,
+      fontSize: 12, bold: true, color: this.colors.white, fontFace: this.fonts.header, letterSpacing: 2
+    });
 
-    slide.addShape(this.ppt.ShapeType.line, { x: 4.5, y: 4.3, w: 2, h: 0, line: { color: this.colors.tvsRed, width: 4 } });
+    slide.addText('EXECUTIVE\nOPERATIONS\nREVIEW', { 
+      x: 0.6, y: 1.9, w: 8, h: 2, 
+      fontSize: 48, bold: true, color: this.colors.white, fontFace: this.fonts.bold, lineSpacing: 48
+    });
 
-    slide.addText(`DIGITAL OPS REVIEW | ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`, {
-      x: 4.5, y: 4.8, w: 5, fontSize: 11, color: this.colors.textLight, align: 'left'
+    const liveTime = new Date().toLocaleString('en-US', { 
+      month: 'long', day: 'numeric', year: 'numeric', 
+      hour: '2-digit', minute: '2-digit' 
+    });
+
+    slide.addText(`PLANT ENGINEERING DIVISION  |  LIVE DATA EXTRACT: ${liveTime.toUpperCase()}`, {
+      x: 0.6, y: 4.8, w: 8, h: 0.3,
+      fontSize: 10, color: 'A0AEC0', fontFace: this.fonts.body, letterSpacing: 1
     });
   }
 
   /**
-   * Slide 2: Bento KPI Grid 2.0 (Premium Gradients)
+   * Master Layout Applier (For inner slides)
    */
-  addSlideKPIBento(stats) {
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'EXECUTIVE SUMMARY', 'Quarterly Performance Snapshot');
+  applyMasterLayout(slide, title, actionSubtitle) {
+    slide.background = { color: this.colors.bgLight };
 
-    const kpi = stats?.kpiCards || {};
-    const cards = [
-      { label: 'TOTAL VOLUME', val: kpi.totalRequests || 0, icon: '📈', color: this.colors.primary },
-      { label: 'APPROVAL RATE', val: kpi.accepted || 0, icon: '✅', color: this.colors.success },
-      { label: 'IMPLEMENTATION', val: kpi.implemented || 0, icon: '🏭', color: this.colors.warning },
-      { label: 'ACTIVE FLOW', val: (kpi.totalRequests - (kpi.accepted + kpi.rejected)) || 0, icon: '🔄', color: this.colors.tvsBlue }
+    // 1. Top Corporate Band
+    slide.addShape(this.ppt.ShapeType.rect, {
+      x: 0, y: 0, w: '100%', h: 0.3, fill: { color: this.colors.primary }, line: { width: 0 }
+    });
+    slide.addShape(this.ppt.ShapeType.rect, {
+      x: 0, y: 0.3, w: '100%', h: 0.03, fill: { color: this.colors.accent }, line: { width: 0 }
+    });
+    slide.addText('TVS MOTOR COMPANY  |  PLANT ENGINEERING DIVISION', {
+      x: 0.2, y: 0, w: 6, h: 0.3, fontSize: 8, color: this.colors.white, fontFace: this.fonts.header, bold: true, valign: 'middle', letterSpacing: 1
+    });
+
+    // 2. Slide Title with Accent
+    slide.addShape(this.ppt.ShapeType.rect, {
+      x: 0.4, y: 0.6, w: 0.08, h: 0.5, fill: { color: this.colors.accent }, line: { width: 0 }
+    });
+    slide.addText(title.toUpperCase(), { 
+      x: 0.6, y: 0.55, w: 8, h: 0.4, 
+      fontSize: 22, bold: true, color: this.colors.primary, fontFace: this.fonts.bold 
+    });
+    
+    // 3. Action Subtitle (The "So What?")
+    if (actionSubtitle) {
+      slide.addText(actionSubtitle, { 
+        x: 0.6, y: 0.95, w: 8.5, h: 0.25, 
+        fontSize: 12, italic: true, color: this.colors.textMuted, fontFace: this.fonts.body 
+      });
+    }
+
+    // 4. Clean Footer
+    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 5.4, w: '100%', h: 0.01, fill: { color: this.colors.border }, line: { width: 0 } });
+    slide.addText(`Strictly Confidential  |  Slide ${this.ppt.slides.length}`, {
+      x: 0.4, y: 5.45, w: 9, h: 0.15, fontSize: 8, color: this.colors.textMuted, fontFace: this.fonts.body
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // DATA SLIDES
+  // ────────────────────────────────────────────────────────────────────────
+
+  addExecutiveSummary(data) {
+    const slide = this.ppt.addSlide();
+    this.applyMasterLayout(slide, 'Executive Summary', 'Key operational metrics indicate steady pipeline throughput.');
+
+    const s = data?.mhSummary || {};
+    const metrics = [
+      { label: 'Total MH Requests', val: s.totalRequested || 0 },
+      { label: 'Approved Requests', val: s.totalApproved || 0 },
+      { label: 'Approval Rate', val: `${s.approvalRate || 0}%` },
+      { label: 'Active Pipeline', val: (s.totalPending + s.totalAssigned) || 0 }
     ];
 
-    cards.forEach((c, i) => {
-      const x = 0.5 + (i * 2.35);
-      // Premium Card Base
+    // Minimalist Metric Cards
+    metrics.forEach((m, i) => {
+      const x = 0.5 + (i * 2.3);
+      
+      // Clean Bordered Box
       slide.addShape(this.ppt.ShapeType.rect, {
-        x, y: 1.3, w: 2.2, h: 1.8,
-        fill: { color: c.color },
-        line: { color: this.colors.white, width: 2 }
+        x, y: 1.5, w: 2.1, h: 1.2,
+        fill: { color: this.colors.white },
+        line: { color: this.colors.border, width: 1 }
       });
-
-      slide.addText(c.icon, { x, y: 1.4, w: 2.2, align: 'center', fontSize: 20 });
-      slide.addText(c.val.toString(), { x, y: 1.8, w: 2.2, align: 'center', fontSize: 38, bold: true, color: this.colors.white });
-      slide.addText(c.label, { x, y: 2.6, w: 2.2, align: 'center', fontSize: 9, bold: true, color: this.colors.white, letterSpacing: 1 });
+      
+      slide.addText(m.val.toString(), { 
+        x, y: 1.6, w: 2.1, h: 0.6, align: 'center', fontSize: 36, bold: true, color: this.colors.primary, fontFace: this.fonts.header
+      });
+      slide.addText(m.label.toUpperCase(), { 
+        x, y: 2.2, w: 2.1, h: 0.3, align: 'center', fontSize: 9, bold: true, color: this.colors.textMuted, fontFace: this.fonts.body, letterSpacing: 1
+      });
     });
 
-    slide.addChart(this.ppt.ChartType.bar, [{ name: 'Vol', labels: cards.map(c => c.label), values: cards.map(c => c.val) }], {
-      x: 0.5, y: 3.3, w: 9, h: 2.1,
-      barGapWidthPct: 60,
-      chartColors: cards.map(c => c.color),
-      showValue: true,
-      valAxisHidden: true,
-      catAxisLabelColor: this.colors.textHeavy,
-      catAxisFontSize: 10
+    // Volume Chart
+    slide.addText('METRIC COMPARISON', { x: 0.5, y: 3.1, w: 3, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+    
+    slide.addChart(this.ppt.ChartType.bar, [{ name: 'Vol', labels: metrics.map(m => m.label), values: metrics.map(m => parseInt(m.val) || 0) }], {
+      x: 0.5, y: 3.4, w: 9, h: 1.8,
+      barDir: 'bar', barGapWidthPct: 60,
+      chartColors: [this.colors.primary, this.colors.success, this.colors.accent, this.colors.secondary],
+      showValue: true, valAxisHidden: true, catAxisLineShow: false,
+      catAxisLabelColor: this.colors.textMain, catAxisFontSize: 10,
+      dataLabelColor: this.colors.textMain, dataLabelFontSize: 11, dataLabelFontBold: true
     });
   }
 
-  /**
-   * Slide 4: Strategic Process Flow
-   */
-  addSlideProcessFlow(stats) {
+  addPipelineVelocity(data) {
     const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'PROCESS LIFECYCLE', '9-Stage Operational Velocity & Queue Health');
+    this.applyMasterLayout(slide, 'Pipeline Velocity', 'Current distribution of assets across the development lifecycle.');
 
-    const workflow = stats?.productionWorkflow || {};
-    const labels = Object.keys(workflow);
-    const values = Object.values(workflow);
+    const phases = data?.mhDevTrackerFunnel || [];
+    const fallbackLabels = ['Initiated', 'Design', 'PR/PO', 'Sample', 'Production', 'Released'];
+    const labels = phases.length ? phases.map(p => p.stage) : fallbackLabels;
+    const values = phases.length ? phases.map(p => p.count) : [0,0,0,0,0,0];
 
+    // Elegant Chevron-style workflow
     labels.forEach((label, i) => {
-      const col = i < 5 ? i : i - 5;
-      const finalX = 0.5 + (col * 1.8);
-      const finalY = i < 5 ? 1.5 : 3.2;
-
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const finalX = 0.5 + (col * 3.0);
+      const finalY = 1.6 + (row * 1.8);
+      
       const isActive = values[i] > 0;
+      
+      // Thin line connecting them (only if not the last item in row)
+      if (col < 2) {
+        slide.addShape(this.ppt.ShapeType.rect, {
+            x: finalX + 2.4, y: finalY + 0.6, w: 0.6, h: 0.02, fill: { color: this.colors.border }
+        });
+      }
 
+      // Elegant Box
       slide.addShape(this.ppt.ShapeType.rect, {
-        x: finalX, y: finalY, w: 1.7, h: 1.2,
-        fill: { color: isActive ? this.colors.tvsBlue : 'E2E8F0' },
-        line: { color: this.colors.white, width: 2 }
+        x: finalX, y: finalY, w: 2.6, h: 1.2,
+        fill: { color: this.colors.white },
+        line: { color: isActive ? this.colors.primary : this.colors.border, width: isActive ? 2 : 1 }
       });
 
+      // Number
       slide.addText(values[i].toString(), {
-        x: finalX, y: finalY + 0.2, w: 1.7, align: 'center', fontSize: 24, bold: true, color: isActive ? this.colors.white : this.colors.textLight
+        x: finalX, y: finalY + 0.1, w: 2.6, h: 0.6, align: 'center', fontSize: 32, bold: true, color: isActive ? this.colors.primary : this.colors.textMuted, fontFace: this.fonts.header
       });
 
-      slide.addText(label.split('_').join(' ').toUpperCase(), {
-        x: finalX, y: finalY + 0.8, w: 1.7, align: 'center', fontSize: 7, bold: true, color: isActive ? this.colors.accentGold : this.colors.textLight
+      // Label
+      slide.addText(label.toUpperCase(), {
+        x: finalX, y: finalY + 0.7, w: 2.6, h: 0.3, align: 'center', fontSize: 9, bold: true, color: isActive ? this.colors.accent : this.colors.textMuted, letterSpacing: 1
       });
-    });
-
-    slide.addShape(this.ppt.ShapeType.rect, { x: 0.5, y: 4.8, w: 9, h: 0.6, fill: { color: this.colors.surfaceHigh } });
-    slide.addText('STRATEGIC FOCUS: Accelerating Design & Vendor Selection stages to improve downstream implementation velocity.', {
-      x: 0.7, y: 4.8, w: 8.6, h: 0.6, fontSize: 10, italic: true, valign: 'middle', color: this.colors.tvsBlue
     });
   }
 
-  /**
-   * Slide 9: Operational Milestones
-   */
-  addSlideMilestones(activity) {
+  addVendorPerformance(data) {
     const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'OPERATIONAL MILESTONES', 'Event-log & Recent High-Value Transitions');
+    this.applyMasterLayout(slide, 'Vendor Quality Assessment', 'Top performing partners based on strict QCD scoring metrics.');
 
-    if (activity?.length) {
+    const vendors = data?.vendorPerformance || [];
+    
+    // Layout: Left Chart, Right Details
+    slide.addText('VENDOR QCD SCORES (%)', { x: 0.5, y: 1.5, w: 4, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+
+    const vLabels = vendors.slice(0, 5).map(v => v.vendorName.substring(0, 15));
+    const vValues = vendors.slice(0, 5).map(v => v.avgScore);
+
+    if (vLabels.length > 0) {
+      slide.addChart(this.ppt.ChartType.bar, [{ name: 'Score', labels: vLabels, values: vValues }], {
+        x: 0.5, y: 1.8, w: 5, h: 3.2, 
+        barDir: 'bar', valAxisMaxVal: 100, barGapWidthPct: 40,
+        chartColors: [this.colors.primary], showValue: true,
+        valAxisHidden: true, catAxisLineShow: false,
+        dataLabelColor: this.colors.textMain, dataLabelFontSize: 10, dataLabelFontBold: true
+      });
+    }
+
+    // Right side: Top Vendor Highlight
+    const topVendor = vendors.length > 0 ? vendors[0] : null;
+    if (topVendor) {
+      slide.addShape(this.ppt.ShapeType.rect, {
+          x: 6.0, y: 1.8, w: 3.5, h: 3.0, fill: { color: this.colors.primary }
+      });
+      slide.addText('TOP PARTNER', { 
+          x: 6.0, y: 2.2, w: 3.5, align: 'center', fontSize: 10, bold: true, color: this.colors.white, letterSpacing: 2 
+      });
+      slide.addText(`${topVendor.avgScore || 0}%`, { 
+          x: 6.0, y: 2.6, w: 3.5, align: 'center', fontSize: 64, bold: true, color: this.colors.accent, fontFace: this.fonts.bold 
+      });
+      slide.addText((topVendor.vendorName || '').toUpperCase(), { 
+          x: 6.0, y: 3.6, w: 3.5, align: 'center', fontSize: 14, color: this.colors.white 
+      });
+    }
+  }
+
+  addStrategicPortfolio(data) {
+    const slide = this.ppt.addSlide();
+    this.applyMasterLayout(slide, 'Strategic Portfolio Trajectory', 'Historical volume growth and requirement classification.');
+
+    // Left: Line Chart (Trends)
+    slide.addText('6-MONTH REQUIREMENT TREND', { x: 0.5, y: 1.5, w: 4.5, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+    
+    const trends = data?.mhTrend || [];
+    const recentTrends = trends.slice(-6);
+
+    if (recentTrends.length > 0) {
+      slide.addChart(this.ppt.ChartType.line, [
+        { name: 'Requested', labels: recentTrends.map(t => t.month), values: recentTrends.map(t => t.requested) },
+        { name: 'Approved', labels: recentTrends.map(t => t.month), values: recentTrends.map(t => t.approved) }
+      ], {
+        x: 0.5, y: 1.9, w: 5.5, h: 3.0, 
+        showLegend: true, legendPos: 't', legendFontSize: 9,
+        chartColors: [this.colors.secondary, this.colors.accent],
+        lineDataSymbol: 'none', lineSize: 3, lineSmooth: true,
+        valAxisLineShow: false, catAxisLineShow: false, valAxisMajorGridLine: { color: this.colors.border, width: 1 }
+      });
+    }
+
+    // Right: Priority Pie
+    slide.addText('PRIORITY DISTRIBUTION', { x: 6.5, y: 1.5, w: 3, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+    const priority = data?.mhByPriority || {};
+    const pLabels = Object.keys(priority);
+    const pValues = Object.values(priority);
+    
+    if (pValues.length > 0 && pValues.some(v => v > 0)) {
+      slide.addChart(this.ppt.ChartType.doughnut, [{ name: 'Priority', labels: pLabels, values: pValues }], {
+        x: 6.5, y: 1.9, w: 3, h: 2.8,
+        holeSize: 65, showPercent: true, dataLabelColor: this.colors.textMain,
+        showLegend: true, legendPos: 'b', legendFontSize: 9,
+        chartColors: [this.colors.primary, this.colors.accent, this.colors.chartLight]
+      });
+    }
+  }
+
+  addStakeholderLoad(data) {
+    const slide = this.ppt.addSlide();
+    this.applyMasterLayout(slide, 'Resource & Stakeholder Load', 'Analyzing departmental demand against engineering capacity.');
+
+    const depts = data?.mhByDepartment || [];
+    const deptLabels = depts.slice(0, 5).map(d => d.department.substring(0, 15));
+    const deptValues = depts.slice(0, 5).map(d => d.requestCount);
+
+    const engs = data?.engineerUtilisation || [];
+    const engLabels = engs.slice(0, 5).map(e => e.engineerName.substring(0, 15));
+    const engValues = engs.slice(0, 5).map(e => e.utilisationPct);
+
+    slide.addText('TOP REQUESTING DEPARTMENTS', { x: 0.5, y: 1.5, w: 4.2, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+    if (deptLabels.length > 0) {
+      slide.addChart(this.ppt.ChartType.bar, [{ name: 'Reqs', labels: deptLabels, values: deptValues }], {
+        x: 0.5, y: 1.9, w: 4.2, h: 3.2, barDir: 'col', chartColors: [this.colors.primary], showValue: true, valAxisHidden: true, catAxisLineShow: false, dataLabelFontSize: 10
+      });
+    }
+
+    slide.addText('ENGINEER UTILISATION (%)', { x: 5.3, y: 1.5, w: 4.2, h: 0.3, fontSize: 10, bold: true, color: this.colors.secondary });
+    if (engLabels.length > 0) {
+      slide.addChart(this.ppt.ChartType.bar, [{ name: 'Util', labels: engLabels, values: engValues }], {
+        x: 5.3, y: 1.9, w: 4.2, h: 3.2, barDir: 'col', chartColors: [this.colors.accent], showValue: true, valAxisHidden: true, catAxisLineShow: false, dataLabelFontSize: 10
+      });
+    }
+  }
+
+  addRecentOperations(data) {
+    const slide = this.ppt.addSlide();
+    this.applyMasterLayout(slide, 'Operations Log', 'Latest high-priority asset interventions.');
+
+    const activity = data?.recentRequests || [];
+
+    if (activity.length > 0) {
       const rows = [[
-        { text: 'ID', options: { bold: true, fill: this.colors.primary, color: this.colors.white } },
-        { text: 'DEPARTMENT', options: { bold: true, fill: this.colors.primary, color: this.colors.white } },
-        { text: 'OWNER', options: { bold: true, fill: this.colors.primary, color: this.colors.white } },
-        { text: 'STATUS', options: { bold: true, fill: this.colors.primary, color: this.colors.white } },
-        { text: 'TRANSITION DATE', options: { bold: true, fill: this.colors.primary, color: this.colors.white } }
+        { text: 'REQUEST ID', options: { bold: true, fill: this.colors.white, color: this.colors.textMuted, fontSize: 9 } },
+        { text: 'ASSET / MODEL', options: { bold: true, fill: this.colors.white, color: this.colors.textMuted, fontSize: 9 } },
+        { text: 'OWNER', options: { bold: true, fill: this.colors.white, color: this.colors.textMuted, fontSize: 9 } },
+        { text: 'STATUS', options: { bold: true, fill: this.colors.white, color: this.colors.textMuted, fontSize: 9 } },
+        { text: 'PRIORITY', options: { bold: true, fill: this.colors.white, color: this.colors.textMuted, fontSize: 9 } }
       ]];
 
-      activity.slice(0, 8).forEach((a, idx) => {
-        const isOdd = idx % 2 !== 0;
-        const statusColor = a.status === 'Accepted' ? this.colors.success : this.colors.tvsBlue;
-
+      activity.slice(0, 7).forEach((a) => {
+        const statusColor = a.status === 'Completed' ? this.colors.success : this.colors.primary;
         rows.push([
-          { text: a.mhRequestId || '-', options: { fill: isOdd ? 'F8FAFC' : 'FFFFFF' } },
-          { text: (a.departmentName || 'PED').toUpperCase(), options: { fill: isOdd ? 'F8FAFC' : 'FFFFFF' } },
-          { text: a.userName || 'System', options: { fill: isOdd ? 'F8FAFC' : 'FFFFFF' } },
-          { text: a.status || 'Active', options: { color: statusColor, bold: true, fill: isOdd ? 'F8FAFC' : 'FFFFFF' } },
-          { text: a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '-', options: { fill: isOdd ? 'F8FAFC' : 'FFFFFF' } }
+          { text: a.requestId || '-', options: { color: this.colors.textMain, bold: true, fontSize: 10 } },
+          { text: (a.assetName || '-').toUpperCase().substring(0,30), options: { color: this.colors.textMain, fontSize: 10 } },
+          { text: a.assignedEngineerName || 'Unassigned', options: { color: this.colors.textMuted, fontSize: 10 } },
+          { text: a.status || 'Pending', options: { color: statusColor, bold: true, fontSize: 10 } },
+          { text: a.priority || 'Normal', options: { color: this.colors.accent, bold: true, fontSize: 10 } }
         ]);
       });
 
       slide.addTable(rows, {
-        x: 0.5, y: 1.5, w: 9, fontSize: 10,
-        border: { type: 'solid', color: 'E2E8F0', pt: 1 },
-        padding: 10, valign: 'middle', align: 'center'
+        x: 0.5, y: 1.6, w: 9, 
+        border: { type: 'solid', color: this.colors.border, pt: 1 },
+        fill: this.colors.white,
+        padding: 8, valign: 'middle'
       });
+    } else {
+      slide.addText('No recent activity to display.', { x: 0.5, y: 2.5, w: 9, align: 'center', color: this.colors.textMuted });
     }
   }
 
-  /**
-   * Slide 10: Roadmap
-   */
-  addSlideRoadmap() {
+  addConclusionSlide() {
     const slide = this.ppt.addSlide();
-    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: { color: this.colors.primary } });
+    slide.background = { color: this.colors.primary };
 
-    slide.addShape(this.ppt.ShapeType.rtTriangle, { x: 6, y: 0, w: 4, h: 5.6, fill: { color: this.colors.white, opacity: 5 }, flipV: true });
+    // Accent Line
+    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 1.2, w: 0.15, h: 1.0, fill: { color: this.colors.accent }, line: { width: 0 } });
 
-    slide.addText('FUTURE STRATEGY', { x: 0.5, y: 1.0, w: 9, fontSize: 36, bold: true, color: this.colors.white, align: 'center' });
-    slide.addShape(this.ppt.ShapeType.line, { x: 3.5, y: 1.7, w: 3, h: 0, line: { color: this.colors.accentGold, width: 3 } });
+    slide.addText('STRATEGIC\nCONCLUSION', { 
+        x: 0.6, y: 1.2, w: 9, h: 1.0, fontSize: 36, bold: true, color: this.colors.white, fontFace: this.fonts.bold 
+    });
 
     const strategy = [
-      { t: 'Phase 1: Digital Asset Twins', d: 'Mirroring physical handling assets into digital inventory with real-time health tracking.' },
-      { t: 'Phase 2: AI Vendor Grading', d: 'Automated performance scoring based on lead-time and implementation quality APIs.' },
-      { t: 'Phase 3: Hyper-Automation', d: 'Closing the loop between request raising and vendor PO via integrated ERP triggers.' }
+      { t: 'DIGITAL TWIN INTEGRATION', d: 'Continue mapping physical handling assets into the digital inventory.' },
+      { t: 'VENDOR RATIONALIZATION', d: 'Concentrate procurement towards vendors exceeding 80% QCD thresholds.' },
+      { t: 'WORKFLOW AUTOMATION', d: 'Deploy automatic ERP triggers to bypass manual PO generation delays.' }
     ];
 
     strategy.forEach((s, idx) => {
-      const y = 2.2 + (idx * 1.1);
-      slide.addShape(this.ppt.ShapeType.rect, { x: 1, y, w: 8, h: 0.9, fill: { color: this.colors.white, opacity: 8 } });
+      const y = 2.8 + (idx * 0.8);
+      
+      slide.addShape(this.ppt.ShapeType.rect, {
+        x: 0.6, y: y + 0.1, w: 0.05, h: 0.4, fill: { color: this.colors.accent }, line: { width: 0 }
+      });
+
       slide.addText([
-        { text: `${s.t}:\n`, options: { fontSize: 14, bold: true, color: this.colors.accentGold } },
-        { text: s.d, options: { fontSize: 11, color: this.colors.white } }
-      ], { x: 1.2, y, w: 7.6, h: 0.9, valign: 'middle' });
+        { text: `${s.t}\n`, options: { fontSize: 12, bold: true, color: this.colors.white, fontFace: this.fonts.header } },
+        { text: s.d, options: { fontSize: 10, color: 'A0AEC0', fontFace: this.fonts.body } }
+      ], { x: 0.8, y, w: 8, h: 0.6, valign: 'middle' });
     });
-
-    slide.addText('CalTIMS | PROCESS ENGINEERING DIVISION 2026', {
-      x: 0, y: 5.2, w: '100%', align: 'center', fontSize: 10, color: '888888', letterSpacing: 2
-    });
-  }
-
-  /**
-   * Master Layout Utility
-   */
-  applyMasterLayout(slide, title, subtitle) {
-    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 0, w: '100%', h: 1, fill: { color: this.colors.surfaceHigh } });
-    slide.addShape(this.ppt.ShapeType.line, { x: 0, y: 1, w: '100%', h: 0, line: { color: this.colors.tvsBlue, width: 3 } });
-
-    slide.addText('CalTIMS PED', { x: 8.5, y: 0.2, w: 1, fontSize: 12, bold: true, color: this.colors.tvsBlue, align: 'right' });
-    slide.addText(title, { x: 0.5, y: 0.25, w: 7, fontSize: 22, bold: true, color: this.colors.textHeavy, align: 'left', fit: 'shrink' });
-    slide.addText(subtitle, { x: 0.5, y: 0.65, w: 7, fontSize: 9, italic: true, color: this.colors.textLight, align: 'left' });
-
-    slide.addShape(this.ppt.ShapeType.rect, { x: 0, y: 5.4, w: '100%', h: 0.225, fill: { color: this.colors.primary } });
-    slide.addText(`STRATEGIC REVIEW | CONFIDENTIAL | PAGE ${this.ppt.slides.length}`, {
-      x: 0, y: 5.4, w: '100%', align: 'center', fontSize: 7, color: 'AAAAAA', valign: 'middle'
-    });
-  }
-
-  /**
-   * Portfolio Slide
-   */
-  addSlidePortfolioAnalytics(stats) {
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'MANAGEMENT PORTFOLIO', 'Categorization Analysis of Active Requirements');
-
-    const types = stats?.additionalStats?.typeBreakdown || {};
-    const labels = Object.keys(types);
-    const values = Object.values(types);
-
-    if (values.length > 0) {
-      slide.addChart(this.ppt.ChartType.pie, [{ name: 'Type', labels, values }], {
-        x: 0.5, y: 1.5, w: 5, h: 3.5,
-        showPercent: true,
-        showLegend: true,
-        legendPos: 'b',
-        legendFontSize: 9,
-        chartColors: [this.colors.tvsBlue, this.colors.tvsRed, this.colors.accentGold, this.colors.primary, this.colors.success]
-      });
-
-      slide.addShape(this.ppt.ShapeType.rect, { x: 5.8, y: 1.5, w: 3.5, h: 3.5, fill: { color: this.colors.surfaceHigh } });
-      slide.addText('PORTFOLIO INSIGHTS', { x: 6.0, y: 1.7, w: 3.1, fontSize: 13, bold: true, color: this.colors.tvsBlue, align: 'center' });
-
-      const insight = `Requirement diversity is currently controlled. "${labels[values.indexOf(Math.max(...values))]}" represents the core operational focus this period.`;
-      slide.addText(insight, { x: 6.0, y: 2.2, w: 3.1, fontSize: 10, align: 'left', color: this.colors.textHeavy, fit: 'shrink' });
-    }
-  }
-
-  /**
-   * Slide 5: Efficiency Metrics
-   */
-  addSlideEfficiencyMetrics(stats) {
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'OPERATIONAL VELOCITY', 'Lead-time Compliance & Scale Benchmarks');
-
-    const efficiency = stats?.additionalStats || {};
-    slide.addChart(this.ppt.ChartType.bar, [{ name: 'Comp', labels: ['Current'], values: [efficiency.completionRate || 0] }], {
-      x: 0.5, y: 1.5, w: 4, h: 3.5, barDir: 'bar', valAxisMaxVal: 100, chartColors: [this.colors.success], showValue: true
-    });
-
-    slide.addText('AVG PROCESSING CYCLE', { x: 5.5, y: 1.8, w: 3.5, fontSize: 12, bold: true, color: this.colors.textLight, align: 'center' });
-    slide.addText(`${efficiency.avgProcessingTime || 0} DAYS`, { x: 5.5, y: 2.3, w: 3.5, fontSize: 54, bold: true, color: this.colors.tvsBlue, align: 'center' });
-
-    slide.addShape(this.ppt.ShapeType.rect, { x: 5.5, y: 3.5, w: 3.5, h: 1, fill: { color: this.colors.primary, opacity: 5 } });
-    slide.addText('TARGET KPI: 12.0 DAYS', { x: 5.5, y: 3.6, w: 3.5, fontSize: 11, bold: true, color: this.colors.textHeavy, align: 'center' });
-  }
-
-  /**
-   * Slide 6: Historical Trajectory
-   */
-  addSlideHistoricalTrends(trends) {
-    if (!trends?.length) return;
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'GROWTH TRAJECTORY', 'Monthly Volume Analysis & Approvals');
-
-    slide.addChart(this.ppt.ChartType.line, [
-      { name: 'Raised', labels: trends.map(t => t.displayDate), values: trends.map(t => t.total) },
-      { name: 'Strategic', labels: trends.map(t => t.displayDate), values: trends.map(t => t.accepted) }
-    ], {
-      x: 0.5, y: 1.5, w: 9, h: 3.8, showLegend: true, legendPos: 't',
-      chartColors: [this.colors.tvsBlue, this.colors.success],
-      lineDataSymbol: 'circle', markerSize: 6,
-      catAxisLabelColor: this.colors.textLight, catAxisFontSize: 8
-    });
-  }
-
-  /**
-   * Slide 7: Load Heatmap
-   */
-  addSlideLoadHeatmap(stats) {
-    if (!stats?.additionalStats) return;
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'STAKEHOLDER LOAD', 'Heatmap Strategy for Departments & Product Classes');
-
-    const deptData = Object.entries(stats.additionalStats.deptBreakdown || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const prodData = Object.entries(stats.additionalStats.productBreakdown || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-    slide.addText('DEPT CONCENTRATION', { x: 0.5, y: 1.35, w: 4, fontSize: 11, bold: true, color: this.colors.tvsBlue });
-    slide.addChart(this.ppt.ChartType.bar, [{ name: 'L', labels: deptData.map(d => d[0]), values: deptData.map(d => d[1]) }], {
-      x: 0.5, y: 1.6, w: 4.2, h: 3.5, barDir: 'bar', chartColors: [this.colors.tvsRed], catAxisFontSize: 8, showValue: true
-    });
-
-    slide.addText('MODEL PREVALENCE', { x: 5.3, y: 1.35, w: 4, fontSize: 11, bold: true, color: this.colors.tvsBlue });
-    slide.addChart(this.ppt.ChartType.bar, [{ name: 'V', labels: prodData.map(p => p[0]), values: prodData.map(p => p[1]) }], {
-      x: 5.3, y: 1.6, w: 4.2, h: 3.5, barDir: 'bar', chartColors: [this.colors.accentGold], catAxisFontSize: 8, showValue: true
-    });
-  }
-
-  /**
-   * Slide 8: Priority Matrix
-   */
-  addSlidePriorityActions(stageMetrics) {
-    const slide = this.ppt.addSlide();
-    this.applyMasterLayout(slide, 'STRATEGIC RADAR', 'Critical Requirements Mapping & Urgent Release Phase');
-
-    const pending = stageMetrics?.designRelease?.pendingList?.slice(0, 5) || [];
-    if (pending.length > 0) {
-      const rows = [[{ text: 'REQUEST ID', options: { bold: true, fill: this.colors.tvsRed, color: this.colors.white } }, { text: 'TECHNICAL SCOPE / DESCRIPTION', options: { bold: true, fill: this.colors.tvsRed, color: this.colors.white } }]];
-      pending.forEach(item => {
-        rows.push([{ text: item.id || '-', options: { bold: true } }, item.name || 'Critical Scope Review Required']);
-      });
-
-      slide.addTable(rows, { x: 0.5, y: 1.5, w: 9, fontSize: 11, border: { type: 'solid', color: 'E2E8F0', pt: 1 }, padding: 12 });
-    } else {
-      slide.addShape(this.ppt.ShapeType.rect, { x: 2, y: 2.5, w: 6, h: 1.5, fill: { color: this.colors.success, opacity: 10 } });
-      slide.addText('OPERATIONAL STATUS: OPTIMAL\nAll pending design releases are currently synchronized.', {
-        x: 2, y: 2.5, w: 6, h: 1.5, align: 'center', bold: true, color: this.colors.success
-      });
-    }
   }
 }
 
