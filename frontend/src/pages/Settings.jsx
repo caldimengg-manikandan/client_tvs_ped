@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, FileText, Users, Save, Check, Search, Shield } from 'lucide-react';
+import { Calendar, FileText, Users, Save, Check, Search, Shield, Palette, Type, Layout as LayoutIcon, Sliders } from 'lucide-react';
 import { message, Select, Tag, Spin, Tooltip } from 'antd';
+import { COLOR_THEMES, FONT_OPTIONS, LAYOUT_OPTIONS } from '../components/Sidebar';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -28,6 +29,15 @@ const Settings = () => {
     const [usersLoading, setUsersLoading] = useState(false);
     const [userSearchTerm, setUserSearchTerm] = useState('');
     const [roleUpdating, setRoleUpdating] = useState({});
+
+    // UI Customization State
+    const [activeTheme,  setActiveTheme]  = useState(() => { try { return JSON.parse(localStorage.getItem('sb_theme')) ?? 'white'; } catch { return 'white'; } });
+    const [activeFont,   setActiveFont]   = useState(() => { try { return JSON.parse(localStorage.getItem('sb_font')) ?? 'inter'; } catch { return 'inter'; } });
+    const [activeLayout, setActiveLayout] = useState(() => { try { return JSON.parse(localStorage.getItem('sb_layout')) ?? 'normal'; } catch { return 'normal'; } });
+
+    const applyTheme  = k => { setActiveTheme(k);  localStorage.setItem('sb_theme', JSON.stringify(k)); window.dispatchEvent(new Event('sidebar_theme_update')); };
+    const applyFont   = k => { setActiveFont(k);   localStorage.setItem('sb_font', JSON.stringify(k)); window.dispatchEvent(new Event('sidebar_theme_update')); };
+    const applyLayout = k => { setActiveLayout(k); localStorage.setItem('sb_layout', JSON.stringify(k)); window.dispatchEvent(new Event('sidebar_theme_update')); };
 
     useEffect(() => {
         fetchEmployees();
@@ -503,6 +513,84 @@ const Settings = () => {
                             )}
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* ─── UI Customization Section ─────────────────────────────────────── */}
+            <div className="mt-10">
+                <div className="mb-4 flex items-center gap-3">
+                    <Sliders className="w-6 h-6 text-tvs-primary" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Interface Customization</h1>
+                        <p className="text-gray-600 text-sm">Personalize your portal's theme, fonts, and layout density.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Color Theme */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Palette size={18} className="text-tvs-primary" />
+                            <h2 className="text-base font-bold text-gray-800">Color Theme</h2>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                            {COLOR_THEMES.map(t => (
+                                <button
+                                    key={t.key}
+                                    onClick={() => applyTheme(t.key)}
+                                    title={t.label}
+                                    className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all border-2 ${activeTheme === t.key ? 'border-tvs-primary bg-blue-50' : 'border-transparent hover:bg-gray-50'}`}
+                                >
+                                    <div className="w-full h-8 rounded-md relative overflow-hidden shadow-sm border border-gray-200" style={{ background: t.preview }}>
+                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: t.accent }} />
+                                    </div>
+                                    <span className={`text-[10px] font-bold ${activeTheme === t.key ? 'text-tvs-primary' : 'text-gray-500'}`}>
+                                        {t.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Font */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Type size={18} className="text-tvs-primary" />
+                            <h2 className="text-base font-bold text-gray-800">Typography</h2>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {FONT_OPTIONS.map(f => (
+                                <button
+                                    key={f.key}
+                                    onClick={() => applyFont(f.key)}
+                                    style={{ fontFamily: f.style }}
+                                    className={`p-3 rounded-lg text-left font-semibold text-sm transition-all border-2 ${activeFont === f.key ? 'border-tvs-primary text-tvs-primary bg-blue-50' : 'border-gray-100 text-gray-600 hover:border-gray-300'}`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Density */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <LayoutIcon size={18} className="text-tvs-primary" />
+                            <h2 className="text-base font-bold text-gray-800">Layout Density</h2>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {LAYOUT_OPTIONS.map(l => (
+                                <button
+                                    key={l.key}
+                                    onClick={() => applyLayout(l.key)}
+                                    className={`flex items-center justify-between p-3 rounded-lg transition-all border-2 ${activeLayout === l.key ? 'border-tvs-primary text-tvs-primary bg-blue-50' : 'border-gray-100 text-gray-600 hover:border-gray-300'}`}
+                                >
+                                    <span className="font-semibold text-sm">{l.label}</span>
+                                    {activeLayout === l.key && <Check size={16} />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

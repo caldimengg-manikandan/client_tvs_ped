@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 /* ══════════════════════════════════════════════════
    COLOR THEMES  (8 total: 6 dark + white + black)
 ══════════════════════════════════════════════════ */
-const COLOR_THEMES = [
+export const COLOR_THEMES = [
     {
         key: 'navy', label: 'Navy',
         bg: 'linear-gradient(180deg,#7A0F0F 0%,#991515 60%,#091526 100%)',
@@ -62,14 +62,14 @@ const COLOR_THEMES = [
     },
 ];
 
-const FONT_OPTIONS = [
+export const FONT_OPTIONS = [
     { key: 'inter',  label: 'Inter',   style: "'Inter', sans-serif" },
     { key: 'outfit', label: 'Outfit',  style: "'Outfit', sans-serif" },
     { key: 'dm',     label: 'DM Sans', style: "'DM Sans', sans-serif" },
     { key: 'mono',   label: 'Mono',    style: "'JetBrains Mono', 'Fira Mono', monospace" },
 ];
 
-const LAYOUT_OPTIONS = [
+export const LAYOUT_OPTIONS = [
     { key: 'spacious', label: 'Spacious', itemPY: 14, iconSize: 36 },
     { key: 'normal',   label: 'Normal',   itemPY: 11, iconSize: 34 },
     { key: 'compact',  label: 'Compact',  itemPY: 8,  iconSize: 30 },
@@ -87,11 +87,20 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const location = useLocation();
     const navigate  = useNavigate();
 
-    const [showCustomize, setShowCustomize] = useState(false);
-
-    const [activeTheme,  setActiveTheme]  = useState(() => load('sb_theme',  'tvs-red'));
+    const [activeTheme,  setActiveTheme]  = useState(() => load('sb_theme',  'white'));
     const [activeFont,   setActiveFont]   = useState(() => load('sb_font',   'inter'));
     const [activeLayout, setActiveLayout] = useState(() => load('sb_layout', 'normal'));
+
+    // Listen for theme updates from Settings page
+    React.useEffect(() => {
+        const handleThemeUpdate = () => {
+            setActiveTheme(load('sb_theme', 'white'));
+            setActiveFont(load('sb_font', 'inter'));
+            setActiveLayout(load('sb_layout', 'normal'));
+        };
+        window.addEventListener('sidebar_theme_update', handleThemeUpdate);
+        return () => window.removeEventListener('sidebar_theme_update', handleThemeUpdate);
+    }, []);
 
     const theme  = COLOR_THEMES.find(t => t.key  === activeTheme)  ?? COLOR_THEMES[0];
     const font   = FONT_OPTIONS.find(f => f.key   === activeFont)   ?? FONT_OPTIONS[0];
@@ -114,9 +123,9 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         scrollTrack: lx ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)',
     };
 
-    const applyTheme  = k => { setActiveTheme(k);  save('sb_theme',  k); };
-    const applyFont   = k => { setActiveFont(k);   save('sb_font',   k); };
-    const applyLayout = k => { setActiveLayout(k); save('sb_layout', k); };
+    const applyTheme  = k => { setActiveTheme(k);  save('sb_theme',  k); window.dispatchEvent(new Event('sidebar_theme_update')); };
+    const applyFont   = k => { setActiveFont(k);   save('sb_font',   k); window.dispatchEvent(new Event('sidebar_theme_update')); };
+    const applyLayout = k => { setActiveLayout(k); save('sb_layout', k); window.dispatchEvent(new Event('sidebar_theme_update')); };
 
 
     const NAV_SECTIONS = [
@@ -189,6 +198,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             onClick={() => isSidebarOpen ? navigate('/') : setIsSidebarOpen(true)}
                             style={{
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 minHeight: 64,
@@ -206,172 +216,30 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                     transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
                                 }}
                             />
+                            <AnimatePresence>
+                                {isSidebarOpen && (
+                                    <motion.span
+                                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                        animate={{ opacity: 1, height: 'auto', marginTop: 4 }}
+                                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                        style={{
+                                            fontSize: '8.5px',
+                                            fontWeight: 700,
+                                            color: tc.text80,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            textAlign: 'center',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        Plant Engineering Department
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </div>
                     <div style={{ borderBottom:`1px solid ${tc.border}`, margin:'12px 0 8px 0' }} />
                 </div>
-
-                {/* ══ Customize Button ══ */}
-                <div className="px-3 pt-3 pb-1">
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setShowCustomize(v => !v)}
-                        className={`w-full flex items-center rounded-xl border transition-all duration-200 ${isSidebarOpen ? 'px-3 py-2.5 gap-3 justify-start' : 'p-2.5 justify-center'}`}
-                        style={{
-                            background:   showCustomize ? `${theme.accent}18` : tc.custBtnBg,
-                            borderColor:  showCustomize ? `${theme.accent}44` : tc.custBtnBorder,
-                            color:        showCustomize ? theme.accent : tc.muted,
-                        }}
-                        title="Customize Sidebar"
-                    >
-                        <Sliders size={14} />
-                        <AnimatePresence>
-                            {isSidebarOpen && (
-                                <motion.span
-                                    initial={{ opacity: 0, width: 0 }}
-                                    animate={{ opacity: 1, width: 'auto' }}
-                                    exit={{ opacity: 0, width: 0 }}
-                                    className="text-[10.5px] font-bold tracking-[0.1em] uppercase overflow-hidden whitespace-nowrap"
-                                >
-                                    Customize
-                                </motion.span>
-                            )}
-                        </AnimatePresence>
-                        {isSidebarOpen && (
-                            <motion.div
-                                animate={{ rotate: showCustomize ? 180 : 0 }}
-                                transition={{ duration: 0.22 }}
-                                className="ml-auto"
-                            >
-                                <ChevronDown size={12} />
-                            </motion.div>
-                        )}
-                    </motion.button>
-                </div>
-
-                {/* ══ Customize Panel ══ */}
-                <AnimatePresence>
-                    {showCustomize && isSidebarOpen && (
-                        <motion.div
-                            key="customize-panel"
-                            variants={panelV}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="mx-3 mb-1 rounded-2xl overflow-hidden"
-                            style={{
-                                background: tc.panelBg,
-                                border: `1px solid ${tc.panelBorder}`,
-                                backdropFilter: 'blur(10px)',
-                                transformOrigin: 'top center',
-                            }}
-                        >
-                            <div style={{ maxHeight: 290, overflowY: 'auto' }} className="p-3 space-y-3.5">
-
-                                {/* ── Colors ── */}
-                                <div>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                        <Palette size={10} style={{ color: theme.accent }} />
-                                        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: tc.label }}>
-                                            Color Theme
-                                        </span>
-                                    </div>
-                                    {/* 4-column grid to fit all 8 themes */}
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
-                                        {COLOR_THEMES.map(t => (
-                                            <button
-                                                key={t.key}
-                                                onClick={() => applyTheme(t.key)}
-                                                title={t.label}
-                                                style={{
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                                                    padding: '6px 4px', borderRadius: 10,
-                                                    background:   activeTheme === t.key ? `${theme.accent}18` : lx ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
-                                                    border:       `1.5px solid ${activeTheme === t.key ? theme.accent : 'transparent'}`,
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.18s ease',
-                                                }}
-                                            >
-                                                {/* Swatch */}
-                                                <div style={{
-                                                    width: 26, height: 18, borderRadius: 6, position: 'relative', overflow: 'hidden',
-                                                    background: t.preview,
-                                                    border: t.key === 'white' ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
-                                                }}>
-                                                    {/* Accent strip at bottom */}
-                                                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: t.accent }} />
-                                                    {activeTheme === t.key && (
-                                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Check size={9} color={t.isLight ? '#CC1F1F' : '#fff'} strokeWidth={3} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span style={{
-                                                    fontSize: 8.5, fontWeight: 700,
-                                                    color: activeTheme === t.key ? theme.accent : tc.muted,
-                                                    lineHeight: 1,
-                                                }}>
-                                                    {t.label}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* ── Font ── */}
-                                <div>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                        <Type size={10} style={{ color: theme.accent }} />
-                                        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: tc.label }}>
-                                            Font
-                                        </span>
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
-                                        {FONT_OPTIONS.map(f => (
-                                            <button key={f.key} onClick={() => applyFont(f.key)} style={{
-                                                fontFamily: f.style,
-                                                padding: '6px 8px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-                                                background:   activeFont === f.key ? `${theme.accent}18` : lx ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
-                                                border:       `1.5px solid ${activeFont === f.key ? theme.accent : 'transparent'}`,
-                                                color:        activeFont === f.key ? theme.accent : tc.muted,
-                                                fontSize: 11, fontWeight: 700,
-                                                transition: 'all 0.16s ease',
-                                            }}>
-                                                {f.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* ── Density ── */}
-                                <div>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                        <LayoutIcon size={10} style={{ color: theme.accent }} />
-                                        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: tc.label }}>
-                                            Density
-                                        </span>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 5 }}>
-                                        {LAYOUT_OPTIONS.map(l => (
-                                            <button key={l.key} onClick={() => applyLayout(l.key)} style={{
-                                                flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
-                                                background:   activeLayout === l.key ? `${theme.accent}18` : lx ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)',
-                                                border:       `1.5px solid ${activeLayout === l.key ? theme.accent : 'transparent'}`,
-                                                color:        activeLayout === l.key ? theme.accent : tc.muted,
-                                                fontSize: 10, fontWeight: 700,
-                                                transition: 'all 0.16s ease',
-                                            }}>
-                                                {l.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 {/* ══ Navigation ══ */}
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 sidebar-scrollbar">
