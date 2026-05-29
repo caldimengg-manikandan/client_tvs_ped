@@ -3,6 +3,7 @@ const AssetManagement = require('../models/AssetManagement');
 const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 const Employee = require('../models/EmployeeModel');
 const nodemailer = require('nodemailer');
+const { sendRequesterStatusEmail } = require('./emailController');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: build & send auto-notification email to approver on request creation
@@ -235,9 +236,10 @@ const createMHRequest = async (req, res) => {
         const locPart = plantCodes[plantLocation] || (plantLocation || location || "LOC").replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
         const deptPart = (departmentName || "DEP").replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
 
-        const idPrefix = `${companyPrefix}${locPart}${deptPart}`;
+        const idPrefix = `${companyPrefix}/${locPart}/${deptPart}`;
 
         // Find the last request with the same prefix to determine the next serial number
+        // We must escape slashes? No, MongoDB $regex handles literal slashes fine.
         const lastRequest = await MHRequest.findOne({
             mhRequestId: { $regex: `^${idPrefix}` }
         }).sort({ mhRequestId: -1 });
@@ -245,14 +247,14 @@ const createMHRequest = async (req, res) => {
         let nextSerial = 1;
         if (lastRequest && lastRequest.mhRequestId) {
             const lastId = lastRequest.mhRequestId;
-            const lastSerialStr = lastId.slice(-4);
+            const lastSerialStr = lastId.slice(-3); // Change to 3 digits
             const lastSerial = parseInt(lastSerialStr, 10);
             if (!isNaN(lastSerial)) {
                 nextSerial = lastSerial + 1;
             }
         }
 
-        const mhRequestId = `${idPrefix}${nextSerial.toString().padStart(4, '0')}`;
+        const mhRequestId = `${idPrefix}${nextSerial.toString().padStart(3, '0')}`;
 
         const newRequest = new MHRequest({
             mhRequestId,
@@ -546,6 +548,28 @@ const updateMHRequest = async (req, res) => {
         }
 
         res.json(updatedRequest);
+
+        // ── Trigger 1: Notify requester when request is Accepted or Rejected ──
+        if (status && (status === 'Accepted' || status === 'Rejected') && existingRequest.status !== status) {
+            try {
+                const requesterEmployee = await Employee.findOne({ mailId: updatedRequest.mailId })
+                    || await Employee.findOne({ employeeName: updatedRequest.userName });
+                const requesterEmail = requesterEmployee?.mailId || updatedRequest.mailId;
+                if (requesterEmail) {
+                    sendRequesterStatusEmail(requesterEmail, {
+                        mhRequestId: updatedRequest.mhRequestId,
+                        userName: updatedRequest.userName,
+                        status: updatedRequest.status,
+                        handlingPartName: updatedRequest.handlingPartName,
+                        departmentName: updatedRequest.departmentName,
+                        plantLocation: updatedRequest.plantLocation,
+                        remark: updatedRequest.remark
+                    }); // fire and forget — non-fatal
+                }
+            } catch (emailErr) {
+                console.error('[AutoEmail] Could not resolve requester email for status notification:', emailErr.message);
+            }
+        }
     } catch (err) {
         console.error('Update MH Request Error:', err);
 
@@ -572,7 +596,25 @@ const deleteMHRequest = async (req, res) => {
     try {
         const request = await MHRequest.findByIdAndDelete(req.params.id);
         if (!request) return res.status(404).json({ message: 'Request not found' });
-        res.json({ message: 'MH Request deleted successfully', request });
+        
+        // Cascade delete related records
+        if (request.mhRequestId) {
+            // Delete related Asset Management records
+            const AssetManagement = require('../models/AssetManagement');
+            if (request.allocationAssetId) {
+                await AssetManagement.findOneAndDelete({ assetId: request.allocationAssetId });
+            }
+            
+            // Delete related MH Development Tracker records
+            const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
+            await MHDevelopmentTracker.deleteMany({ assetRequestId: request.mhRequestId });
+            
+            // Delete related Project Plans
+            const ProjectPlan = require('../models/ProjectPlan');
+            await ProjectPlan.deleteMany({ assetRequestId: request.mhRequestId });
+        }
+        
+        res.json({ message: 'MH Request and all related data deleted successfully', request });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });

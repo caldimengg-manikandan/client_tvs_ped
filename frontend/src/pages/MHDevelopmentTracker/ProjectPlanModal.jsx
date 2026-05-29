@@ -344,8 +344,8 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
             }}
             className="custom-modal-premium-fullscreen"
         >
-            <Form form={form} layout="vertical" className="mt-6 flex flex-col h-[calc(100vh-200px)]">
-                <div className="flex-1 overflow-hidden flex flex-col">
+            <Form form={form} layout="vertical" className="mt-6 flex flex-col flex-1 h-full min-h-0">
+                <div className="flex-1 min-h-0 flex flex-col">
                     {modalViewType === 'Editor' ? (
                         <Form.List name="milestones">
                             {(fields, { remove, add }) => {
@@ -427,6 +427,8 @@ const ProjectPlanModal = ({ visible, onCancel, onSave, trackerId, initialData, a
                 }
                 .custom-modal-premium-fullscreen .ant-modal-body {
                     flex: 1;
+                    display: flex;
+                    flex-direction: column;
                     overflow: hidden;
                 }
                 .custom-modal-premium-fullscreen .ant-modal-header {

@@ -36,6 +36,8 @@ const VendorMaster = () => {
     const [hiddenKeys, setHiddenKeys] = useState(new Set());
     const [rowHeight, setRowHeight] = useState(48);
     const [headerRowHeight, setHeaderRowHeight] = useState(52);
+    const [importErrors, setImportErrors] = useState([]);
+    const [isErrorModalVisible, setIsErrorModalVisible] = useState(false);
     const gridContainerRef = useRef(null);
 
     useEffect(() => {
@@ -98,11 +100,11 @@ const VendorMaster = () => {
 
                 // Validate and transform data
                 const transformedData = jsonData.map((row, index) => ({
-                    vendorCode: row['Vendor Code'] || row['vendorCode'] || '',
-                    vendorName: row['Vendor Name'] || row['vendorName'] || '',
-                    GSTIN: row['GSTIN'] || row['gstin'] || '',
-                    vendorLocation: row['Vendor Location'] || row['vendorLocation'] || '',
-                    vendorMailId: row['Vendor Mail ID'] || row['vendorMailId'] || '',
+                    vendorCode: row['Vendor Code'] || row['vendorCode'] || row['Code'] || '',
+                    vendorName: row['Vendor Name'] || row['vendorName'] || row['Name'] || '',
+                    GSTIN: row['GSTIN'] || row['gstin'] || row['Gstin'] || '',
+                    vendorLocation: row['Vendor Location'] || row['vendorLocation'] || row['Location'] || row['location'] || '',
+                    vendorMailId: row['Vendor Mail ID'] || row['vendorMailId'] || row['Email'] || row['email'] || row['Email Address'] || '',
                     remarks: row['Remarks'] || row['remarks'] || ''
                 }));
 
@@ -132,12 +134,13 @@ const VendorMaster = () => {
     const handleConfirmImport = async () => {
         try {
             const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
 
             let successCount = 0;
             let errorCount = 0;
+            let errorDetails = [];
 
-            for (const vendor of importData) {
+            for (const [index, vendor] of importData.entries()) {
                 try {
                     const response = await fetch(`${API_BASE_URL}/vendors`, {
                         method: 'POST',
@@ -151,10 +154,13 @@ const VendorMaster = () => {
                     if (response.ok) {
                         successCount++;
                     } else {
+                        const errorData = await response.json();
                         errorCount++;
+                        errorDetails.push(`Row ${index + 1} (${vendor.vendorCode}): ${errorData.message}`);
                     }
                 } catch (err) {
                     errorCount++;
+                    errorDetails.push(`Row ${index + 1}: Network error`);
                 }
             }
 
@@ -166,7 +172,8 @@ const VendorMaster = () => {
                 toast.success(`Successfully imported ${successCount} vendor(s)`);
             }
             if (errorCount > 0) {
-                toast.error(`Failed to import ${errorCount} vendor(s)`);
+                setImportErrors(errorDetails);
+                setIsErrorModalVisible(true);
             }
         } catch (error) {
             console.error('Import error:', error);
@@ -718,6 +725,40 @@ const VendorMaster = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Import Errors Modal */}
+            <Modal
+                title={
+                    <div className="flex items-center gap-2 pb-2 border-b border-red-100">
+                        <span className="text-xl font-bold text-red-600">Import Failed</span>
+                    </div>
+                }
+                open={isErrorModalVisible}
+                onCancel={() => setIsErrorModalVisible(false)}
+                footer={[
+                    <button
+                        key="close"
+                        onClick={() => setIsErrorModalVisible(false)}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors font-semibold"
+                    >
+                        Close
+                    </button>
+                ]}
+                width="95%"
+                style={{ maxWidth: '600px' }}
+                centered
+            >
+                <div className="py-4">
+                    <p className="text-gray-600 mb-4 font-medium">The following vendors could not be imported due to data validation errors. Please fix these issues in your Excel file and try again:</p>
+                    <div className="max-h-64 overflow-y-auto bg-red-50 border border-red-100 rounded-lg p-2">
+                        <ul className="list-disc pl-5 space-y-1">
+                            {importErrors.map((err, i) => (
+                                <li key={i} className="text-sm text-red-800 font-medium">{err}</li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             </Modal>

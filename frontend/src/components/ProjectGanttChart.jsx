@@ -25,19 +25,24 @@ const ProjectGanttChart = ({ milestones }) => {
             const start = m.actualStart ? new Date(m.actualStart) : (m.planStart ? new Date(m.planStart) : null);
             const end = m.actualEnd ? new Date(m.actualEnd) : (m.planEnd ? new Date(m.planEnd) : null);
 
-            if (!start || !end) {
-                // If we don't have valid dates, we can't show it on the Gantt chart.
-                return; 
-            }
-
-            // Ensure start is before end
             let safeStart = start;
             let safeEnd = end;
-            if (safeStart.getTime() > safeEnd.getTime()) {
-                safeEnd = new Date(safeStart.getTime() + 24 * 60 * 60 * 1000); // add 1 day
+
+            if (!safeStart && !safeEnd) {
+                return; // If we have absolutely no dates, skip this task.
             }
-            if (safeStart.getTime() === safeEnd.getTime()) {
-                safeEnd = new Date(safeStart.getTime() + 24 * 60 * 60 * 1000); // Minimum 1 day width
+
+            // If missing one bound, infer it to be a 1-day task
+            if (!safeStart && safeEnd) {
+                safeStart = new Date(safeEnd.getTime() - 24 * 60 * 60 * 1000);
+            }
+            if (safeStart && !safeEnd) {
+                safeEnd = new Date(safeStart.getTime() + 24 * 60 * 60 * 1000);
+            }
+
+            // Ensure start is strictly before end
+            if (safeStart.getTime() >= safeEnd.getTime()) {
+                safeEnd = new Date(safeStart.getTime() + 24 * 60 * 60 * 1000);
             }
 
             // Determine progress based on actual dates
@@ -114,7 +119,7 @@ const ProjectGanttChart = ({ milestones }) => {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col h-full min-h-0">
             <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 flex-shrink-0">
                 <div>
                     <h3 className="text-lg font-bold text-gray-800 tracking-tight">Project Timeline Gantt</h3>
@@ -164,7 +169,7 @@ const ProjectGanttChart = ({ milestones }) => {
                 </div>
             </div>
 
-            <div className="gantt-container flex-1 overflow-auto rounded-lg border border-gray-100 shadow-inner bg-gray-50/30">
+            <div className="gantt-container flex-1 min-h-0 overflow-auto rounded-lg border border-gray-100 shadow-inner bg-gray-50/30">
                 <Gantt
                     tasks={tasks.tasks}
                     viewMode={view}
