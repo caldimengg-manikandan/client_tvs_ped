@@ -671,7 +671,7 @@ const CreateMHRequestList = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} sm={8}>
-                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">LOCATION</span>} name="location">
+                                    <Form.Item label={<span className="text-xs font-bold text-gray-500">PLANT LOCATION</span>} name="location">
                                         <Input disabled className="bg-gray-50 h-12 rounded-2xl text-gray-500 font-bold border-gray-100" />
                                     </Form.Item>
                                 </Col>

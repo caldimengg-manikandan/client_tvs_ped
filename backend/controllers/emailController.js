@@ -208,8 +208,200 @@ const testSMTPConnection = asyncHandler(async (req, res) => {
     }
 });
 
+// ─── Auto Notification: MH Request Status Change (Accepted / Rejected) ─────────
+// Called automatically from mhRequestController after status is finalized.
+const sendRequesterStatusEmail = async (requesterEmail, requestData) => {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !requesterEmail) return;
+    const { mhRequestId, userName, status, handlingPartName, departmentName, plantLocation, remark } = requestData;
+
+    const isAccepted = status === 'Accepted';
+    const headerColor = isAccepted ? '#059669' : '#dc2626';
+    const statusLabel = isAccepted ? '✅ ACCEPTED' : '❌ REJECTED';
+    const alertBg = isAccepted ? '#ecfdf5' : '#fef2f2';
+    const alertBorder = isAccepted ? '#6ee7b7' : '#fca5a5';
+    const alertTextColor = isAccepted ? '#065f46' : '#991b1b';
+
+    const html = `<!DOCTYPE html><html><head><style>
+        body{font-family:Arial,sans-serif;line-height:1.6;color:#334155;margin:0;padding:0;background:#f8fafc;}
+        .wrap{max-width:600px;margin:32px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+        .header{background:${headerColor};color:#fff;padding:28px 32px;}
+        .header h2{margin:0;font-size:20px;}
+        .header p{margin:6px 0 0;opacity:.85;font-size:13px;}
+        .body{background:#fff;padding:28px 32px;}
+        .alert{background:${alertBg};border:1px solid ${alertBorder};border-radius:8px;padding:14px 18px;margin:0 0 20px;}
+        .alert p{margin:0;color:${alertTextColor};font-weight:700;font-size:15px;}
+        table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;}
+        td{padding:10px 12px;border-bottom:1px solid #f1f5f9;}
+        td:first-child{font-weight:600;color:#64748b;width:40%;background:#f8fafc;}
+        .footer{text-align:center;font-size:11px;color:#94a3b8;padding:16px 32px;background:#f1f5f9;}
+    </style></head><body>
+    <div class="wrap">
+        <div class="header">
+            <h2>MH Request ${statusLabel}</h2>
+            <p>TVS-PED Portal · Automated Notification</p>
+        </div>
+        <div class="body">
+            <p>Dear <strong>${userName}</strong>,</p>
+            <div class="alert"><p>Your MH Request <strong>${mhRequestId}</strong> has been <strong>${status.toUpperCase()}</strong>.</p></div>
+            <table>
+                <tr><td>Request ID</td><td><strong>${mhRequestId}</strong></td></tr>
+                <tr><td>Part / Equipment</td><td>${handlingPartName || '—'}</td></tr>
+                <tr><td>Department</td><td>${departmentName}</td></tr>
+                <tr><td>Plant Location</td><td>${plantLocation}</td></tr>
+                <tr><td>Final Status</td><td style="color:${headerColor};font-weight:700;">${status}</td></tr>
+                ${remark ? `<tr><td>Remarks</td><td>${remark}</td></tr>` : ''}
+            </table>
+            ${isAccepted
+                ? `<p style="color:#475569;font-size:14px;">Your request has been approved and is now being processed by the PED Engineering team. You will receive further updates as the development progresses.</p>`
+                : `<p style="color:#475569;font-size:14px;">If you believe this is an error or need clarification, please contact your department approver or the PED team directly.</p>`}
+            <p style="margin-top:24px;font-size:13px;color:#64748b;">Regards,<br><strong>TVS-PED Portal</strong></p>
+        </div>
+        <div class="footer">This is an automated notification. Do not reply to this email. © TVS Motors PED Portal</div>
+    </div>
+    </body></html>`;
+
+    try {
+        const transporter = getTransporter();
+        await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: requesterEmail,
+            subject: `Your MH Request ${mhRequestId} has been ${status} — TVS PED Portal`,
+            html
+        });
+        console.log(`[AutoEmail] Requester status email (${status}) sent to ${requesterEmail} for ${mhRequestId}`);
+    } catch (err) {
+        console.error('[AutoEmail] Failed to send requester status email:', err.message);
+    }
+};
+
+// ─── Auto Notification: Vendor Assigned — sent to the REQUESTER ────────────────
+// Called from mhDevelopmentTrackerController.allocateVendor after vendor is saved.
+const sendVendorAssignedToRequesterEmail = async (requesterEmail, data) => {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !requesterEmail) return;
+    const { projectId, requesterName, vendorName, vendorLocation, materialHandlingEquipment, departmentName, plantLocation } = data;
+
+    const html = `<!DOCTYPE html><html><head><style>
+        body{font-family:Arial,sans-serif;line-height:1.6;color:#334155;margin:0;padding:0;background:#f8fafc;}
+        .wrap{max-width:600px;margin:32px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+        .header{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 32px;}
+        .header h2{margin:0;font-size:20px;}
+        .header p{margin:6px 0 0;opacity:.85;font-size:13px;}
+        .body{background:#fff;padding:28px 32px;}
+        .highlight{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px 20px;margin:0 0 20px;}
+        .highlight p{margin:0;color:#1e40af;font-weight:700;font-size:15px;}
+        table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;}
+        td{padding:10px 12px;border-bottom:1px solid #f1f5f9;}
+        td:first-child{font-weight:600;color:#64748b;width:40%;background:#f8fafc;}
+        .footer{text-align:center;font-size:11px;color:#94a3b8;padding:16px 32px;background:#f1f5f9;}
+    </style></head><body>
+    <div class="wrap">
+        <div class="header">
+            <h2>🏭 Vendor Assigned to Your Project</h2>
+            <p>TVS-PED Portal · Automated Notification</p>
+        </div>
+        <div class="body">
+            <p>Dear <strong>${requesterName}</strong>,</p>
+            <div class="highlight">
+                <p>Good news! A vendor has been assigned to your project <strong>${projectId}</strong> and development is now underway.</p>
+            </div>
+            <table>
+                <tr><td>Project ID</td><td><strong>${projectId}</strong></td></tr>
+                <tr><td>Equipment</td><td>${materialHandlingEquipment || '—'}</td></tr>
+                <tr><td>Department</td><td>${departmentName}</td></tr>
+                <tr><td>Plant Location</td><td>${plantLocation}</td></tr>
+                <tr><td>Assigned Vendor</td><td><strong style="color:#1e40af;">${vendorName}</strong></td></tr>
+                <tr><td>Vendor Location</td><td>${vendorLocation || '—'}</td></tr>
+                <tr><td>Current Stage</td><td><span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;">Design</span></td></tr>
+            </table>
+            <p style="color:#475569;font-size:14px;">The PED team will keep you informed as the project progresses through each development stage. You can also track the live status on the portal.</p>
+            <p style="margin-top:24px;font-size:13px;color:#64748b;">Regards,<br><strong>TVS-PED Portal</strong></p>
+        </div>
+        <div class="footer">This is an automated notification. Do not reply to this email. © TVS Motors PED Portal</div>
+    </div>
+    </body></html>`;
+
+    try {
+        const transporter = getTransporter();
+        await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: requesterEmail,
+            subject: `Vendor Assigned: ${vendorName} for Project ${projectId} — TVS PED Portal`,
+            html
+        });
+        console.log(`[AutoEmail] Vendor-assigned email sent to requester ${requesterEmail} for project ${projectId}`);
+    } catch (err) {
+        console.error('[AutoEmail] Failed to send vendor-assigned email to requester:', err.message);
+    }
+};
+
+// ─── Auto Notification: Tracker Stage / Status Changed ──────────────────────
+// Called from mhDevelopmentTrackerController.updateTracker when status or stage changes.
+const sendTrackerStatusChangeEmail = async (requesterEmail, data) => {
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !requesterEmail) return;
+    const { projectId, requesterName, newStatus, newStage, previousStatus, previousStage, materialHandlingEquipment, departmentName, plantLocation } = data;
+
+    const isCompleted = newStatus === 'Completed' || newStage === 'Completed';
+    const headerColor = isCompleted ? '#059669' : '#B31818';
+    const changeLabel = newStage && newStage !== previousStage ? `Stage: ${previousStage} → ${newStage}` : `Status: ${previousStatus} → ${newStatus}`;
+
+    const html = `<!DOCTYPE html><html><head><style>
+        body{font-family:Arial,sans-serif;line-height:1.6;color:#334155;margin:0;padding:0;background:#f8fafc;}
+        .wrap{max-width:600px;margin:32px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+        .header{background:${headerColor};color:#fff;padding:28px 32px;}
+        .header h2{margin:0;font-size:20px;}
+        .header p{margin:6px 0 0;opacity:.85;font-size:13px;}
+        .body{background:#fff;padding:28px 32px;}
+        .change-badge{display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;color:#1e293b;margin:0 0 20px;}
+        table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0;}
+        td{padding:10px 12px;border-bottom:1px solid #f1f5f9;}
+        td:first-child{font-weight:600;color:#64748b;width:40%;background:#f8fafc;}
+        .footer{text-align:center;font-size:11px;color:#94a3b8;padding:16px 32px;background:#f1f5f9;}
+    </style></head><body>
+    <div class="wrap">
+        <div class="header">
+            <h2>${isCompleted ? '🎉 Project Completed!' : '🔄 Project Update'}</h2>
+            <p>TVS-PED Portal · Development Tracker Notification</p>
+        </div>
+        <div class="body">
+            <p>Dear <strong>${requesterName}</strong>,</p>
+            <p>There has been a status update on your project <strong>${projectId}</strong>:</p>
+            <div class="change-badge">📋 ${changeLabel}</div>
+            <table>
+                <tr><td>Project ID</td><td><strong>${projectId}</strong></td></tr>
+                <tr><td>Equipment</td><td>${materialHandlingEquipment || '—'}</td></tr>
+                <tr><td>Department</td><td>${departmentName}</td></tr>
+                <tr><td>Plant Location</td><td>${plantLocation}</td></tr>
+                <tr><td>New Status</td><td><strong style="color:${headerColor};">${newStatus || previousStatus}</strong></td></tr>
+                <tr><td>Current Stage</td><td><strong>${newStage || previousStage}</strong></td></tr>
+            </table>
+            ${isCompleted
+                ? `<p style="color:#065f46;font-size:14px;font-weight:600;">Congratulations! Your Material Handling project has been successfully completed and is ready for deployment at your plant.</p>`
+                : `<p style="color:#475569;font-size:14px;">You can track the live progress on the TVS-PED portal. The engineering team will notify you of further changes.</p>`}
+            <p style="margin-top:24px;font-size:13px;color:#64748b;">Regards,<br><strong>TVS-PED Portal</strong></p>
+        </div>
+        <div class="footer">This is an automated notification. Do not reply to this email. © TVS Motors PED Portal</div>
+    </div>
+    </body></html>`;
+
+    try {
+        const transporter = getTransporter();
+        await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: requesterEmail,
+            subject: `Project Update: ${changeLabel} — ${projectId} | TVS PED Portal`,
+            html
+        });
+        console.log(`[AutoEmail] Tracker status-change email sent to ${requesterEmail} for project ${projectId}`);
+    } catch (err) {
+        console.error('[AutoEmail] Failed to send tracker status-change email:', err.message);
+    }
+};
+
 module.exports = {
     sendRequestEmail,
     testSMTPConnection,
-    sendVendorAllocationEmail
+    sendVendorAllocationEmail,
+    sendRequesterStatusEmail,
+    sendVendorAssignedToRequesterEmail,
+    sendTrackerStatusChangeEmail
 };

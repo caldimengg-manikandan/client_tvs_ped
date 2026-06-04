@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Switch } from 'antd';
-import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings, TrendingUp } from 'lucide-react';
+import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, Key, Lock, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings, TrendingUp, CheckCircle2, XCircle, RefreshCw, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEmployee, updateEmployee, fetchEmployeeById, fetchUserByEmployeeId, checkIdAvailability } from '../../redux/slices/employeeSlice';
@@ -65,6 +65,141 @@ const EmployeeForm = ({ mode = 'add' }) => {
     const [updatePassword, setUpdatePassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Password Strength & Generation Logic
+    const calculateStrength = (pass) => {
+        if (!pass) return 0;
+        let strength = 0;
+        if (pass.length >= 8) strength += 25;
+        if (/[A-Z]/.test(pass)) strength += 25;
+        if (/[0-9]/.test(pass)) strength += 25;
+        if (/[^A-Za-z0-9]/.test(pass)) strength += 25;
+        return strength;
+    };
+
+    const generateRandomPassword = () => {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+        let pass = "";
+        for (let i = 0; i < 12; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        if (!/[A-Z]/.test(pass)) pass += "A";
+        if (!/[0-9]/.test(pass)) pass += "1";
+        if (!/[^A-Za-z0-9]/.test(pass)) pass += "@";
+        
+        setFormData(prev => ({ ...prev, password: pass, confirmPassword: pass }));
+        navigator.clipboard.writeText(pass);
+        toast.success("Secure password generated & copied to clipboard!");
+    };
+
+    const strength = calculateStrength(formData.password);
+    const rules = {
+        length: formData.password?.length >= 8,
+        upper: /[A-Z]/.test(formData.password || ''),
+        number: /[0-9]/.test(formData.password || ''),
+        special: /[^A-Za-z0-9]/.test(formData.password || '')
+    };
+
+    const renderPasswordFields = () => (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <label className="block text-sm font-medium text-gray-700">
+                            {mode === 'edit' ? 'New Password *' : 'Password *'}
+                        </label>
+                        <button
+                            type="button"
+                            onClick={generateRandomPassword}
+                            className="text-[11px] font-bold text-tvs-primary hover:text-red-700 flex items-center gap-1 bg-red-50 px-2 py-1 rounded transition-colors"
+                        >
+                            <RefreshCw size={12} /> Auto-Generate
+                        </button>
+                    </div>
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all ${errors.password ? 'border-red-300 bg-red-50/30' : 'border-gray-300 bg-gray-50/30 hover:bg-white'}`}
+                            placeholder="Enter password"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                        </button>
+                    </div>
+                    {errors.password && (
+                        <p className="text-sm text-red-600 flex items-center gap-1.5 mt-1.5 font-medium">
+                            <AlertCircle size={14} /> {errors.password}
+                        </p>
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                        {mode === 'edit' ? 'Confirm New Password *' : 'Confirm Password *'}
+                    </label>
+                    <div className="relative">
+                        <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all ${errors.confirmPassword ? 'border-red-300 bg-red-50/30' : 'border-gray-300 bg-gray-50/30 hover:bg-white'}`}
+                            placeholder="Re-enter password"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                        </button>
+                    </div>
+                    {errors.confirmPassword && (
+                        <p className="text-sm text-red-600 flex items-center gap-1.5 mt-1.5 font-medium">
+                            <AlertCircle size={14} /> {errors.confirmPassword}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* Advanced Password Strength UI */}
+            <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-bold text-gray-700">Password Strength</span>
+                    <span className={`text-[11px] font-black uppercase tracking-wider ${strength < 50 ? 'text-red-500' : strength < 100 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                        {strength === 0 ? 'None' : strength < 50 ? 'Weak' : strength < 100 ? 'Good' : 'Strong'}
+                    </span>
+                </div>
+                <div className="flex gap-1 mb-4">
+                    {[1, 2, 3, 4].map(idx => (
+                        <div key={idx} className={`h-1.5 w-full rounded-full transition-colors duration-500 ${strength >= idx * 25 ? (strength === 100 ? 'bg-emerald-500' : strength >= 50 ? 'bg-amber-400' : 'bg-red-500') : 'bg-gray-200'}`} />
+                    ))}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                    <div className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${rules.length ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {rules.length ? <CheckCircle2 size={13} /> : <XCircle size={13} className="opacity-40" />} 8+ Characters
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${rules.upper ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {rules.upper ? <CheckCircle2 size={13} /> : <XCircle size={13} className="opacity-40" />} Uppercase Letter
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${rules.number ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {rules.number ? <CheckCircle2 size={13} /> : <XCircle size={13} className="opacity-40" />} Number
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${rules.special ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        {rules.special ? <CheckCircle2 size={13} /> : <XCircle size={13} className="opacity-40" />} Special Character
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     // Debounce check ID
     // We use a ref to keep the debounce function stable across renders
@@ -428,79 +563,55 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         </div>
 
                         {/* Password Section */}
-                        {mode === 'edit' && (
-                            <div className="md:col-span-2 lg:col-span-3">
-                                <label className="flex items-center space-x-2 cursor-pointer mb-2">
-                                    <Switch
-                                        checked={updatePassword}
-                                        onChange={(checked) => setUpdatePassword(checked)}
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">Change Password</span>
-                                </label>
+                        {mode === 'edit' ? (
+                            <div className="md:col-span-2 lg:col-span-3 mt-4 mb-2">
+                                <div className={`border rounded-xl transition-all duration-300 ${updatePassword ? 'border-red-200 bg-red-50/30' : 'border-gray-200 bg-gray-50/50'} overflow-hidden shadow-sm`}>
+                                    <div 
+                                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                                        onClick={() => setUpdatePassword(!updatePassword)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2.5 rounded-lg transition-colors ${updatePassword ? 'bg-red-100 text-red-600' : 'bg-white border border-gray-200 text-gray-500 shadow-sm'}`}>
+                                                <Key size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[15px] font-bold text-gray-900">Change Password</h4>
+                                                <p className="text-[12px] text-gray-500 mt-0.5">Click the toggle switch on the right to update credentials</p>
+                                            </div>
+                                        </div>
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <Switch
+                                                checked={updatePassword}
+                                                onChange={(checked) => setUpdatePassword(checked)}
+                                                style={{ backgroundColor: updatePassword ? '#cc1f1f' : undefined }}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`transition-all duration-500 ease-in-out ${updatePassword ? 'max-h-[500px] opacity-100 border-t border-red-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                        <div className="p-5 bg-white">
+                                            {renderPasswordFields()}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-
-                        {(mode === 'add' || (mode === 'edit' && updatePassword)) && (
-                            <>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Password *
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            name="password"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            className={`w-full px-3 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
-                                            placeholder="Enter password"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                        >
-                                            {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </button>
+                        ) : (
+                            <div className="md:col-span-2 lg:col-span-3 mt-4 mb-2">
+                                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
+                                    <div className="p-4 flex items-center gap-4 bg-gray-50/50 border-b border-gray-100">
+                                        <div className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-500 shadow-sm">
+                                            <Key size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-[15px] font-bold text-gray-900">Account Password</h4>
+                                            <p className="text-[12px] text-gray-500 mt-0.5">Set up initial employee login credentials</p>
+                                        </div>
                                     </div>
-                                    {errors.password && (
-                                        <p className="text-sm text-red-600 flex items-center gap-1">
-                                            <AlertCircle size={14} /> {errors.password}
-                                        </p>
-                                    )}
-                                    <p className="text-xs text-gray-500">
-                                        Min 8 chars with uppercase, lowercase, number & special character
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Confirm Password *
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            name="confirmPassword"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            className={`w-full px-3 py-2.5 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'}`}
-                                            placeholder="Re-enter password"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                        >
-                                            {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </button>
+                                    <div className="p-5">
+                                        {renderPasswordFields()}
                                     </div>
-                                    {errors.confirmPassword && (
-                                        <p className="text-sm text-red-600 flex items-center gap-1">
-                                            <AlertCircle size={14} /> {errors.confirmPassword}
-                                        </p>
-                                    )}
                                 </div>
-                            </>
+                            </div>
                         )}
 
                         {/* Status */}

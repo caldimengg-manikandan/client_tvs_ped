@@ -3,6 +3,7 @@ const MHRequest = require('../models/MHRequest');
 const Vendor = require('../models/Vendor');
 const VendorLoading = require('../models/VendorLoading');
 const VendorScoring = require('../models/VendorScoring');
+const Employee = require('../models/EmployeeModel');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -240,6 +241,10 @@ const updateTracker = async (req, res) => {
             });
         }
 
+        // Capture previous state before update for change-detection email
+        const previousStatus = tracker.status;
+        const previousStage = tracker.currentStage;
+
         // Update fields
         const allowedUpdates = [
             'departmentName', 'userName', 'requestType', 'productModel', 'materialHandlingEquipment', 'plantLocation',
@@ -255,6 +260,35 @@ const updateTracker = async (req, res) => {
         });
 
         const updatedTracker = await tracker.save();
+
+        // ── Trigger 3: Notify requester when stage or status changes ──
+        const statusChanged = updatedTracker.status !== previousStatus;
+        const stageChanged  = updatedTracker.currentStage !== previousStage;
+        if (statusChanged || stageChanged) {
+            try {
+                const MHRequest = require('../models/MHRequest');
+                const mhReq = await MHRequest.findOne({ mhRequestId: updatedTracker.assetRequestId });
+                const requesterEmployee = mhReq
+                    ? await Employee.findOne({ mailId: mhReq.mailId }) || await Employee.findOne({ employeeName: updatedTracker.userName })
+                    : await Employee.findOne({ employeeName: updatedTracker.userName });
+                const requesterEmail = requesterEmployee?.mailId || mhReq?.mailId;
+                if (requesterEmail) {
+                    sendTrackerStatusChangeEmail(requesterEmail, {
+                        projectId:               updatedTracker.assetRequestId,
+                        requesterName:           updatedTracker.userName,
+                        previousStatus,
+                        newStatus:               updatedTracker.status,
+                        previousStage,
+                        newStage:                updatedTracker.currentStage,
+                        materialHandlingEquipment: updatedTracker.materialHandlingEquipment,
+                        departmentName:          updatedTracker.departmentName,
+                        plantLocation:           updatedTracker.plantLocation
+                    }); // fire and forget
+                }
+            } catch (emailErr) {
+                console.error('[AutoEmail] Tracker status-change email error:', emailErr.message);
+            }
+        }
 
         res.status(200).json({
             success: true,
@@ -355,9 +389,7 @@ const uploadDrawing = async (req, res) => {
     }
 };
 
-const { sendVendorAllocationEmail } = require('./emailController');
-
-// ... (existing code)
+const { sendVendorAllocationEmail, sendVendorAssignedToRequesterEmail, sendTrackerStatusChangeEmail } = require('./emailController');
 
 // Get vendors for selection (from Vendor Scoring)
 const getVendorsForSelection = async (req, res) => {
@@ -497,6 +529,29 @@ const allocateVendor = async (req, res) => {
                 department: tracker.departmentName,
                 plant: tracker.plantLocation
             });
+        }
+
+        // ── Trigger 2: Notify the original requester that a vendor has been assigned ──
+        try {
+            const MHRequest = require('../models/MHRequest');
+            const mhReq = await MHRequest.findOne({ mhRequestId: tracker.assetRequestId });
+            const requesterEmployee = mhReq
+                ? await Employee.findOne({ mailId: mhReq.mailId }) || await Employee.findOne({ employeeName: tracker.userName })
+                : await Employee.findOne({ employeeName: tracker.userName });
+            const requesterEmail = requesterEmployee?.mailId || mhReq?.mailId;
+            if (requesterEmail) {
+                sendVendorAssignedToRequesterEmail(requesterEmail, {
+                    projectId:               tracker.assetRequestId,
+                    requesterName:           tracker.userName,
+                    vendorName,
+                    vendorLocation,
+                    materialHandlingEquipment: tracker.materialHandlingEquipment,
+                    departmentName:          tracker.departmentName,
+                    plantLocation:           tracker.plantLocation
+                }); // fire and forget
+            }
+        } catch (emailErr) {
+            console.error('[AutoEmail] Vendor-assigned requester email error:', emailErr.message);
         }
 
         res.status(200).json({

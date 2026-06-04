@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 // Import TVS & Trolley Assets
 import imgTvsLogo from '../assets/tvslogo.jpg';
@@ -274,7 +275,12 @@ const Login = () => {
                                     }}>
                                         Password
                                     </label>
-                                    <span style={{ fontSize: '12px', color: '#253C80', fontWeight: '600', cursor: 'pointer' }}>Forgot password?</span>
+                                    <span 
+                                        onClick={() => toast('Please contact your System Administrator to reset your password.', { icon: '🔒', duration: 4000 })}
+                                        style={{ fontSize: '12px', color: '#253C80', fontWeight: '600', cursor: 'pointer' }}
+                                    >
+                                        Forgot password?
+                                    </span>
                                 </div>
                                 <div style={{
                                     display: 'flex',
