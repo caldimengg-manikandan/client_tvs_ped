@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Home, Settings, FileText, ClipboardList, Users, Shield,
     BarChart2, TrendingUp, Menu, ChevronLeft, ChevronDown,
     Layers, Package, PieChart, Factory, Sliders, Palette,
-    Type, Layout as LayoutIcon, Check
+    Type, Layout as LayoutIcon, Check,
+    // Workflow icons
+    GitBranch, Pencil, CheckSquare, Award, Inbox
 } from 'lucide-react';
+
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Tooltip } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,9 +86,52 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
    SIDEBAR
 ══════════════════════════════════════════════════ */
 const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
-    const { hasPermission } = useAuth();
+    const { hasPermission, hasRole, user } = useAuth();
     const location = useLocation();
     const navigate  = useNavigate();
+
+    // ── Workflow queue badge counts ────────────────────────────────────────
+    const [queueCounts, setQueueCounts] = useState({ l1: 0, design: 0, checker: 0, final: 0 });
+
+    const fetchQueueCounts = useCallback(async () => {
+        if (!user) return;
+        const role = user.role;
+        const token = sessionStorage.getItem('token');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const base = import.meta.env.VITE_API_BASE_URL || '';
+
+        const fetchCount = async (queueType) => {
+            try {
+                const res = await fetch(`${base}/api/workflow/queue/${queueType}`, { headers });
+                if (!res.ok) return 0;
+                const data = await res.json();
+                return data.count ?? 0;
+            } catch { return 0; }
+        };
+
+        const updates = {};
+        if (role === 'Approver' || role === 'Admin') {
+            updates.l1 = await fetchCount('l1');
+        }
+        if (role === 'Designer' || role === 'Admin') {
+            updates.design = await fetchCount('design');
+        }
+        if (role === 'Checker' || role === 'Admin') {
+            updates.checker = await fetchCount('checker');
+        }
+        if (role === 'Final Approver' || role === 'Admin') {
+            updates.final = await fetchCount('final');
+        }
+        setQueueCounts(prev => ({ ...prev, ...updates }));
+    }, [user]);
+
+    useEffect(() => {
+        fetchQueueCounts();
+        // Refresh counts every 60 seconds
+        const interval = setInterval(fetchQueueCounts, 60000);
+        return () => clearInterval(interval);
+    }, [fetchQueueCounts]);
+
 
     const [activeTheme,  setActiveTheme]  = useState(() => load('sb_theme',  'white'));
     const [activeFont,   setActiveFont]   = useState(() => load('sb_font',   'inter'));
@@ -128,6 +174,39 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const applyLayout = k => { setActiveLayout(k); save('sb_layout', k); window.dispatchEvent(new Event('sidebar_theme_update')); };
 
 
+    // ── Build WORKFLOW section items based on current user role ─────────────────
+    const workflowItems = [];
+    const role = user?.role;
+
+    if (role === 'Approver' || role === 'Admin') {
+        workflowItems.push({
+            name: 'L1 Approval Queue',  short: 'L1 Queue', icon: Inbox,
+            path: '/workflow-queue/l1',  permission: 'requestTracker',
+            badge: queueCounts.l1,      badgeColor: '#f59e0b'
+        });
+    }
+    if (role === 'Designer' || role === 'Admin') {
+        workflowItems.push({
+            name: 'Design Queue',  short: 'Design Q', icon: Pencil,
+            path: '/design-queue', permission: 'designQueue',
+            badge: queueCounts.design,  badgeColor: '#7c3aed'
+        });
+    }
+    if (role === 'Checker' || role === 'Admin') {
+        workflowItems.push({
+            name: 'Checker Queue',  short: 'Check Q', icon: CheckSquare,
+            path: '/checker-queue', permission: 'checkerQueue',
+            badge: queueCounts.checker, badgeColor: '#0891b2'
+        });
+    }
+    if (role === 'Final Approver' || role === 'Admin') {
+        workflowItems.push({
+            name: 'Final Approval',  short: 'Final Q', icon: Award,
+            path: '/final-approval-queue', permission: 'finalApprovalQueue',
+            badge: queueCounts.final,   badgeColor: '#16a34a'
+        });
+    }
+
     const NAV_SECTIONS = [
         { label: 'OPERATIONS', items: [
             { name: 'Dashboard',        short: 'Dashboard',  icon: Home,          path: '/',                        permission: 'dashboard' },
@@ -136,6 +215,8 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             { name: 'MH Development',   short: 'MH Dev',     icon: TrendingUp,    path: '/mh-development-tracker',  permission: 'mhDevelopmentTracker' },
             { name: 'Project Plan Tracking', short: 'Plan Track', icon: LayoutIcon, path: '/project-plan-model', permission: 'mhDevelopmentTracker' },
         ]},
+        // Workflow queues — only shown if user has at least one queue
+        ...(workflowItems.length > 0 ? [{ label: 'WORKFLOW', items: workflowItems }] : []),
         { label: 'ASSETS', items: [
             { name: 'Asset Management', short: 'Assets',     icon: Package,       path: '/asset-management-update', permission: 'assetSummary' },
             { name: 'Asset Summary',    short: 'Summary',    icon: ClipboardList, path: '/asset-summary',           permission: 'assetSummary' },
@@ -150,6 +231,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
             { name: 'Settings',         short: 'Settings',   icon: Settings,      path: '/settings',                permission: 'settings' },
         ]},
     ];
+
 
     const panelV = {
         hidden:  { opacity: 0, y: -8, scaleY: 0.94 },
@@ -252,12 +334,37 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                             <div key={section.label}>
                                 {/* Section header — hidden in collapsed mode */}
                                 {isSidebarOpen && (
-                                    <div style={{
-                                        fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
-                                        color: tc.label, padding: '16px 16px 4px 16px', marginTop: 4,
-                                    }}>
-                                        {section.label}
-                                    </div>
+                                    section.label === 'WORKFLOW' ? (
+                                        /* ── WORKFLOW section gets a special styled header ── */
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 6,
+                                            padding: '16px 16px 6px 16px', marginTop: 4,
+                                        }}>
+                                            <div style={{
+                                                width: 2, height: 10, borderRadius: 2,
+                                                background: theme.accent, flexShrink: 0,
+                                                opacity: 0.8,
+                                            }} />
+                                            <span style={{
+                                                fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
+                                                fontWeight: 700, color: theme.accent, opacity: 0.9,
+                                            }}>
+                                                {section.label}
+                                            </span>
+                                            <div style={{
+                                                width: 5, height: 5, borderRadius: '50%',
+                                                background: theme.accent, marginLeft: 2, opacity: 0.7,
+                                                animation: 'pulse 2s ease-in-out infinite',
+                                            }} />
+                                        </div>
+                                    ) : (
+                                        <div style={{
+                                            fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase',
+                                            color: tc.label, padding: '16px 16px 4px 16px', marginTop: 4,
+                                        }}>
+                                            {section.label}
+                                        </div>
+                                    )
                                 )}
                                 <ul style={{ listStyle:'none', margin:0, padding: isSidebarOpen ? '0 8px' : '0 4px' }}>
                                     {visibleItems.map((item, idx) => {
@@ -310,26 +417,78 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                                     whiteSpace: 'nowrap',
                                                                     overflow: 'hidden',
                                                                     textOverflow: 'ellipsis',
+                                                                    flex: 1,
                                                                 }}>
                                                                     {item.name}
                                                                 </span>
+                                                                {/* Badge: pending count */}
+                                                                {item.badge > 0 && (
+                                                                    <motion.span
+                                                                        initial={{ scale: 0 }}
+                                                                        animate={{ scale: 1 }}
+                                                                        style={{
+                                                                            background: item.badgeColor || '#f59e0b',
+                                                                            color: '#fff',
+                                                                            fontSize: 10,
+                                                                            fontWeight: 800,
+                                                                            minWidth: 18,
+                                                                            height: 18,
+                                                                            borderRadius: 9,
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            padding: '0 5px',
+                                                                            flexShrink: 0,
+                                                                            marginLeft: 6,
+                                                                            letterSpacing: '-0.3px',
+                                                                        }}
+                                                                    >
+                                                                        {item.badge > 99 ? '99+' : item.badge}
+                                                                    </motion.span>
+                                                                )}
                                                             </motion.div>
+
                                                         ) : (
                                                             /* ── COLLAPSED item: icon tile + label below ── */
                                                             <div style={{
                                                                 display: 'flex', flexDirection: 'column',
                                                                 alignItems: 'center', justifyContent: 'center',
                                                                 padding: '8px 0', width: '100%',
+                                                                position: 'relative',
                                                             }}>
                                                                 <div style={{
-                                                                    width: 36, height: 36, borderRadius: 8,
-                                                                    /* Use theme tokens — works on both dark AND light/white sidebars */
-                                                                    background: navActive ? `${theme.accent}33` : tc.iconBg,
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                    transition: 'background 0.18s ease',
+                                                                    position: 'relative',
+                                                                    width: 36, height: 36,
                                                                 }}>
-                                                                    <item.icon size={18} color={navActive ? theme.accent : tc.text80} />
+                                                                    <div style={{
+                                                                        width: 36, height: 36, borderRadius: 8,
+                                                                        background: navActive ? `${theme.accent}33` : tc.iconBg,
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                        transition: 'background 0.18s ease',
+                                                                    }}>
+                                                                        <item.icon size={18} color={navActive ? theme.accent : tc.text80} />
+                                                                    </div>
+                                                                    {/* Dot badge for collapsed mode */}
+                                                                    {item.badge > 0 && (
+                                                                        <div style={{
+                                                                            position: 'absolute',
+                                                                            top: -3, right: -3,
+                                                                            width: 14, height: 14,
+                                                                            borderRadius: '50%',
+                                                                            background: item.badgeColor || '#f59e0b',
+                                                                            border: '2px solid transparent',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            fontSize: 8,
+                                                                            fontWeight: 800,
+                                                                            color: '#fff',
+                                                                        }}>
+                                                                            {item.badge > 9 ? '9+' : item.badge}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
+
                                                                 <div style={{
                                                                     fontSize: 9,
                                                                     /* Theme-aware text color — visible on white sidebar too */

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UserPlus, X, Check, ArrowRight, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { UserPlus, X, Check, ArrowRight, Filter, GitBranch } from 'lucide-react';
+
 import ColumnCustomizer from '../components/ColumnCustomizer';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,6 +16,7 @@ import FrozenRowsDataGrid from '../components/FrozenRowsDataGrid';
 
 const RequestTracker = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     // Redux State
     const { items: requests, loading: loadingRequests } = useSelector((state) => state.assetRequests);
@@ -485,29 +488,62 @@ const RequestTracker = () => {
                             >
                                 <X size={14} strokeWidth={3} />
                             </button>
+                            <button
+                                onClick={() => navigate(`/workflow/${row._id}`)}
+                                className="p-1.5 rounded-lg hover:bg-purple-100 transition-colors text-purple-600 border border-purple-100"
+                                title="View Workflow"
+                            >
+                                <GitBranch size={14} strokeWidth={2.5} />
+                            </button>
                         </div>
                     );
                 }
 
                 if (status === 'Accepted') {
                     return (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase tracking-wider">
-                            <Check size={10} strokeWidth={4} />
-                            Approved
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg border border-green-100 uppercase tracking-wider">
+                                <Check size={10} strokeWidth={4} />
+                                Approved
+                            </span>
+                            <button
+                                onClick={() => navigate(`/workflow/${row._id}`)}
+                                className="p-1 py-1 rounded-lg hover:bg-purple-100 transition-colors text-purple-600 border border-purple-100"
+                                title="View Workflow"
+                            >
+                                <GitBranch size={12} strokeWidth={2.5} />
+                            </button>
+                        </div>
                     );
                 }
 
                 if (status === 'Rejected') {
                     return (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase tracking-wider">
-                            <X size={10} strokeWidth={4} />
-                            Rejected
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase tracking-wider">
+                                <X size={10} strokeWidth={4} />
+                                Rejected
+                            </span>
+                            <button
+                                onClick={() => navigate(`/workflow/${row._id}`)}
+                                className="p-1 py-1 rounded-lg hover:bg-purple-100 transition-colors text-purple-600 border border-purple-100"
+                                title="View Workflow"
+                            >
+                                <GitBranch size={12} strokeWidth={2.5} />
+                            </button>
+                        </div>
                     );
                 }
 
-                return null;
+                return (
+                    <button
+                        onClick={() => navigate(`/workflow/${row._id}`)}
+                        className="p-1 py-1 rounded-lg hover:bg-purple-100 transition-colors text-purple-600 border border-purple-100"
+                        title="View Workflow"
+                    >
+                        <GitBranch size={12} strokeWidth={2.5} />
+                    </button>
+                );
             }
         },
         {

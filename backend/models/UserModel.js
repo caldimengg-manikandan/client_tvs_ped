@@ -8,22 +8,45 @@ const ROLE_PERMISSIONS = {
     'Admin': {
         dashboard: true, assetRequest: true, requestTracker: true,
         mhDevelopmentTracker: true, assetSummary: true, reports: true,
-        employeeMaster: true, vendorMaster: true, settings: true
+        employeeMaster: true, vendorMaster: true, settings: true,
+        designQueue: true, checkerQueue: true, finalApprovalQueue: true
     },
     'Employee': {
         dashboard: true, assetRequest: true, requestTracker: true,
         mhDevelopmentTracker: false, assetSummary: false, reports: false,
-        employeeMaster: false, vendorMaster: false, settings: false
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: false, checkerQueue: false, finalApprovalQueue: false
     },
     'Approver': {
         dashboard: true, assetRequest: true, requestTracker: true,
         mhDevelopmentTracker: true, assetSummary: false, reports: false,
-        employeeMaster: false, vendorMaster: false, settings: false
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: false, checkerQueue: false, finalApprovalQueue: false
     },
     'PED Engineer': {
         dashboard: true, assetRequest: false, requestTracker: true,
         mhDevelopmentTracker: true, assetSummary: true, reports: false,
-        employeeMaster: false, vendorMaster: false, settings: false
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: false, checkerQueue: false, finalApprovalQueue: false
+    },
+    // ── Enterprise Workflow v2 Roles ────────────────────────────────────────────
+    'Designer': {
+        dashboard: true, assetRequest: false, requestTracker: true,
+        mhDevelopmentTracker: true, assetSummary: false, reports: false,
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: true, checkerQueue: false, finalApprovalQueue: false
+    },
+    'Checker': {
+        dashboard: true, assetRequest: false, requestTracker: true,
+        mhDevelopmentTracker: false, assetSummary: false, reports: false,
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: false, checkerQueue: true, finalApprovalQueue: false
+    },
+    'Final Approver': {
+        dashboard: true, assetRequest: false, requestTracker: true,
+        mhDevelopmentTracker: true, assetSummary: false, reports: true,
+        employeeMaster: false, vendorMaster: false, settings: false,
+        designQueue: false, checkerQueue: false, finalApprovalQueue: true
     }
 };
 
@@ -49,19 +72,23 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['Admin', 'Employee', 'Approver', 'PED Engineer'],
+        enum: ['Admin', 'Employee', 'Approver', 'PED Engineer', 'Designer', 'Checker', 'Final Approver'],
         default: 'Employee'
     },
     permissions: {
-        dashboard: { type: Boolean, default: true },
-        assetRequest: { type: Boolean, default: true },
-        requestTracker: { type: Boolean, default: false },
+        dashboard:            { type: Boolean, default: true },
+        assetRequest:         { type: Boolean, default: true },
+        requestTracker:       { type: Boolean, default: false },
         mhDevelopmentTracker: { type: Boolean, default: false },
-        assetSummary: { type: Boolean, default: false },
-        reports: { type: Boolean, default: false },
-        employeeMaster: { type: Boolean, default: false },
-        vendorMaster: { type: Boolean, default: false },
-        settings: { type: Boolean, default: false }
+        assetSummary:         { type: Boolean, default: false },
+        reports:              { type: Boolean, default: false },
+        employeeMaster:       { type: Boolean, default: false },
+        vendorMaster:         { type: Boolean, default: false },
+        settings:             { type: Boolean, default: false },
+        // ── v2 workflow permissions
+        designQueue:          { type: Boolean, default: false },
+        checkerQueue:         { type: Boolean, default: false },
+        finalApprovalQueue:   { type: Boolean, default: false }
     },
     status: {
         type: String,

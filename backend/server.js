@@ -42,6 +42,11 @@ app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
 app.use('/api/mh-development-tracker', require('./routes/mhDevelopmentTrackerRoutes'));
 app.use('/api/project-plan', require('./routes/projectPlanRoutes'));
 
+// Enterprise Workflow v2 routes
+app.use('/api/workflow',       require('./routes/workflowRoutes'));
+app.use('/api/design-library', require('./routes/designLibraryRoutes'));
+
+
 // Public routes (no auth required — for landing page)
 app.use('/api/public', require('./routes/publicRoutes'));
 

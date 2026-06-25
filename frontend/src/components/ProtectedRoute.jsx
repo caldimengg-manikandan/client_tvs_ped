@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, Fingerprint } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const ProtectedRoute = ({ children, permission }) => {
-    const { isAuthenticated, loading, hasPermission } = useAuth();
+const ProtectedRoute = ({ children, permission, roles }) => {
+    const { isAuthenticated, loading, hasPermission, hasRole, user } = useAuth();
     const location = useLocation();
+
 
     if (loading) {
         return (
@@ -26,7 +27,37 @@ const ProtectedRoute = ({ children, permission }) => {
         return <Navigate to="/landing" state={{ from: location }} replace />;
     }
 
+    // Permission check (existing)
     if (permission && !hasPermission(permission)) {
+        // Role-based bypass: Admin always passes, and certain routes use role-based access
+        const isAdmin = user?.role === 'Admin';
+        if (!isAdmin) {
+            return (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center justify-center h-[70vh] p-8 text-center"
+                >
+                    <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-rose-100/50">
+                        <ShieldAlert size={48} />
+                    </div>
+                    <h1 className="text-3xl font-black text-gray-900 mb-2 font-outfit">Security Restriction</h1>
+                    <p className="text-gray-500 mb-10 max-w-md font-medium">Your account does not have the necessary clearance levels to access this protected resource.</p>
+                    
+                    <div className="glass-card px-8 py-4 rounded-2xl border border-rose-100 flex items-center gap-4">
+                        <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-none">
+                            Required Permission: 
+                            <span className="text-rose-600 ml-2 font-mono">{permission}</span>
+                        </span>
+                    </div>
+                </motion.div>
+            );
+        }
+    }
+
+    // Role check (new — for workflow queue routes)
+    if (roles && roles.length > 0 && !hasRole(roles) && user?.role !== 'Admin') {
         return (
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -36,14 +67,13 @@ const ProtectedRoute = ({ children, permission }) => {
                 <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-rose-100/50">
                     <ShieldAlert size={48} />
                 </div>
-                <h1 className="text-3xl font-black text-gray-900 mb-2 font-outfit">Security Restriction</h1>
-                <p className="text-gray-500 mb-10 max-w-md font-medium">Your account does not have the necessary clearance levels to access this protected resource.</p>
-                
+                <h1 className="text-3xl font-black text-gray-900 mb-2 font-outfit">Access Restricted</h1>
+                <p className="text-gray-500 mb-10 max-w-md font-medium">This queue is only accessible to users with the required role.</p>
                 <div className="glass-card px-8 py-4 rounded-2xl border border-rose-100 flex items-center gap-4">
                     <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-none">
-                        Required Permission: 
-                        <span className="text-rose-600 ml-2 font-mono">{permission}</span>
+                        Required Role: 
+                        <span className="text-rose-600 ml-2 font-mono">{roles.join(' / ')}</span>
                     </span>
                 </div>
             </motion.div>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Plus, FileText, X, Filter, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus, FileText, X, Filter, Eye, Pencil, Trash2, GitBranch } from 'lucide-react';
+
 import { fetchAssetRequests, deleteAssetRequest, createAssetRequest, resetStatus } from '../../redux/slices/assetRequestSlice';
 import { useAuth } from '../../context/AuthContext';
 import { Modal as AntModal, message, Form, Input, Select, Button, Row, Col, Tag } from 'antd';
@@ -374,13 +375,23 @@ const CreateMHRequestList = () => {
                         type="button"
                         onClick={() => handleViewRequest(row)}
                         className="p-1.5 rounded-full hover:bg-blue-50 text-blue-600 border border-blue-100"
+                        title="View Details"
                     >
                         <Eye size={14} />
                     </button>
                     <button
                         type="button"
+                        onClick={() => navigate(`/workflow/${row._id || row.mhRequestId}`)}
+                        className="p-1.5 rounded-full hover:bg-purple-50 text-purple-600 border border-purple-100"
+                        title="View Workflow"
+                    >
+                        <GitBranch size={14} />
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => handleEditRequest(row)}
                         className="p-1.5 rounded-full hover:bg-amber-50 text-amber-600 border border-amber-100"
+                        title="Edit Request"
                     >
                         <Pencil size={14} />
                     </button>
@@ -388,11 +399,13 @@ const CreateMHRequestList = () => {
                         type="button"
                         onClick={() => handleDeleteRequest(row)}
                         className="p-1.5 rounded-full hover:bg-red-50 text-red-600 border border-red-100"
+                        title="Delete Request"
                     >
                         <Trash2 size={14} />
                     </button>
                 </div>
             )
+
         }
     ];
 

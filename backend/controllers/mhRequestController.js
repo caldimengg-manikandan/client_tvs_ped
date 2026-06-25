@@ -4,6 +4,8 @@ const MHDevelopmentTracker = require('../models/MHDevelopmentTracker');
 const Employee = require('../models/EmployeeModel');
 const nodemailer = require('nodemailer');
 const { sendRequesterStatusEmail } = require('./emailController');
+const { estimateLeadTime } = require('../services/leadTimeService');
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: build & send auto-notification email to approver on request creation
@@ -283,10 +285,50 @@ const createMHRequest = async (req, res) => {
 
         const savedRequest = await newRequest.save();
 
+        // ── Enterprise Workflow v2: set state machine fields ─────────────────────────
+        // Non-blocking update — failure here does not affect the saved request
+        (async () => {
+            try {
+                const historyEntry = {
+                    stage:     'REQUEST',
+                    state:     'SUBMITTED',
+                    action:    'SUBMITTED',
+                    actor:     req.user._id,
+                    actorName: userName,
+                    actorRole: req.user.role,
+                    comment:   'Request submitted',
+                    timestamp: new Date(),
+                    metadata:  {}
+                };
+
+                await MHRequest.findByIdAndUpdate(savedRequest._id, {
+                    workflowState:   'SUBMITTED',
+                    workflowVersion: 2,
+                    currentStage:    1,
+                    $push: { stageHistory: historyEntry }
+                });
+
+                // Auto-generate lead time estimate
+                const estimate = await estimateLeadTime(savedRequest);
+                await MHRequest.findByIdAndUpdate(savedRequest._id, {
+                    leadTimeEstimate:    estimate.estimatedDays,
+                    leadTimeConfidence:  estimate.confidence,
+                    leadTimeSource:      estimate.source,
+                    leadTimeFactors:     estimate.factors,
+                    leadTimeGeneratedAt: estimate.generatedAt
+                });
+
+                console.log(`[WorkflowV2] Request ${savedRequest.mhRequestId} initialized — Lead Time: ${estimate.estimatedDays} days (${estimate.confidence}% confidence)`);
+            } catch (wfErr) {
+                console.error('[WorkflowV2] Non-fatal init error:', wfErr.message);
+            }
+        })();
+
         // Auto-send approval email to approver (fire-and-forget, non-blocking)
         sendAutoApproverEmail(savedRequest).catch(e => console.error('[AutoEmail]', e.message));
 
         res.status(201).json(savedRequest);
+
     } catch (err) {
         console.error('Create MH Request Error:', err);
 
