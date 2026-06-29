@@ -11,7 +11,8 @@ import {
     submitDesign,
     checkDesign,
     finalApprove,
-    advanceProduction
+    advanceProduction,
+    designerReject
 } from '../../api/workflowApi';
 import { CheckCircle2, XCircle, Send, PlayCircle, Loader2, Info } from 'lucide-react';
 
@@ -123,7 +124,7 @@ export default function WorkflowActions({ requestId, workflowState, employees = 
     let actionSummary = '';
 
     // L1 Approver: SUBMITTED
-    if ((role === 'Approver' || role === 'Admin') && workflowState === 'SUBMITTED') {
+    if ((role === 'L1 Approver' || role === 'Admin') && workflowState === 'SUBMITTED') {
         actionSummary = "You are requested to review this submission. Approval requires assigning a Designer and a Checker.";
         panels.push(
             <div key="l1" className="flex gap-3 flex-wrap">
@@ -156,8 +157,9 @@ export default function WorkflowActions({ requestId, workflowState, employees = 
                         </div>
                     )}
                 </div>
-                <div className="flex">
+                <div className="flex gap-3">
                     <ActionButton config={BTN.submit} onClick={() => setModal('submitdesign')} />
+                    <ActionButton config={BTN.reject} labelOverride="Revert Request" onClick={() => setModal('designerreject')} />
                 </div>
             </div>
         );
@@ -293,6 +295,11 @@ export default function WorkflowActions({ requestId, workflowState, employees = 
                         await submitDesign(requestId, fd);
                         setModal(null); setDesignFiles([]);
                     })} />
+            )}
+
+            {modal === 'designerreject' && (
+                <CommentModal title="Revert Request" required={true} onClose={() => setModal(null)}
+                    onConfirm={({ comment }) => exec(async () => { await designerReject(requestId, { comment }); setModal(null); })} />
             )}
 
             {modal === 'checkerapprove' && (

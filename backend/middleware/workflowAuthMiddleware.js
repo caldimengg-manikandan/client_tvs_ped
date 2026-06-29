@@ -9,7 +9,7 @@ const ALLOWED_TRANSITIONS = {
     SUBMITTED:           ['L1_APPROVED', 'L1_REJECTED'],
     L1_APPROVED:         ['DESIGN_IN_PROGRESS'],
     L1_REJECTED:         [],                             // terminal
-    DESIGN_IN_PROGRESS:  ['DESIGN_SUBMITTED'],
+    DESIGN_IN_PROGRESS:  ['DESIGN_SUBMITTED', 'REVERTED'],
     DESIGN_SUBMITTED:    ['DESIGN_APPROVED', 'DESIGN_REJECTED'],
     DESIGN_APPROVED:     ['FINAL_APPROVED', 'FINAL_REJECTED'],
     DESIGN_REJECTED:     ['DESIGN_IN_PROGRESS'],         // back to designer
@@ -18,14 +18,15 @@ const ALLOWED_TRANSITIONS = {
     IN_PRODUCTION:       ['IMPLEMENTATION'],
     IMPLEMENTATION:      ['COMPLETED'],
     COMPLETED:           [],                             // terminal
-    CANCELLED:           []                              // terminal
+    CANCELLED:           [],                             // terminal
+    REVERTED:            []                              // terminal
 };
 
 // ─── Roles allowed per transition ─────────────────────────────────────────────
 const TRANSITION_ROLES = {
-    L1_APPROVED:        ['Approver', 'Admin'],
-    L1_REJECTED:        ['Approver', 'Admin'],
-    DESIGN_IN_PROGRESS: ['Approver', 'Admin'],           // assignment action
+    L1_APPROVED:        ['L1 Approver', 'Admin'],
+    L1_REJECTED:        ['L1 Approver', 'Admin'],
+    DESIGN_IN_PROGRESS: ['L1 Approver', 'Admin'],           // assignment action
     DESIGN_SUBMITTED:   ['Designer', 'Admin'],
     DESIGN_APPROVED:    ['Checker', 'Admin'],
     DESIGN_REJECTED:    ['Checker', 'Admin'],
@@ -33,7 +34,8 @@ const TRANSITION_ROLES = {
     FINAL_REJECTED:     ['Final Approver', 'Admin'],
     IN_PRODUCTION:      ['PED Engineer', 'Admin'],
     IMPLEMENTATION:     ['PED Engineer', 'Admin'],
-    COMPLETED:          ['PED Engineer', 'Admin']
+    COMPLETED:          ['PED Engineer', 'Admin'],
+    REVERTED:           ['PED Engineer', 'Admin']
 };
 
 // ─── Stage number map ─────────────────────────────────────────────────────────
@@ -50,7 +52,8 @@ const STATE_TO_STAGE = {
     IN_PRODUCTION:       6,
     IMPLEMENTATION:      7,
     COMPLETED:           7,
-    CANCELLED:           0
+    CANCELLED:           0,
+    REVERTED:            0
 };
 
 /**

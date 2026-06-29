@@ -9,6 +9,7 @@ const {
     getDesignById,
     createDesign,
     updateDesign,
+    deleteDesign,
     getLeadTimeMasterRules,
     upsertLeadTimeMasterRule
 } = require('../controllers/designLibraryController');
@@ -21,6 +22,7 @@ router.get('/',                  getAllDesigns);
 router.get('/:id',               getDesignById);
 router.post('/',                 requireWorkflowRole('Admin'), createDesign);
 router.put('/:id',               requireWorkflowRole('Admin'), updateDesign);
+router.delete('/:id',            requireWorkflowRole('Admin'), deleteDesign);
 
 // Lead Time Master (Admin only)
 router.get('/lead-time-master',  getLeadTimeMasterRules);

@@ -12,7 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const routeNameMap = {
     'employee-master':       'Employee Master',
     'mh-requests':           'MH Requests',
-    'request-tracker':       'Request Tracker',
+    'request-tracker':       'All Requests Overview',
     'mh-development-tracker':'MH Development Tracker',
     'vendor-master':         'Vendor Master',
     'settings':              'Settings',

@@ -11,13 +11,13 @@ const ROLE_PERMISSIONS = {
         employeeMaster: true, vendorMaster: true, settings: true,
         designQueue: true, checkerQueue: true, finalApprovalQueue: true
     },
-    'Employee': {
+    'Requester': {
         dashboard: true, assetRequest: true, requestTracker: true,
         mhDevelopmentTracker: false, assetSummary: false, reports: false,
         employeeMaster: false, vendorMaster: false, settings: false,
         designQueue: false, checkerQueue: false, finalApprovalQueue: false
     },
-    'Approver': {
+    'L1 Approver': {
         dashboard: true, assetRequest: true, requestTracker: true,
         mhDevelopmentTracker: true, assetSummary: false, reports: false,
         employeeMaster: false, vendorMaster: false, settings: false,
@@ -72,8 +72,7 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['Admin', 'Employee', 'Approver', 'PED Engineer', 'Designer', 'Checker', 'Final Approver'],
-        default: 'Employee'
+        default: 'Requester'
     },
     permissions: {
         dashboard:            { type: Boolean, default: true },

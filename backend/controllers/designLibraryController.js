@@ -116,6 +116,19 @@ const upsertLeadTimeMasterRule = asyncHandler(async (req, res) => {
     res.status(200).json(rule);
 });
 
+// ─── DELETE /api/design-library/:id ──────────────────────────────────────────
+const deleteDesign = asyncHandler(async (req, res) => {
+    const design = await DesignLibrary.findById(req.params.id);
+    if (!design) return res.status(404).json({ message: 'Design not found' });
+
+    // Soft delete
+    design.activeStatus = false;
+    design.version += 1;
+    await design.save();
+
+    res.json({ message: 'Design marked as inactive', id: design._id });
+});
+
 module.exports = {
     getAllDesigns,
     searchDesigns,
@@ -123,5 +136,6 @@ module.exports = {
     createDesign,
     updateDesign,
     getLeadTimeMasterRules,
-    upsertLeadTimeMasterRule
+    upsertLeadTimeMasterRule,
+    deleteDesign
 };

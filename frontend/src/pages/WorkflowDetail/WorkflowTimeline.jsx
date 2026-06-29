@@ -20,7 +20,7 @@ const STAGES = [
 const STATE_TO_STAGE = {
     SUBMITTED:           1,
     L1_APPROVED:         2, L1_REJECTED: 2,
-    DESIGN_IN_PROGRESS:  3, DESIGN_SUBMITTED: 3, DESIGN_REJECTED: 3,
+    DESIGN_IN_PROGRESS:  3, DESIGN_SUBMITTED: 3, DESIGN_REJECTED: 3, REVERTED: 3,
     DESIGN_APPROVED:     4,
     FINAL_APPROVED:      5, FINAL_REJECTED: 5,
     IN_PRODUCTION:       6,
@@ -28,7 +28,7 @@ const STATE_TO_STAGE = {
     COMPLETED:           7,
 };
 
-const REJECTED_STATES = ['L1_REJECTED', 'DESIGN_REJECTED', 'FINAL_REJECTED'];
+const REJECTED_STATES = ['L1_REJECTED', 'DESIGN_REJECTED', 'FINAL_REJECTED', 'REVERTED'];
 
 function stageStatus(stageId, currentStage, workflowState) {
     if (REJECTED_STATES.includes(workflowState) && stageId === currentStage) return 'rejected';
@@ -73,7 +73,7 @@ export default function WorkflowTimeline({ workflowState, currentStage, stageFla
         let stateMatches = [];
         if (stageId === 1) stateMatches = ['SUBMITTED'];
         if (stageId === 2) stateMatches = ['L1_APPROVED', 'L1_REJECTED'];
-        if (stageId === 3) stateMatches = ['DESIGN_IN_PROGRESS', 'DESIGN_SUBMITTED', 'DESIGN_REJECTED'];
+        if (stageId === 3) stateMatches = ['DESIGN_IN_PROGRESS', 'DESIGN_SUBMITTED', 'DESIGN_REJECTED', 'REVERTED'];
         if (stageId === 4) stateMatches = ['DESIGN_APPROVED'];
         if (stageId === 5) stateMatches = ['FINAL_APPROVED', 'FINAL_REJECTED'];
         if (stageId === 6) stateMatches = ['IN_PRODUCTION'];
@@ -183,13 +183,6 @@ export default function WorkflowTimeline({ workflowState, currentStage, stageFla
                     );
                 })}
             </div>
-                    fontSize: 12,
-                    color: '#64748b',
-                    fontFamily: 'monospace'
-                }}>
-                    State: <strong style={{ color: '#334155' }}>{workflowState}</strong>
-                </div>
-            )}
         </div>
     );
 }

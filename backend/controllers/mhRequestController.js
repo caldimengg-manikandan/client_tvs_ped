@@ -17,10 +17,10 @@ async function sendAutoApproverEmail(savedRequest) {
         // 1. Find approver for the department
         const dept = savedRequest.departmentName;
         const approver = await Employee.findOne({
-            role: 'Approver',
+            role: 'L1 Approver',
             status: 'Active',
             ...(dept ? { departmentName: dept } : {})
-        }) || await Employee.findOne({ role: 'Approver', status: 'Active' });
+        }) || await Employee.findOne({ role: 'L1 Approver', status: 'Active' });
 
         if (!approver || !approver.mailId) {
             console.warn('[AutoEmail] No approver found for dept:', dept);

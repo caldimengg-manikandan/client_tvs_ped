@@ -120,7 +120,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const assignedRole = role || 'Employee';
+    const assignedRole = role || 'Requester';
 
     // Create user — pre-save hook auto-sets permissions from role
     const user = await User.create({
@@ -135,7 +135,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     // Sync the employee's role field to match
-    const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
+    const validRoles = ['Admin', 'Requester', 'L1 Approver', 'PED Engineer', 'Designer', 'Checker', 'Final Approver'];
     if (validRoles.includes(assignedRole)) {
         await Employee.findByIdAndUpdate(employee._id, { role: assignedRole });
     }

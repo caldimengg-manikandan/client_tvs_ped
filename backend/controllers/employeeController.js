@@ -106,8 +106,8 @@ const createEmployee = asyncHandler(async (req, res) => {
     }
 
     // Determine the role for the Employee record
-    const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
-    const employeeRole = (role && validRoles.includes(role)) ? role : 'Employee';
+    const validRoles = ['Admin', 'Requester', 'L1 Approver', 'PED Engineer'];
+    const employeeRole = (role && validRoles.includes(role)) ? role : 'Requester';
 
     const employee = await Employee.create({
         employeeId,
@@ -133,7 +133,7 @@ const createEmployee = asyncHandler(async (req, res) => {
         // Determine user role: explicit role field takes precedence, then accessLevel mapping
         let userRole = employeeRole;
         if (!validRoles.includes(userRole)) {
-            userRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee';
+            userRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Requester';
         }
 
         const userPayload = {
@@ -219,12 +219,12 @@ const updateEmployee = asyncHandler(async (req, res) => {
         let user = await User.findOne({ employeeId: employee._id });
 
         // Resolve the new user role
-        const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
+        const validRoles = ['Admin', 'Requester', 'L1 Approver', 'PED Engineer'];
         let resolvedUserRole = null;
         if (updatedRole && validRoles.includes(updatedRole)) {
             resolvedUserRole = updatedRole;
         } else if (accessLevel) {
-            resolvedUserRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Employee';
+            resolvedUserRole = (accessLevel === 'Admin' || accessLevel === 'Super Admin') ? 'Admin' : 'Requester';
         }
 
         if (user) {
@@ -261,7 +261,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
                 employeeId: employee._id,
                 email: mailId,
                 passwordHash: hashed,
-                role: resolvedUserRole || 'Employee',
+                role: resolvedUserRole || 'Requester',
                 permissions: permissions || {},
                 status: 'Active'
             });
@@ -562,7 +562,7 @@ const getPedEngineers = asyncHandler(async (req, res) => {
 // @route   GET /api/employees/approvers
 // @access  Private
 const getApprovers = asyncHandler(async (req, res) => {
-    const filter = { role: 'Approver', status: 'Active' };
+    const filter = { role: 'L1 Approver', status: 'Active' };
     if (req.query.department) {
         filter.departmentName = req.query.department;
     }

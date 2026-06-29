@@ -127,9 +127,9 @@ export default function WorkflowDetailPage() {
         <div className="min-h-screen bg-[#F8FAFC] font-inter text-slate-800 pb-16">
             
             {/* Section 1: Executive Workflow Header */}
-            <div className="bg-white border-b border-slate-200 pt-6 pb-6 px-6 lg:px-8 mb-6 sticky top-0 z-40 shadow-sm">
-                <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-start gap-4">
+            <div className="bg-white border-b border-gray-200 py-6 px-4 shadow-sm relative z-10 sticky top-0">
+                <div className="w-full px-4 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="flex items-center gap-4">
                         <button onClick={() => navigate(-1)} className="mt-1 p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
                             <ChevronLeft size={20} />
                         </button>
@@ -167,43 +167,45 @@ export default function WorkflowDetailPage() {
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-4 lg:px-8">
+            {/* Main Content */}
+            <div className="w-full px-4 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
                 
-                {/* Section 2: Premium Workflow Timeline */}
-                <div className="bg-white rounded-[18px] shadow-[0_8px_32px_rgba(15,23,42,0.04)] border border-slate-100 p-6 lg:p-8 mb-6 hover:-translate-y-[2px] transition-transform duration-300">
-                    <WorkflowTimeline
-                        workflowState={workflow?.workflowState}
-                        currentStage={workflow?.currentStage}
-                        stageFlags={workflow?.stageFlags}
-                        history={workflow?.stageHistory}
-                    />
-                </div>
+                    {/* Section 2: Premium Workflow Timeline */}
+                    <div className="lg:col-span-12 mt-8 bg-white rounded-[18px] shadow-[0_8px_32px_rgba(15,23,42,0.04)] border border-slate-100 p-6 lg:p-8 mb-6 hover:-translate-y-[2px] transition-transform duration-300">
+                        <WorkflowTimeline
+                            workflowState={workflow?.workflowState}
+                            currentStage={workflow?.currentStage}
+                            stageFlags={workflow?.stageFlags}
+                            history={workflow?.stageHistory}
+                        />
+                    </div>
 
-                {/* Section 3: Executive KPI Row */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-                    {[
-                        { label: 'Lead Time', value: leadTimeDays ? `${leadTimeDays} Days` : 'TBD', icon: Clock4, color: 'text-blue-500', bg: 'bg-blue-50' },
-                        { label: 'Confidence', value: leadTime?.confidence ? `${leadTime.confidence}%` : '—', icon: Gauge, color: 'text-purple-500', bg: 'bg-purple-50' },
-                        { label: 'Workflow Progress', value: `${Math.round((workflow?.currentStage / 6) * 100)}%`, icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                        { label: 'Status', value: isSlaBreached ? 'Breached' : 'On Track', icon: ShieldCheck, color: isSlaBreached ? 'text-red-500' : 'text-emerald-500', bg: isSlaBreached ? 'bg-red-50' : 'bg-emerald-50' }
-                    ].map((kpi, i) => (
-                        <div key={i} className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.04)] border border-slate-100 p-5 hover:-translate-y-[2px] transition-transform duration-300">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</div>
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.bg} ${kpi.color}`}>
-                                    <kpi.icon size={16} strokeWidth={2.5} />
+                    {/* Section 3: Executive KPI Row */}
+                    <div className="lg:col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+                        {[
+                            { label: 'Lead Time', value: leadTimeDays ? `${leadTimeDays} Days` : 'TBD', icon: Clock4, color: 'text-blue-500', bg: 'bg-blue-50' },
+                            { label: 'Confidence', value: leadTime?.confidence ? `${leadTime.confidence}%` : '—', icon: Gauge, color: 'text-purple-500', bg: 'bg-purple-50' },
+                            { label: 'Workflow Progress', value: `${Math.round((workflow?.currentStage / 6) * 100)}%`, icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                            { label: 'Status', value: isSlaBreached ? 'Breached' : 'On Track', icon: ShieldCheck, color: isSlaBreached ? 'text-red-500' : 'text-emerald-500', bg: isSlaBreached ? 'bg-red-50' : 'bg-emerald-50' }
+                        ].map((kpi, i) => (
+                            <div key={i} className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(15,23,42,0.04)] border border-slate-100 p-5 hover:-translate-y-[2px] transition-transform duration-300">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{kpi.label}</div>
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.bg} ${kpi.color}`}>
+                                        <kpi.icon size={16} strokeWidth={2.5} />
+                                    </div>
                                 </div>
+                                <div className="text-2xl font-black text-slate-800">{kpi.value}</div>
                             </div>
-                            <div className="text-2xl font-black text-slate-800">{kpi.value}</div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
 
-                {/* Section 4: Information Layout (70/30 Split) */}
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
-                    
-                    {/* Main Area (70%) */}
-                    <div className="xl:col-span-8 space-y-6 lg:space-y-8">
+                    {/* Section 4: Information Layout (70/30 Split) */}
+                    <div className="lg:col-span-12 grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
+                        
+                        {/* Main Area (70%) */}
+                        <div className="xl:col-span-8 space-y-6 lg:space-y-8">
                         
                         {/* Request Overview Card */}
                         <section className="bg-white rounded-[18px] shadow-[0_8px_32px_rgba(15,23,42,0.04)] border border-slate-100 overflow-hidden hover:-translate-y-[2px] transition-transform duration-300">
@@ -370,6 +372,7 @@ export default function WorkflowDetailPage() {
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     );
 }

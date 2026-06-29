@@ -33,10 +33,17 @@ export const l1Reject = (requestId, payload) =>
 
 // ─── Design Stage ─────────────────────────────────────────────────────────────
 
-export const submitDesign = (requestId, formData) =>
-    axios.post(`${BASE_URL}/workflow/${requestId}/submit-design`, formData, {
+export const submitDesign = async (requestId, formData) => {
+    const res = await axios.post(`${BASE_URL}/workflow/${requestId}/submit-design`, formData, {
         headers: { ...getAuthHeader(), 'Content-Type': 'multipart/form-data' }
     });
+    return res.data;
+};
+
+export const designerReject = async (requestId, payload) => {
+    const res = await axios.post(`${BASE_URL}/workflow/${requestId}/designer-reject`, payload, { headers: getAuthHeader() });
+    return res.data;
+};
 
 // ─── Checker Stage ────────────────────────────────────────────────────────────
 

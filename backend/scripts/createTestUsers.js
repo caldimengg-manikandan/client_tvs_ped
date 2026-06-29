@@ -14,7 +14,7 @@ const seedTestUsers = async () => {
             { name: 'Diana Design', email: 'designer@tvs.com', role: 'Designer', empId: 'EMP-DES-01' },
             { name: 'Charlie Checker', email: 'checker@tvs.com', role: 'Checker', empId: 'EMP-CHK-01' },
             { name: 'Fiona Final', email: 'final@tvs.com', role: 'Final Approver', empId: 'EMP-FIN-01' },
-            { name: 'Luke LevelOne', email: 'approver@tvs.com', role: 'Approver', empId: 'EMP-L1-01' }
+            { name: 'Luke LevelOne', email: 'approver@tvs.com', role: 'L1 Approver', empId: 'EMP-L1-01' }
         ];
 
         const emails = testUsers.map(u => u.email);

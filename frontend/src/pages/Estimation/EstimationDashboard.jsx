@@ -16,7 +16,7 @@ export default function EstimationDashboard() {
     const [activeTab, setActiveTab] = useState('estimation_model');
 
     return (
-        <div className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full">
+        <div className="flex-1 flex flex-col p-6 w-full">
             
             {/* Filter Row */}
             <div className="flex items-center gap-4 mb-6">

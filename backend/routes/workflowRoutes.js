@@ -12,7 +12,8 @@ const {
     checkDesign,
     finalApprove,
     advanceProduction,
-    getLeadTimeEstimate
+    getLeadTimeEstimate,
+    designerReject
 } = require('../controllers/workflowController');
 
 // All routes require JWT auth
@@ -34,14 +35,14 @@ router.get('/lead-time/estimate/:requestId', getLeadTimeEstimate);
 // POST /api/workflow/:requestId/l1-approve
 router.post(
     '/:requestId/l1-approve',
-    requireWorkflowRole('Approver', 'Admin'),
+    requireWorkflowRole('L1 Approver', 'Admin'),
     l1Approve
 );
 
 // POST /api/workflow/:requestId/l1-reject
 router.post(
     '/:requestId/l1-reject',
-    requireWorkflowRole('Approver', 'Admin'),
+    requireWorkflowRole('L1 Approver', 'Admin'),
     l1Reject
 );
 
@@ -50,8 +51,15 @@ router.post(
 // POST /api/workflow/:requestId/submit-design  (multipart/form-data)
 router.post(
     '/:requestId/submit-design',
-    requireWorkflowRole('Designer', 'Admin'),
+    requireWorkflowRole('Designer', 'PED Engineer', 'Admin'),
     submitDesign
+);
+
+// POST /api/workflow/:requestId/designer-reject
+router.post(
+    '/:requestId/designer-reject',
+    requireWorkflowRole('Designer', 'PED Engineer', 'Admin'),
+    designerReject
 );
 
 // ─── Checker Stage ────────────────────────────────────────────────────────────

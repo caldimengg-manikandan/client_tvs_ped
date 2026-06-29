@@ -7,7 +7,8 @@ const {
     getTrends,
     fixDataDates,
     getDashboardData,
-    dashboardPhaseItems
+    dashboardPhaseItems,
+    getCalendarData
 } = require('../controllers/dashboardController');
 
 router.use(protect);
@@ -15,6 +16,9 @@ router.use(checkPermission('dashboard'));
 
 // Unified dashboard data endpoint
 router.get('/', getDashboardData);
+
+// Calendar endpoint
+router.get('/calendar', getCalendarData);
 
 // Legacy endpoints (keep for backward compatibility)
 router.get('/stats', getStats);

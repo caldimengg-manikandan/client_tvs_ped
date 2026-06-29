@@ -10,10 +10,14 @@ const employeeRoutes = require('./routes/employeeRoutes');
 const { initializeScheduler } = require('./jobs/reportScheduler');
 
 // Connect Database
-connectDB();
+const dbPromise = connectDB();
 
 // Initialize Report Scheduler
-initializeScheduler();
+dbPromise.then(() => {
+    initializeScheduler();
+    const { initializeAlertScheduler } = require('./jobs/alertCron');
+    initializeAlertScheduler();
+}).catch(err => console.error('Database connection failed:', err));
 
 // Middleware
 app.use(cors());
@@ -37,10 +41,12 @@ app.use('/api/asset-management', require('./routes/assetManagementRoutes'));
 app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/roles', require('./routes/roleRoutes'));
 app.use('/api/user-activity', require('./routes/userActivityRoutes'));
 app.use('/api/report-settings', require('./routes/reportSettingsRoutes'));
 app.use('/api/mh-development-tracker', require('./routes/mhDevelopmentTrackerRoutes'));
 app.use('/api/project-plan', require('./routes/projectPlanRoutes'));
+app.use('/api/kpi-settings', require('./routes/kpiSettingsRoutes'));
 
 // Enterprise Workflow v2 routes
 app.use('/api/workflow',       require('./routes/workflowRoutes'));
@@ -64,7 +70,9 @@ module.exports = app;
 
 // Only listen if not running in Vercel (or similar environment where module.exports is used)
 if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  dbPromise.then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
   });
 }

@@ -110,7 +110,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         };
 
         const updates = {};
-        if (role === 'Approver' || role === 'Admin') {
+        if (role === 'L1 Approver' || role === 'Admin') {
             updates.l1 = await fetchCount('l1');
         }
         if (role === 'Designer' || role === 'Admin') {
@@ -155,11 +155,11 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     /* ── Dynamic color tokens (dark vs light sidebar) ── */
     const lx = theme.isLight;
     const tc = {
-        text:    lx ? '#0D1B3E'              : '#ffffff',
-        text80:  lx ? 'rgba(13,27,62,0.80)'  : 'rgba(255,255,255,0.80)',
-        muted:   lx ? 'rgba(13,27,62,0.42)'  : 'rgba(255,255,255,0.42)',
-        muted2:  lx ? 'rgba(13,27,62,0.28)'  : 'rgba(255,255,255,0.28)',
-        label:   lx ? 'rgba(13,27,62,0.30)'  : 'rgba(255,255,255,0.28)',
+        text:    lx ? '#020617'              : '#ffffff',
+        text80:  lx ? '#0f172a'              : '#f8fafc',
+        muted:   lx ? '#334155'              : '#cbd5e1',
+        muted2:  lx ? '#475569'              : '#94a3b8',
+        label:   lx ? '#1e293b'              : '#e2e8f0',
         border:  lx ? 'rgba(0,0,0,0.08)'     : 'rgba(255,255,255,0.07)',
         iconBg:  lx ? 'rgba(13,27,62,0.06)'  : 'rgba(255,255,255,0.05)',
         panelBg: lx ? 'rgba(0,0,0,0.04)'     : 'rgba(0,0,0,0.35)',
@@ -178,7 +178,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
     const workflowItems = [];
     const role = user?.role;
 
-    if (role === 'Approver' || role === 'Admin') {
+    if (role === 'L1 Approver' || role === 'Admin') {
         workflowItems.push({
             name: 'L1 Approval Queue',  short: 'L1 Queue', icon: Inbox,
             path: '/workflow-queue/l1',  permission: 'requestTracker',
@@ -211,7 +211,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         { label: 'OPERATIONS', items: [
             { name: 'Dashboard',        short: 'Dashboard',  icon: Home,          path: '/',                        permission: 'dashboard' },
             { name: 'MH Request',       short: 'MH Request', icon: FileText,      path: '/mh-requests',             permission: 'assetRequest' },
-            { name: 'Request Tracker',  short: 'Tracker',    icon: ClipboardList, path: '/request-tracker',         permission: 'requestTracker' },
+            { name: 'All Requests Overview', short: 'Overview',  icon: ClipboardList, path: '/request-tracker',         permission: 'requestTracker' },
             { name: 'MH Development',   short: 'MH Dev',     icon: TrendingUp,    path: '/mh-development-tracker',  permission: 'mhDevelopmentTracker' },
             { name: 'Project Plan Tracking', short: 'Plan Track', icon: LayoutIcon, path: '/project-plan-model', permission: 'mhDevelopmentTracker' },
         ]},
@@ -220,6 +220,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
         { label: 'ASSETS', items: [
             { name: 'Asset Management', short: 'Assets',     icon: Package,       path: '/asset-management-update', permission: 'assetSummary' },
             { name: 'Asset Summary',    short: 'Summary',    icon: ClipboardList, path: '/asset-summary',           permission: 'assetSummary' },
+            { name: 'Design Library',   short: 'Library',    icon: Palette,       path: '/design-library',          permission: 'assetSummary' },
         ]},
         { label: 'MANAGEMENT', items: [
             { name: 'Employee Master',  short: 'Employees',  icon: Users,         path: '/employee-master',         permission: 'employeeMaster' },
@@ -411,7 +412,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, windowWidth }) => {
                                                                 />
                                                                 <span style={{
                                                                     fontSize: 13,
-                                                                    fontWeight: navActive ? 500 : 400,
+                                                                    fontWeight: navActive ? 700 : 600,
                                                                     color: navActive ? tc.text : tc.muted,
                                                                     fontFamily: font.style,
                                                                     whiteSpace: 'nowrap',

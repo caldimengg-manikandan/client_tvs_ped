@@ -219,7 +219,7 @@ const l1Approve = asyncHandler(async (req, res) => {
     };
 
     sendIfEmail(designer.mailId, designer.employeeName, 'Designer', 'L1_APPROVED');
-    sendIfEmail(request.mailId, request.userName, 'Employee', 'L1_APPROVED');
+    sendIfEmail(request.mailId, request.userName, 'Requester', 'L1_APPROVED');
 
     res.json({
         success:      true,
@@ -267,7 +267,7 @@ const l1Reject = asyncHandler(async (req, res) => {
     sendWorkflowNotification({
         request: updatedRequest,
         event:   'L1_REJECTED',
-        recipient: { email: request.mailId, name: request.userName, role: 'Employee' },
+        recipient: { email: request.mailId, name: request.userName, role: 'Requester' },
         actor
     }).catch(console.error);
 
@@ -292,6 +292,61 @@ const l1Reject = asyncHandler(async (req, res) => {
     }
 
     res.json({ success: true, workflowState: 'L1_REJECTED', message: 'Request rejected and requester notified.' });
+});
+
+// ─── POST /api/workflow/:requestId/designer-reject ────────────────────────────
+const designerReject = asyncHandler(async (req, res) => {
+    const { comment = '' } = req.body;
+
+    if (!comment || comment.trim().length < 5) {
+        return res.status(400).json({ message: 'Rejection comment must be at least 5 characters' });
+    }
+
+    const request = await MHRequest.findById(req.params.requestId);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    if (!isValidTransition(request.workflowState, 'REVERTED')) {
+        return res.status(400).json({ message: `Cannot revert from state '${request.workflowState}'` });
+    }
+
+    const historyEntry = buildHistoryEntry({
+        stage:  'DESIGN',
+        state:  'REVERTED',
+        action: 'REVERTED',
+        user:   req.user,
+        comment
+    });
+
+    await MHRequest.findByIdAndUpdate(request._id, {
+        workflowState:     'REVERTED',
+        currentStage:      0,
+        status:            'Rejected',
+        progressStatus:    'Reverted by Designer',
+        $push: { stageHistory: historyEntry }
+    });
+
+    const updatedRequest = await MHRequest.findById(request._id).lean();
+    
+    try {
+        const requesterEmployee = await Employee.findOne({ mailId: updatedRequest.mailId })
+            || await Employee.findOne({ employeeName: updatedRequest.userName });
+        const requesterEmail = requesterEmployee?.mailId || updatedRequest.mailId;
+        if (requesterEmail) {
+            sendRequesterStatusEmail(requesterEmail, {
+                mhRequestId: updatedRequest.mhRequestId,
+                userName: updatedRequest.userName,
+                status: 'Reverted',
+                handlingPartName: updatedRequest.handlingPartName,
+                departmentName: updatedRequest.departmentName,
+                plantLocation: updatedRequest.plantLocation,
+                remark: `Sorry, the given request or the requirement is not fulfilling: ${comment}`
+            });
+        }
+    } catch (emailErr) {
+        console.error('[AutoEmail] Could not resolve requester email for status notification:', emailErr.message);
+    }
+
+    res.json({ success: true, workflowState: 'REVERTED', message: 'Request reverted back to requester.' });
 });
 
 // ─── POST /api/workflow/:requestId/submit-design ──────────────────────────────
@@ -494,7 +549,7 @@ const finalApprove = asyncHandler(async (req, res) => {
         sendWorkflowNotification({
             request:   updatedRequest,
             event:     'FINAL_APPROVED',
-            recipient: { email: request.mailId, name: request.userName, role: 'Employee' },
+            recipient: { email: request.mailId, name: request.userName, role: 'Requester' },
             actor
         }).catch(console.error);
     } else {
@@ -505,7 +560,7 @@ const finalApprove = asyncHandler(async (req, res) => {
             recipient: {
                 email: request.approverEmail || '',
                 name:  'L1 Approver',
-                role:  'Approver'
+                role:  'L1 Approver'
             },
             actor
         }).catch(console.error);
@@ -573,7 +628,7 @@ const advanceProduction = asyncHandler(async (req, res) => {
         sendWorkflowNotification({
             request:   updatedRequest,
             event,
-            recipient: { email: request.mailId, name: request.userName, role: 'Employee' },
+            recipient: { email: request.mailId, name: request.userName, role: 'Requester' },
             actor
         }).catch(console.error);
     }
@@ -624,5 +679,6 @@ module.exports = {
     checkDesign,
     finalApprove,
     advanceProduction,
-    getLeadTimeEstimate
+    getLeadTimeEstimate,
+    designerReject
 };

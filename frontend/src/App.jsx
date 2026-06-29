@@ -41,6 +41,7 @@ import DesignQueuePage        from './pages/DesignQueue/DesignQueuePage';
 import CheckerQueuePage       from './pages/CheckerQueue/CheckerQueuePage';
 import FinalApprovalQueuePage from './pages/FinalApprovalQueue/FinalApprovalQueuePage';
 import L1ApprovalQueuePage    from './pages/L1ApprovalQueue/L1ApprovalQueuePage';
+import DesignLibraryPage      from './pages/DesignLibrary/DesignLibraryPage';
 
 // ── Estimation UI Feature ───────────────────────────────────────────────────────
 import EstimationLayout from './components/EstimationLayout';
@@ -139,6 +140,12 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path="design-library" element={
+              <ProtectedRoute permission="assetSummary">
+                <DesignLibraryPage />
+              </ProtectedRoute>
+            } />
+
 
             {/* Placeholder routes for other links in Sidebar */}
             <Route path="orders" element={
@@ -219,7 +226,7 @@ function App() {
 
             {/* L1 Approval Queue — Approver + Admin */}
             <Route path="workflow-queue/l1" element={
-              <ProtectedRoute roles={['Approver', 'Admin']}>
+              <ProtectedRoute roles={['L1 Approver', 'Admin']}>
                 <L1ApprovalQueuePage />
               </ProtectedRoute>
             } />

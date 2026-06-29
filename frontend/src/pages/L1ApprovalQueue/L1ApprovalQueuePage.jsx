@@ -77,7 +77,7 @@ export default function L1ApprovalQueuePage() {
             
             
 
-            <main className="max-w-7xl mx-auto px-4 lg:px-8 pt-6 lg:pt-8">
+            <main className="w-full mx-auto px-4 lg:px-8 pt-6 lg:pt-8">
                 
                 {/* ZONE 1: Executive Header */}
                 <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
