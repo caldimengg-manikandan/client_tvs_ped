@@ -57,10 +57,20 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true };
         } catch (error) {
-            console.error('Login error', error.response?.data?.message);
+            console.error('Login error:', error);
+            let message = 'Login failed';
+            
+            if (error.response?.data?.message) {
+                message = error.response.data.message;
+            } else if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+                message = 'Cannot connect to server. Is the backend running?';
+            } else {
+                message = error.message || 'Login failed';
+            }
+
             return {
                 success: false,
-                message: error.response?.data?.message || 'Login failed'
+                message: message
             };
         }
     };
@@ -104,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     /**
-     * The current user's role string (e.g. 'Admin', 'Employee', 'Approver', 'PED Engineer').
+     * The current user's role string (e.g. 'Admin', 'Requester', 'L1 Approver', 'PED Engineer').
      */
     const role = user?.role || null;
 

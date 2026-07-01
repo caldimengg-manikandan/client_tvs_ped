@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axiosConfig';
-import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Crown, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Register Chart.js once
@@ -21,8 +21,10 @@ import ActivityFeed from './ActivityFeed';
 import AssetBreakdownChart from './AssetBreakdownChart';
 import DevTrackerFunnel from './DevTrackerFunnel';
 import RoleGuard from './RoleGuard';
-import PhaseDetailModal from './PhaseDetailModal';
-import KPIDetailModal from './KPIDetailModal';
+import InlineDetailPanel from './InlineDetailPanel';
+import KPIAlertsPanel from './KPIAlertsPanel';
+import PhaseTimelineGantt from './PhaseTimelineGantt';
+import TeamPerformanceMetrics from './TeamPerformanceMetrics';
 
 const POLL_INTERVAL = 30000; // 30 s
 
@@ -57,10 +59,11 @@ const Dashboard = () => {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [secondsAgo, setSecondsAgo] = useState(0);
     const [dateRange, setDateRange] = useState({ from: null, to: null });
+    const [filters, setFilters] = useState({ department: null, requestType: null, plantLocation: null });
     const pollRef = useRef(null);
     const tickRef = useRef(null);
-    const [phaseModal, setPhaseModal] = useState({ visible: false, stage: null, colour: null });
-    const [kpiModal,   setKpiModal]   = useState({ visible: false, type: null, title: '' });
+    const [activeKpi, setActiveKpi] = useState(null);
+    const [activeTab, setActiveTab] = useState('BID_AND_ESTIMATION');
 
     const fetchData = useCallback(async (isManual = false) => {
         if (isManual) setRefreshing(true);
@@ -68,6 +71,9 @@ const Dashboard = () => {
             const params = {};
             if (dateRange.from) params.from = dateRange.from;
             if (dateRange.to) params.to = dateRange.to;
+            if (filters.department) params.department = filters.department;
+            if (filters.requestType) params.requestType = filters.requestType;
+            if (filters.plantLocation) params.plantLocation = filters.plantLocation;
             const res = await api.get('/dashboard', { params });
             setData(res.data);
             setLastUpdated(Date.now());
@@ -97,12 +103,13 @@ const Dashboard = () => {
         return () => clearInterval(tickRef.current);
     }, [lastUpdated]);
 
-    // Re-fetch when date range changes
+    // Re-fetch when date range or filters change
     useEffect(() => {
-        if (dateRange.from || dateRange.to) fetchData();
-    }, [dateRange]);
+        fetchData();
+    }, [dateRange, filters]);
 
     const handleDateRangeChange = (from, to) => setDateRange({ from, to });
+    const handleFilterChange = (key, value) => setFilters(prev => ({ ...prev, [key]: value }));
     const handleRetry = () => { setError(null); setLoading(true); fetchData(true); };
 
     if (loading) {
@@ -152,66 +159,115 @@ const Dashboard = () => {
                     onRefresh={() => fetchData(true)}
                     onDateRangeChange={handleDateRangeChange}
                     dateRange={dateRange}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
                     dashboardData={data}
                 />
 
-                {/* Row 1: KPI Cards */}
-                <KPIGrid
-                    data={data}
-                    loading={loading}
-                    user={user}
-                    onPhaseClick={(stage, colour) => setPhaseModal({ visible: true, stage, colour })}
-                    onKpiClick={(type, title) => setKpiModal({ visible: true, type, title })}
-                />
-
-                {/* Row 2: MH Trend + Status Donut */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <div className="lg:col-span-2">
-                        <MHTrendChart data={data?.mhTrend} loading={loading} />
-                    </div>
-                    <div>
-                        <StatusDonutChart data={data?.mhByStatus} loading={loading} />
-                    </div>
+                {/* Custom Tabs */}
+                <div className="bg-slate-100 p-1.5 rounded-2xl flex items-center w-fit mx-auto lg:mx-0">
+                    <button
+                        onClick={() => setActiveTab('BID_AND_ESTIMATION')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-wider transition-all duration-300 ${
+                            activeTab === 'BID_AND_ESTIMATION' 
+                                ? 'bg-white text-[#0f172a] shadow-sm' 
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        }`}
+                    >
+                        <Crown size={16} className={activeTab === 'BID_AND_ESTIMATION' ? 'text-[#0f172a]' : 'text-slate-400'} />
+                        MATERIAL HANDLING
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('OPERATIONS')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-extrabold tracking-wider transition-all duration-300 ${
+                            activeTab === 'OPERATIONS' 
+                                ? 'bg-white text-[#0f172a] shadow-sm' 
+                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        }`}
+                    >
+                        <LayoutGrid size={16} className={activeTab === 'OPERATIONS' ? 'text-[#0f172a]' : 'text-slate-400'} />
+                        OPERATIONS
+                    </button>
                 </div>
 
-                {/* Row 3: Dept Load + Vendor Perf + Engineer Util */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <DeptLoadChart data={data?.mhByDepartment} loading={loading} />
-                    <VendorPerformanceList data={data?.vendorPerformance} loading={loading} />
-                    <RoleGuard roles={['Admin', 'Approver', 'PED Engineer']}>
-                        <EngineerUtilList data={data?.engineerUtilisation} loading={loading} currentUser={user} />
-                    </RoleGuard>
-                </div>
+                {/* Tab Content: MATERIAL HANDLING */}
+                {activeTab === 'BID_AND_ESTIMATION' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+                        className="space-y-5"
+                    >
+                        {/* Alerts Panel */}
+                        <KPIAlertsPanel data={data} />
 
-                {/* Row 4: Recent Requests + Activity Feed */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <RecentRequestsTable data={data?.recentRequests} loading={loading} user={user} />
-                    <ActivityFeed data={data?.activityFeed} loading={loading} />
-                </div>
+                        {/* Row 1: KPI Cards */}
+                        <KPIGrid
+                            data={data}
+                            loading={loading}
+                            user={user}
+                            activeKpi={activeKpi}
+                            onPhaseClick={(stage, colour) => setActiveKpi({ isPhase: true, stage, colour })}
+                            onKpiClick={(type, title) => setActiveKpi({ isPhase: false, type, title })}
+                        />
 
-                {/* Row 5: Asset Breakdown + Dev Tracker Funnel */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                    <AssetBreakdownChart data={data?.assetSummary} loading={loading} />
-                    <div className="lg:col-span-2">
-                        <DevTrackerFunnel data={data?.mhDevTrackerFunnel} loading={loading} />
-                    </div>
-                </div>
+                        {/* Inline Details Panel */}
+                        <InlineDetailPanel 
+                            activeKpi={activeKpi}
+                            onClose={() => setActiveKpi(null)}
+                        />
 
-                {/* Phase Detail Modal */}
-                <PhaseDetailModal
-                    visible={phaseModal.visible}
-                    onClose={() => setPhaseModal({ visible: false, stage: null, colour: null })}
-                    stage={phaseModal.stage}
-                    stageColour={phaseModal.colour}
-                />
+                        {/* Advanced Metrics Row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <div className="lg:col-span-2">
+                                <PhaseTimelineGantt data={data} />
+                            </div>
+                            <div>
+                                <TeamPerformanceMetrics data={data} />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
 
-                {/* KPI Detail Modal */}
-                <KPIDetailModal
-                    visible={kpiModal.visible}
-                    onClose={() => setKpiModal({ visible: false, type: null, title: '' })}
-                    type={kpiModal.type}
-                    title={kpiModal.title}
-                />
+                {/* Tab Content: OPERATIONS */}
+                {activeTab === 'OPERATIONS' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+                        className="space-y-5"
+                    >
+                        {/* Row 2: MH Trend + Status Donut */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <div className="lg:col-span-2">
+                                <MHTrendChart data={data?.mhTrend} loading={loading} />
+                            </div>
+                            <div>
+                                <StatusDonutChart data={data?.mhByStatus} loading={loading} />
+                            </div>
+                        </div>
+
+                        {/* Row 3: Dept Load + Vendor Perf + Engineer Util */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <DeptLoadChart data={data?.mhByDepartment} loading={loading} />
+                            <VendorPerformanceList data={data?.vendorPerformance} loading={loading} />
+                            <RoleGuard roles={['Admin', 'L1 Approver', 'PED Engineer']}>
+                                <EngineerUtilList data={data?.engineerUtilisation} loading={loading} currentUser={user} />
+                            </RoleGuard>
+                        </div>
+
+                        {/* Row 4: Recent Requests + Activity Feed */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            <RecentRequestsTable data={data?.recentRequests} loading={loading} user={user} />
+                            <ActivityFeed data={data?.activityFeed} loading={loading} />
+                        </div>
+
+                        {/* Row 5: Asset Breakdown + Dev Tracker Funnel */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <AssetBreakdownChart data={data?.assetSummary} loading={loading} />
+                            <div className="lg:col-span-2">
+                                <DevTrackerFunnel data={data?.mhDevTrackerFunnel} loading={loading} />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
             </div>
         </ErrorBoundary>
     );

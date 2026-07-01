@@ -77,7 +77,7 @@ const seedData = async () => {
             mailId: 'john.doe@tvs.com',
             designation: 'Engineer',
             dateOfJoining: new Date(),
-            accessLevel: 'Employee',
+            accessLevel: 'Requester',
             permissions: {
                 dashboard: true,
                 assetRequest: true,
@@ -98,7 +98,7 @@ const seedData = async () => {
             employeeId: userEmployee._id,
             email: 'john.doe@tvs.com',
             passwordHash: hashedUserPassword,
-            role: 'Employee',
+            role: 'Requester',
             permissions: {
                 dashboard: true,
                 assetRequest: true,

@@ -4,7 +4,9 @@ import { Switch } from 'antd';
 import { Save, Eye, EyeOff, ArrowLeft, AlertCircle, Shield, Key, Lock, LayoutDashboard, FilePlus, List, BarChart3, Users, Truck, FileBarChart, Settings, TrendingUp, CheckCircle2, XCircle, RefreshCw, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
+import api from '../../api/axiosConfig';
 import { createEmployee, updateEmployee, fetchEmployeeById, fetchUserByEmployeeId, checkIdAvailability } from '../../redux/slices/employeeSlice';
+
 const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
@@ -38,13 +40,48 @@ const EmployeeForm = ({ mode = 'add' }) => {
         employeeName: '',
         departmentName: '',
         plantLocation: '',
-        role: 'Employee',
-        accessLevel: 'Employee',   // kept for backend compatibility, synced from role
+        role: 'Requester',
+        accessLevel: 'Requester',   // kept for backend compatibility, synced from role
         mailId: '',
         password: '',
         confirmPassword: '',
         status: 'Active'
     });
+
+    const [availableRoles, setAvailableRoles] = useState([]);
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const [newRoleName, setNewRoleName] = useState('');
+    const [isAddingRole, setIsAddingRole] = useState(false);
+
+    useEffect(() => {
+        fetchRoles();
+    }, []);
+
+    const fetchRoles = async () => {
+        try {
+            const { data } = await api.get('/roles');
+            setAvailableRoles(data);
+        } catch (error) {
+            toast.error('Failed to load roles');
+        }
+    };
+
+    const handleAddRole = async () => {
+        if (!newRoleName.trim()) return;
+        setIsAddingRole(true);
+        try {
+            const { data } = await api.post('/roles', { name: newRoleName.trim() });
+            setAvailableRoles(prev => [...prev, data]);
+            setFormData(prev => ({ ...prev, role: data.name }));
+            setIsRoleModalOpen(false);
+            setNewRoleName('');
+            toast.success('Role added successfully');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to add role');
+        } finally {
+            setIsAddingRole(false);
+        }
+    };
 
     // Permissions state
     const [permissions, setPermissions] = useState({
@@ -244,7 +281,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         departmentName: currentItem.departmentName,
                         plantLocation: currentItem.plantLocation,
                         accessLevel: currentItem.accessLevel,
-                        role: currentItem.role || 'Employee',
+                        role: currentItem.role || 'Requester',
                         mailId: currentItem.mailId,
                         password: '', // Kept empty
                         confirmPassword: '',
@@ -258,7 +295,7 @@ const EmployeeForm = ({ mode = 'add' }) => {
                         departmentName: currentItem.departmentName,
                         plantLocation: currentItem.plantLocation,
                         accessLevel: currentItem.accessLevel,
-                        role: currentItem.role || 'Employee',
+                        role: currentItem.role || 'Requester',
                         mailId: currentItem.mailId,
                         password: '',
                         confirmPassword: '',
@@ -532,33 +569,50 @@ const EmployeeForm = ({ mode = 'add' }) => {
                             <label className="block text-sm font-medium text-gray-700">
                                 Role
                             </label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={(e) => {
-                                    // Keep accessLevel in sync so legacy backend code stays happy
-                                    const val = e.target.value;
-                                    const legacyMap = {
-                                        'Admin': 'Admin',
-                                        'Approver': 'Manager',
-                                        'PED Engineer': 'Manager',
-                                        'Employee': 'Employee'
-                                    };
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        role: val,
-                                        accessLevel: legacyMap[val] || 'Employee'
-                                    }));
-                                }}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="Employee">Employee</option>
-                                <option value="Approver">Approver</option>
-                                <option value="PED Engineer">PED Engineer</option>
-                                <option value="Admin">Admin</option>
-                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const legacyMap = {
+                                            'Admin': 'Admin',
+                                            'L1 Approver': 'Manager',
+                                            'PED Engineer': 'Manager',
+                                            'Requester': 'Requester'
+                                        };
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            role: val,
+                                            accessLevel: legacyMap[val] || 'Requester'
+                                        }));
+                                    }}
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    {availableRoles.length > 0 ? (
+                                        availableRoles.map(r => (
+                                            <option key={r._id || r.name} value={r.name}>{r.name}</option>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <option value="Requester">Requester</option>
+                                            <option value="L1 Approver">L1 Approver</option>
+                                            <option value="PED Engineer">PED Engineer</option>
+                                            <option value="Admin">Admin</option>
+                                        </>
+                                    )}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsRoleModalOpen(true)}
+                                    className="px-3 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+                                    title="Add new role"
+                                >
+                                    <FilePlus size={18} />
+                                </button>
+                            </div>
                             <p className="text-xs text-gray-400 mt-1">
-                                Approver — receives MH request emails &nbsp;|&nbsp; PED Engineer — gets assigned to requests
+                                L1 Approver — receives MH request emails &nbsp;|&nbsp; PED Engineer — gets assigned to requests
                             </p>
                         </div>
 
@@ -721,6 +775,54 @@ const EmployeeForm = ({ mode = 'add' }) => {
                     </button>
                 </div>
             </form>
+
+            {/* Add Role Modal */}
+            {isRoleModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">Add Custom Role</h3>
+                            <button
+                                onClick={() => setIsRoleModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                        <div className="p-5">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Role Name
+                            </label>
+                            <input
+                                type="text"
+                                value={newRoleName}
+                                onChange={(e) => setNewRoleName(e.target.value)}
+                                placeholder="e.g. Maintenance"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                Note: Custom roles are used for categorization. System-level workflows still depend on specific roles.
+                            </p>
+                        </div>
+                        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50">
+                            <button
+                                onClick={() => setIsRoleModalOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddRole}
+                                disabled={isAddingRole || !newRoleName.trim()}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center"
+                            >
+                                {isAddingRole ? 'Adding...' : 'Add Role'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

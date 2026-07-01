@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        let dbURI = process.env.MONGO_URI || process.env.ATLAS_URI;
+        let dbURI = process.env.ATLAS_URI || process.env.MONGO_URI;
         let isInMemory = false;
 
         if (!dbURI || dbURI.includes('your_mongodb_atlas_connection_string_here')) {

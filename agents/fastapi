@@ -1,0 +1,1911 @@
+### Example of installing FastAPI with standard dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+This snippet shows the typical command to install FastAPI along with its standard dependencies using pip. It serves as an example of how packages are downloaded and extracted into the Python environment.
+
+```console
+// Don't run this now, it's just an example 🤓
+$ pip install "fastapi[standard]"
+---> 100%
+```
+
+--------------------------------
+
+### Database Session Dependency Setup with Yield
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/dependencies/dependencies-with-yield.md
+
+This snippet shows the initial setup for a database session dependency, including session creation and the start of a `try` block before yielding the session.
+
+```python
+def get_database_session():
+    db = DBSession()
+    try:
+```
+
+--------------------------------
+
+### Install HTTPX for TestClient
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/testing.md
+
+Install the `httpx` library, which is required for `TestClient` to function. It's recommended to do this within a virtual environment.
+
+```console
+$ pip install httpx
+```
+
+--------------------------------
+
+### Install and Run FastAPI CLI Development Server
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/release-notes.md
+
+These commands demonstrate how to install FastAPI and launch the development server using the new `fastapi` command-line interface.
+
+```console
+$ pip install --upgrade fastapi
+
+$ fastapi dev main.py
+
+
+ ╭────────── FastAPI CLI - Development mode ───────────╮
+ │                                                     │
+ │  Serving at: http://127.0.0.1:8000                  │
+ │                                                     │
+ │  API docs: http://127.0.0.1:8000/docs               │
+ │                                                     │
+ │  Running in development mode, for production use:   │
+ │                                                     │
+ │  fastapi run                                        │
+ │                                                     │
+ ╰─────────────────────────────────────────────────────╯
+
+INFO:     Will watch for changes in these directories: ['/home/user/code/awesomeapp']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [2248755] using WatchFiles
+INFO:     Started server process [2248757]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+--------------------------------
+
+### Install Uvicorn with Standard Dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/manually.md
+
+Install Uvicorn, the ASGI server, along with its recommended standard dependencies, including `uvloop` for high-performance `asyncio`.
+
+```console
+$ pip install "uvicorn[standard]"
+```
+
+--------------------------------
+
+### Declare Single Body Example with examples
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/schema-extra-example.md
+
+Provide a single example for a request body using the "examples" parameter within "Body()", which is added to the JSON Schema for the body data.
+
+```python
+                    Body(
+                        examples=[
+                            {
+                                "name": "Foo",
+                                "description": "A very nice Item",
+                                "price": 35.4,
+                                "tax": 3.2,
+                            }
+                        ]
+                    ),
+```
+
+--------------------------------
+
+### Install packages from requirements.txt
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Installs all packages listed in a requirements.txt file into the active virtual environment using either pip or uv.
+
+```console
+$ pip install -r requirements.txt
+---> 100%
+```
+
+```console
+$ uv pip install -r requirements.txt
+---> 100%
+```
+
+--------------------------------
+
+### Chained Sub-Dependencies with Yield
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/dependencies/dependencies-with-yield.md
+
+This example shows how to create a chain of sub-dependencies where each dependency uses `yield` and depends on the value yielded by the previous one. FastAPI ensures correct execution order for both setup and cleanup.
+
+```python
+async def dependency_a():
+    print("Running dependency_a")
+    try:
+        yield 1
+    finally:
+        print("Closing dependency_a")
+
+async def dependency_b(dep_a: Annotated[int, Depends(dependency_a)]):
+    print("Running dependency_b")
+    try:
+        yield dep_a + 1
+    finally:
+        print("Closing dependency_b")
+
+async def dependency_c(dep_b: Annotated[int, Depends(dependency_b)]):
+    print("Running dependency_c")
+    try:
+        yield dep_b + 1
+    finally:
+        print("Closing dependency_c")
+```
+
+--------------------------------
+
+### Declare Multiple Body Examples with examples
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/schema-extra-example.md
+
+Provide multiple examples for a request body using the "examples" parameter within "Body()", which are added to the JSON Schema for the body data.
+
+```python
+                    Body(
+                        examples=[
+                            {
+                                "name": "Foo",
+                                "description": "A very nice Item",
+                                "price": 35.4,
+                                "tax": 3.2,
+                            },
+                            {
+                                "name": "Bar",
+                                "price": 42.0,
+                                "tax": 5.0,
+                            },
+                            {
+                                "name": "Baz",
+                                "price": 50.5,
+                                "tax": 10.5,
+                                "description": "The one with the Goose",
+                            },
+                        ]
+                    ),
+```
+
+--------------------------------
+
+### Example Initial API Request with Callback URL
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/openapi-callbacks.md
+
+This example illustrates an HTTP request to your API, including a query parameter that specifies the external callback URL.
+
+```HTTP
+https://yourapi.com/invoices/?callback_url=https://www.external.org/events
+```
+
+--------------------------------
+
+### Example PATH Environment Variable After Virtual Environment Activation
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+These examples illustrate how activating a virtual environment prepends its binary directory to the system's PATH, prioritizing project-specific executables.
+
+```plaintext
+/home/user/code/awesome-project/.venv/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+```plaintext
+C:\Users\user\code\awesome-project\.venv\Scripts;C:\Windows\System32
+```
+
+--------------------------------
+
+### Install pwdlib with Argon2
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/security/oauth2-jwt.md
+
+Installs the `pwdlib` library along with the Argon2 hashing algorithm, recommended for secure password management.
+
+```console
+$ pip install "pwdlib[argon2]"
+```
+
+--------------------------------
+
+### Install pytest
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/testing.md
+
+Use pip to install the pytest testing framework within your activated virtual environment.
+
+```console
+$ pip install pytest
+
+---> 100%
+```
+
+--------------------------------
+
+### Install python-multipart
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/request-form-models.md
+
+Install the `python-multipart` library, which is required for FastAPI to handle forms. This command should be run in your virtual environment.
+
+```console
+pip install python-multipart
+```
+
+--------------------------------
+
+### Start Traefik with Configuration File (Console)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/behind-a-proxy.md
+
+Executes the Traefik binary, specifying traefik.toml as the configuration file to load entry points and providers.
+
+```console
+$ ./traefik --configFile=traefik.toml
+
+INFO[0000] Configuration loaded from file: /home/user/awesomeapi/traefik.toml
+```
+
+--------------------------------
+
+### Install FastAPI with Standard Dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/release-notes.md
+
+Use this command to install FastAPI along with its standard dependencies, which includes `fastapi-cli` for command-line interface support.
+
+```bash
+pip install "fastapi[standard]"
+```
+
+--------------------------------
+
+### Install `websockets` library
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/websockets.md
+
+Installs the `websockets` Python library, which is required to use the WebSocket protocol with FastAPI.
+
+```console
+$ pip install websockets
+```
+
+--------------------------------
+
+### Example requirements.txt file content
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+An example of a requirements.txt file specifying FastAPI and Pydantic with exact version numbers for project dependencies.
+
+```requirements.txt
+fastapi[standard]==0.113.0
+pydantic==2.8.0
+```
+
+--------------------------------
+
+### Declare OpenAPI-Specific Examples with openapi_examples
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/schema-extra-example.md
+
+Use the "openapi_examples" parameter with "Body()" to define multiple examples that appear in the OpenAPI documentation UI, each with a summary, description, and value.
+
+```python
+                    Body(
+                        openapi_examples={
+                            "normal": {
+                                "summary": "A normal example",
+                                "description": "A **normal** item works correctly.",
+                                "value": {
+                                    "name": "Foo",
+                                    "description": "A very nice Item",
+                                    "price": 35.4,
+                                    "tax": 3.2,
+                                },
+                            },
+                            "reduced": {
+                                "summary": "A reduced price example",
+                                "description": "When the item is reduced, the tax is also reduced.",
+                                "value": {
+                                    "name": "Bar",
+                                    "price": 42.0,
+                                    "tax": 2.0,
+                                },
+                            },
+                            "invalid": {
+                                "summary": "Invalid data example",
+                                "description": "When the item is invalid, it has no price.",
+                                "value": {
+                                    "name": "Baz",
+                                    "price": "no price",
+                                },
+                            },
+                        }
+                    ),
+```
+
+--------------------------------
+
+### Example PATH Environment Variable Before Activation
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+These examples show typical system PATH variable values before a virtual environment is activated, indicating where the system searches for executables.
+
+```plaintext
+/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+```plaintext
+C:\Windows\System32
+```
+
+--------------------------------
+
+### Install pydantic-settings package
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/settings.md
+
+Installs the `pydantic-settings` package, which is required for managing settings with Pydantic.
+
+```console
+$ pip install pydantic-settings
+```
+
+--------------------------------
+
+### Example File Structure with Comments
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/bigger-applications.md
+
+Illustrates a typical FastAPI project structure with Python package and module definitions, showing how `__init__.py` files define packages.
+
+```bash
+.
+├── app                  # "app" is a Python package
+│   ├── __init__.py      # this file makes "app" a "Python package"
+│   ├── main.py          # "main" module, e.g. import app.main
+│   ├── dependencies.py  # "dependencies" module, e.g. import app.dependencies
+│   └── routers          # "routers" is a "Python subpackage"
+│   │   ├── __init__.py  # makes "routers" a "Python subpackage"
+│   │   ├── items.py     # "items" submodule, e.g. import app.routers.items
+│   │   └── users.py     # "users" submodule, e.g. import app.routers.users
+│   └── internal         # "internal" is a "Python subpackage"
+│       ├── __init__.py  # makes "internal" a "Python subpackage"
+│       └── admin.py     # "admin" submodule, e.g. import app.internal.admin
+```
+
+--------------------------------
+
+### Example URL with Default Query Parameters
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+This URL demonstrates accessing the `/items/` endpoint with explicit default values for `skip` and `limit` query parameters.
+
+```url
+http://127.0.0.1:8000/items/?skip=0&limit=10
+```
+
+--------------------------------
+
+### Install Python Package Requirements
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/docker.md
+
+Use this command to install all dependencies listed in the `requirements.txt` file into your Python environment.
+
+```console
+$ pip install -r requirements.txt
+```
+
+--------------------------------
+
+### Install FastAPI with Standard Dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/README.md
+
+Install FastAPI along with its standard dependencies, including Uvicorn for serving the application. Ensure to quote "fastapi[standard]" for cross-terminal compatibility.
+
+```console
+pip install "fastapi[standard]"
+
+---> 100%
+```
+
+--------------------------------
+
+### Install FastAPI with all extras including pydantic-settings
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/settings.md
+
+Installs FastAPI along with all its optional dependencies, which includes `pydantic-settings`.
+
+```console
+$ pip install "fastapi[all]"
+```
+
+--------------------------------
+
+### Example PATH Variable on Windows
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/environment-variables.md
+
+Illustrates a typical `PATH` environment variable string on Windows, showing directories separated by semicolons.
+
+```plaintext
+C:\Program Files\Python312\Scripts;C:\Program Files\Python312;C:\Windows\System32
+```
+
+--------------------------------
+
+### Run FastAPI with Multiple Workers using `fastapi` command
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/server-workers.md
+
+Use the `fastapi` command-line tool to start your application with a specified number of worker processes, improving concurrency. This command automatically handles server setup and worker management.
+
+```console
+$ fastapi run --workers 4 main.py
+
+  FastAPI   Starting production server 🚀
+
+             Searching for package file structure from directories with
+             __init__.py files
+             Importing from /home/user/code/awesomeapp
+
+   module   🐍 main.py
+
+     code   Importing the FastAPI app object from the module with the
+             following code:
+
+             from main import app
+
+      app   Using import string: main:app
+
+   server   Server started at http://0.0.0.0:8000
+   server   Documentation at http://0.0.0.0:8000/docs
+
+             Logs:
+
+     INFO   Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to
+             quit)
+     INFO   Started parent process [27365]
+     INFO   Started server process [27368]
+     INFO   Started server process [27369]
+     INFO   Started server process [27370]
+     INFO   Started server process [27367]
+     INFO   Waiting for application startup.
+     INFO   Waiting for application startup.
+     INFO   Waiting for application startup.
+     INFO   Waiting for application startup.
+     INFO   Application startup complete.
+     INFO   Application startup complete.
+     INFO   Application startup complete.
+     INFO   Application startup complete.
+```
+
+--------------------------------
+
+### Shell Command with Double Quotes
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/_llm-test.md
+
+An example of a `pip install` command demonstrating the use of double quotes within an inline code snippet.
+
+```bash
+pip install "foo[bar]"
+```
+
+--------------------------------
+
+### Example .env File Configuration
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/settings.md
+
+This .env file defines environment variables for ADMIN_EMAIL and APP_NAME that can be loaded by Pydantic Settings.
+
+```bash
+ADMIN_EMAIL="deadpool@example.com"
+APP_NAME="ChimichangApp"
+```
+
+--------------------------------
+
+### Start FastAPI Application with Root Path (Console)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/behind-a-proxy.md
+
+Starts the FastAPI application using Uvicorn, allowing all forwarded IPs and setting the application's root path to /api/v1 for proxy compatibility.
+
+```console
+$ fastapi run main.py --forwarded-allow-ips="*" --root-path /api/v1
+
+<span style="color: green;">INFO</span>:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+
+--------------------------------
+
+### Dockerfile for FastAPI Application
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/docker.md
+
+This Dockerfile builds a Docker image for a FastAPI application, starting from a Python base image, copying dependencies, installing them, and then copying the application code.
+
+```dockerfile
+# (1)!
+FROM python:3.14
+
+# (2)!
+WORKDIR /code
+
+# (3)!
+COPY ./requirements.txt /code/requirements.txt
+
+# (4)!
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+# (5)!
+COPY ./app /code/app
+```
+
+--------------------------------
+
+### Install PyJWT Library
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/security/oauth2-jwt.md
+
+Installs the `PyJWT` library, required for generating and verifying JSON Web Tokens in Python applications.
+
+```console
+$ pip install pyjwt
+```
+
+--------------------------------
+
+### Example JWT Token String
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/security/oauth2-jwt.md
+
+An example of a JSON Web Token (JWT) string, demonstrating its compact, URL-safe representation.
+
+```text
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+```
+
+--------------------------------
+
+### Install SQLModel Library
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/sql-databases.md
+
+Installs the SQLModel library using pip, which is essential for integrating SQL databases with FastAPI applications.
+
+```console
+$ pip install sqlmodel
+```
+
+--------------------------------
+
+### Install Pydantic with Email Extras
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/response-model.md
+
+Installs Pydantic with the `email` extra, which includes `email-validator`.
+
+```console
+$ pip install "pydantic[email]"
+```
+
+--------------------------------
+
+### Using an Async Context Manager
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/events.md
+
+This snippet shows how an async context manager is used with `async with`, executing setup code before the block and cleanup code after.
+
+```Python
+async with lifespan(app):
+    await do_stuff()
+```
+
+--------------------------------
+
+### HTTP Request with Extra Query Parameter
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-param-models.md
+
+An example HTTP GET request demonstrating an extra query parameter that would be forbidden by the model configuration.
+
+```http
+https://example.com/items/?limit=10&tool=plumbus
+```
+
+--------------------------------
+
+### Install python-multipart for Form Data
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/request-forms.md
+
+Install the `python-multipart` library, which is required for FastAPI to parse form data. This command should be run in your activated virtual environment.
+
+```console
+$ pip install python-multipart
+```
+
+--------------------------------
+
+### Create Virtual Environment with uv
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+If `uv` is installed, use this command to quickly create a virtual environment. By default, it creates a `.venv` directory.
+
+```console
+$ uv venv
+```
+
+--------------------------------
+
+### Python File Context Manager Example
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/dependencies/dependencies-with-yield.md
+
+Demonstrates a basic Python context manager using the `with` statement to open and read a file, ensuring proper resource cleanup even if errors occur.
+
+```Python
+with open("./somefile.txt") as f:
+    contents = f.read()
+    print(contents)
+```
+
+--------------------------------
+
+### Run FastAPI Development Server
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/sub-applications.md
+
+Use this command to start the FastAPI development server, making the application and its mounted sub-applications accessible locally.
+
+```console
+$ fastapi dev
+
+<span style="color: green;">INFO</span>:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+
+--------------------------------
+
+### Example PATH Variable on Linux/macOS
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/environment-variables.md
+
+Illustrates a typical `PATH` environment variable string on Linux or macOS, showing directories separated by colons.
+
+```plaintext
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+--------------------------------
+
+### Install packages directly into virtual environment
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Installs specified packages directly into the active virtual environment using either pip or uv.
+
+```console
+$ pip install "fastapi[standard]"
+
+---> 100%
+```
+
+```console
+$ uv pip install "fastapi[standard]"
+---> 100%
+```
+
+--------------------------------
+
+### Run FastAPI server with environment variables
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/settings.md
+
+Starts the FastAPI application, setting `ADMIN_EMAIL` and `APP_NAME` environment variables for the current command execution.
+
+```console
+$ ADMIN_EMAIL="deadpool@example.com" APP_NAME="ChimichangApp" fastapi run main.py
+```
+
+--------------------------------
+
+### Install a different package version using pip
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+This command demonstrates installing a different version of a package, 'harry' version 3, which would replace any existing version in a global environment. This illustrates the problem of dependency conflicts.
+
+```console
+$ pip install "harry==3"
+```
+
+--------------------------------
+
+### Install Jinja2 for FastAPI Templates
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/templates.md
+
+Install the Jinja2 package using pip to enable template rendering in your FastAPI application.
+
+```console
+$ pip install jinja2
+
+---> 100%
+```
+
+--------------------------------
+
+### Example JSON Request Body with All Fields
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/body.md
+
+An example of a valid JSON request body matching a Pydantic model, including all optional fields.
+
+```json
+{
+    "name": "Foo",
+    "description": "An optional description",
+    "price": 45.2,
+    "tax": 3.5
+}
+```
+
+--------------------------------
+
+### Install email-validator for EmailStr
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/response-model.md
+
+Installs the `email-validator` library, required for using Pydantic's `EmailStr` type.
+
+```console
+$ pip install email-validator
+```
+
+--------------------------------
+
+### Install and upgrade pip if missing
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Use this command if you encounter a 'No module named pip' error when trying to upgrade pip, ensuring it's installed and updated.
+
+```console
+$ python -m ensurepip --upgrade
+
+---> 100%
+```
+
+--------------------------------
+
+### Install FastAPI with Standard Dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/index.md
+
+Installs FastAPI along with its standard dependencies like Uvicorn and Pydantic, ensuring it works across different terminals by quoting the package name.
+
+```console
+$ pip install "fastapi[standard]"
+
+---> 100%
+```
+
+--------------------------------
+
+### URL for Boolean Query Parameter (on)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+Example URL demonstrating a boolean query parameter `short` set to `on`, which FastAPI converts to `True`.
+
+```url
+http://127.0.0.1:8000/items/foo?short=on
+```
+
+--------------------------------
+
+### Declare Field Examples in Pydantic Models
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/schema-extra-example.md
+
+Add "examples" to individual fields within a Pydantic model using "Field()" to provide specific data examples for those fields in the generated JSON Schema.
+
+```python
+from typing import Annotated
+name: str = Field(examples=["Foo"])
+description: str | None = Field(default=None, examples=["A very nice Item"])
+price: float = Field(examples=[35.4])
+tax: float | None = Field(default=None, examples=[3.2])
+```
+
+--------------------------------
+
+### Flask Application Response Example
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/wsgi.md
+
+This is the expected text response from the mounted Flask application when accessed via the `/v1/` path.
+
+```txt
+Hello, World from Flask!
+```
+
+--------------------------------
+
+### Example URL with Implicit Default Query Parameters
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+This URL demonstrates accessing the `/items/` endpoint without specifying query parameters, relying on the function's default values.
+
+```url
+http://127.0.0.1:8000/items/
+```
+
+--------------------------------
+
+### URL for Boolean Query Parameter (yes)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+Example URL demonstrating a boolean query parameter `short` set to `yes`, which FastAPI converts to `True`.
+
+```url
+http://127.0.0.1:8000/items/foo?short=yes
+```
+
+--------------------------------
+
+### URL for Boolean Query Parameter (1)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+Example URL demonstrating a boolean query parameter `short` set to `1`, which FastAPI converts to `True`.
+
+```url
+http://127.0.0.1:8000/items/foo?short=1
+```
+
+--------------------------------
+
+### Create Database Tables on Startup
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/sql-databases.md
+
+Initializes database tables when the FastAPI application starts up, ensuring the schema is ready for use. For production, consider using migration scripts.
+
+```python
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+```
+
+--------------------------------
+
+### Example JSON Request Body with Required Fields Only
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/body.md
+
+An example of a valid JSON request body matching a Pydantic model, with only the required fields present.
+
+```json
+{
+    "name": "Foo",
+    "price": 45.2
+}
+```
+
+--------------------------------
+
+### Example Invalid Request Body
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/handling-errors.md
+
+An example JSON payload with an invalid 'size' field, used to trigger a `RequestValidationError`.
+
+```JSON
+{
+  "title": "towel",
+  "size": "XL"
+}
+```
+
+--------------------------------
+
+### Run FastAPI Development Server by File Path
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/first-steps.md
+
+Start the FastAPI development server by directly providing the Python file path to the `fastapi dev` command. The command will attempt to guess the app object.
+
+```console
+$ fastapi dev main.py
+```
+
+--------------------------------
+
+### Install a specific package version using pip
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Use this command to install a particular version of a package, such as 'harry' version 1, into your Python environment. This is relevant when a project requires an exact dependency version.
+
+```console
+$ pip install "harry==1"
+```
+
+--------------------------------
+
+### Example User Data Response
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/security/simple-oauth2.md
+
+This JSON snippet shows the expected structure of user data returned for an authenticated user from the `/users/me` endpoint.
+
+```JSON
+{
+  "username": "johndoe",
+  "email": "johndoe@example.com",
+  "full_name": "John Doe",
+  "disabled": false,
+  "hashed_password": "fakehashedsecret"
+}
+```
+
+--------------------------------
+
+### Run FastAPI with `root_path` Command Line Option
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/behind-a-proxy.md
+
+Use this console command to start your FastAPI application with Uvicorn, specifying the `root_path` to inform the application about the proxy's path prefix and allowing forwarded IPs.
+
+```console
+$ fastapi run main.py --forwarded-allow-ips="*" --root-path /api/v1
+
+<span style="color: green;">INFO</span>:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+```
+
+--------------------------------
+
+### URL for Boolean Query Parameter (true)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+Example URL demonstrating a boolean query parameter `short` set to `true`, which FastAPI converts to `True`.
+
+```url
+http://127.0.0.1:8000/items/foo?short=true
+```
+
+--------------------------------
+
+### URL for Boolean Query Parameter (True)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+Example URL demonstrating a boolean query parameter `short` set to `True`, which FastAPI converts to `True`.
+
+```url
+http://127.0.0.1:8000/items/foo?short=True
+```
+
+--------------------------------
+
+### Example JSON response from API
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/first-steps.md
+
+Displays the JSON response returned by the FastAPI application's root endpoint.
+
+```JSON
+{"message": "Hello World"}
+```
+
+--------------------------------
+
+### Define a Basic FastAPI Application
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/how-to/extending-openapi.md
+
+This snippet shows a standard FastAPI application setup with a single path operation, serving as the base for extending the OpenAPI schema.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
+```
+
+--------------------------------
+
+### FastAPI Application Response Example
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/wsgi.md
+
+This is the expected JSON response from the FastAPI application when accessed via the `/v2` path.
+
+```JSON
+{
+    "message": "Hello World"
+}
+```
+
+--------------------------------
+
+### Create Project Directory Structure
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Use these console commands to set up a new project directory, creating a dedicated space for your code and virtual environment.
+
+```console
+$ cd
+$ mkdir code
+$ cd code
+$ mkdir awesome-project
+$ cd awesome-project
+```
+
+--------------------------------
+
+### Importing a router module in main.py
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/bigger-applications.md
+
+Example of how to import a submodule from the `app.routers` package into `app/main.py` to integrate its routes.
+
+```python
+from app.routers import items
+```
+
+--------------------------------
+
+### Example .gitignore content for virtual environment
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+This shows the content of the .gitignore file created by the echo command, instructing Git to ignore all files in the .venv directory.
+
+```gitignore
+ *
+```
+
+--------------------------------
+
+### Run FastAPI Development Server
+
+Source: https://github.com/fastapi/fastapi/blob/master/README.md
+
+Use this command to start the FastAPI application in development mode with auto-reload enabled. The server will be accessible at the specified local address.
+
+```console
+$ fastapi dev
+
+ ╭────────── FastAPI CLI - Development mode ───────────╮
+ │                                                     │
+ │  Serving at: http://127.0.0.1:8000                  │
+ │                                                     │
+ │  API docs: http://127.0.0.1:8000/docs               │
+ │                                                     │
+ │  Running in development mode, for production use:   │
+ │                                                     │
+ │  fastapi run                                        │
+ │                                                     │
+ ╰─────────────────────────────────────────────────────╯
+
+INFO:     Will watch for changes in these directories: ['/home/user/code/awesomeapp']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [2248755] using WatchFiles
+INFO:     Started server process [2248757]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+--------------------------------
+
+### Create a Basic FastAPI Application (Synchronous)
+
+Source: https://github.com/fastapi/fastapi/blob/master/README.md
+
+Define a simple FastAPI application with two endpoints: a root path returning 'Hello World' and an item path with a path parameter and an optional query parameter. This example uses standard synchronous Python functions.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q}
+```
+
+--------------------------------
+
+### Updated PATH After Python Install on Windows
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/environment-variables.md
+
+Shows how the `PATH` environment variable is modified on Windows after installing Python to a custom location, adding the new Python binary directory.
+
+```plaintext
+C:\Program Files\Python312\Scripts;C:\Program Files\Python312;C:\Windows\System32;C:\opt\custompython\bin
+```
+
+--------------------------------
+
+### Example Initial API Request Body
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/openapi-callbacks.md
+
+This JSON body is sent with the initial request to your API, containing details such as an invoice identifier.
+
+```JSON
+{
+    "id": "2expen51ve",
+    "customer": "Mr. Richie Rich",
+    "total": "9999"
+}
+```
+
+--------------------------------
+
+### Perform a GET Request with Requests
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/alternatives.md
+
+This snippet demonstrates how to make a simple HTTP GET request to a specified URL using the Requests library, a common Python client for interacting with APIs.
+
+```Python
+response = requests.get("http://example.com/some/url")
+```
+
+--------------------------------
+
+### Run FastAPI Application with `fastapi dev`
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/websockets.md
+
+Command to start the FastAPI development server, which automatically reloads on code changes. Use this to test the WebSocket application locally.
+
+```console
+$ fastapi dev
+```
+
+--------------------------------
+
+### Python Function Calls with Comments
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/_llm-test.md
+
+A Python code example demonstrating function calls with inline comments, highlighting both working and non-working scenarios.
+
+```python
+wont_work() # This won't work 😱
+works(foo="bar") # This works 🎉
+```
+
+--------------------------------
+
+### Importing and Initializing APIRouter (users.py)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/bigger-applications.md
+
+Demonstrates how to import `APIRouter` and create an instance in a router file like `app/routers/users.py` to define modular path operations.
+
+```python
+from fastapi import APIRouter
+
+router = APIRouter()
+```
+
+--------------------------------
+
+### Example JSON Lines Response Body
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/stream-json-lines.md
+
+An example of a JSON Lines response body, where each line is a self-contained JSON object separated by a newline character.
+
+```json
+{"name": "Plumbus", "description": "A multi-purpose household device."}
+{"name": "Portal Gun", "description": "A portal opening device."}
+{"name": "Meeseeks Box", "description": "A box that summons a Meeseeks."}
+```
+
+--------------------------------
+
+### Declare Pydantic Model Examples with model_config
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/schema-extra-example.md
+
+Use the "model_config" attribute in a Pydantic model to add "examples" directly to the generated JSON Schema, which will be reflected in API documentation.
+
+```python
+                model_config = {
+                    "json_schema_extra": {
+                        "examples": [
+                            {
+                                "name": "Foo",
+                                "description": "A very nice Item",
+                                "price": 35.4,
+                                "tax": 3.2,
+                            }
+                        ]
+                    }
+                }
+```
+
+--------------------------------
+
+### Defining a Custom Dependency (dependencies.py)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/bigger-applications.md
+
+Example of a simple asynchronous dependency function that validates a custom `X-Token` header, raising an `HTTPException` if invalid.
+
+```python
+from fastapi import Header, HTTPException
+
+async def get_token_header(x_token: str = Header()):
+    if x_token != "fake-super-secret-token":
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+```
+
+--------------------------------
+
+### Run FastAPI development server
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/index.md
+
+Use this command to start the FastAPI development server, which automatically reloads on code changes. Ensure your FastAPI application is defined in `main.py` and named `app`.
+
+```console
+$ fastapi dev
+
+  FastAPI   Starting development server 🚀
+
+             Searching for package file structure from directories
+             with __init__.py files
+             Importing from /home/user/code/awesomeapp
+
+   module   🐍 main.py
+
+     code   Importing the FastAPI app object from the module with
+             the following code:
+
+             from main import app
+
+      app   Using import string: main:app
+
+   server   Server started at http://127.0.0.1:8000
+   server   Documentation at http://127.0.0.1:8000/docs
+
+      tip   Running in development mode, for production use:
+             fastapi run
+
+             Logs:
+
+     INFO   Will watch for changes in these directories:
+             ['/home/user/code/awesomeapp']
+     INFO   Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C
+             to quit)
+     INFO   Started reloader process [383138] using WatchFiles
+     INFO   Started server process [383153]
+     INFO   Waiting for application startup.
+     INFO   Application startup complete.
+```
+
+--------------------------------
+
+### Change Directory to Project
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Use `cd` to navigate to a different project directory in the terminal.
+
+```console
+$ cd ~/code/prisoner-of-azkaban
+```
+
+--------------------------------
+
+### Run FastAPI Application with `fastapi run` Command
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/manually.md
+
+Use this command to quickly start your FastAPI application in a production-like environment, suitable for containers or servers. It automatically detects and imports the app object.
+
+```console
+$ fastapi run main.py
+
+  FastAPI   Starting production server 🚀
+
+             Searching for package file structure from directories
+             with __init__.py files
+             Importing from /home/user/code/awesomeapp
+
+   module   🐍 main.py
+
+     code   Importing the FastAPI app object from the module with
+             the following code:
+
+             from main import app
+
+      app   Using import string: main:app
+
+   server   Server started at http://0.0.0.0:8000
+   server   Documentation at http://0.0.0.0:8000/docs
+
+             Logs:
+
+     INFO   Started server process [2306215]
+     INFO   Waiting for application startup.
+     INFO   Application startup complete.
+     INFO   Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C
+             to quit)
+```
+
+--------------------------------
+
+### Example Callback HTTP Request
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/openapi-callbacks.md
+
+This snippet demonstrates a basic Python implementation of an HTTP POST request that could be used to send a callback notification to an external URL.
+
+```Python
+callback_url = "https://example.com/api/v1/invoices/events/"
+httpx.post(callback_url, json={"description": "Invoice paid", "paid": True})
+```
+
+--------------------------------
+
+### Example JSON Response with Enum Value
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/path-params.md
+
+An example of the JSON response received by the client when an `Enum` member is returned from a FastAPI path operation. The enum member is serialized to its string value.
+
+```json
+{
+  "model_name": "alexnet",
+  "message": "Deep Learning FTW!"
+}
+```
+
+--------------------------------
+
+### Dockerfile: Install Python Dependencies
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/deployment/docker.md
+
+Installs Python packages from `requirements.txt` within the Docker image. Using `--no-cache-dir` prevents pip from caching packages, and this step benefits from Docker's build cache if `requirements.txt` is unchanged.
+
+```Dockerfile
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+```
+
+--------------------------------
+
+### Updated PATH After Python Install on Linux/macOS
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/environment-variables.md
+
+Shows how the `PATH` environment variable is modified on Linux or macOS after installing Python to a custom location, adding the new Python binary directory.
+
+```plaintext
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/custompython/bin
+```
+
+--------------------------------
+
+### Activate a Virtual Environment in Console
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Use these commands to activate a project's virtual environment, making its installed packages and executables available in the current shell session.
+
+```console
+$ source .venv/bin/activate
+```
+
+```console
+$ .venv\Scripts\Activate.ps1
+```
+
+```console
+$ source .venv/Scripts/activate
+```
+
+--------------------------------
+
+### Create a Basic FastAPI Application
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/index.md
+
+Defines a simple FastAPI application with two GET endpoints, demonstrating both synchronous and asynchronous function definitions for handling requests.
+
+```Python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q}
+```
+
+```Python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
+
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q}
+```
+
+--------------------------------
+
+### Run FastAPI App with --entrypoint CLI Option
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/fastapi-cli.md
+
+Use the `--entrypoint` option with `fastapi dev` to explicitly define the app's import string from the command line.
+
+```console
+fastapi dev --entrypoint main:app
+```
+
+--------------------------------
+
+### Run FastAPI App in Development Mode
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/fastapi-cli.md
+
+Start the development server for your FastAPI application using `fastapi dev`. It automatically detects the app and provides live reloading.
+
+```console
+$ <font color="#4E9A06">fastapi</font> dev
+
+  <span style="background-color:#009485"><font color="#D3D7CF"> FastAPI </font></span>  Starting development server 🚀
+
+             Searching for package file structure from directories with
+             <font color="#3465A4">__init__.py</font> files
+             Importing from <font color="#75507B">/home/user/code/</font><font color="#AD7FA8">awesomeapp</font>
+
+   <span style="background-color:#007166"><font color="#D3D7CF"> module </font></span>  🐍 main.py
+
+     <span style="background-color:#007166"><font color="#D3D7CF"> code </font></span>  Importing the FastAPI app object from the module with the
+             following code:
+
+             <u style="text-decoration-style:solid">from </u><u style="text-decoration-style:solid"><b>main</b></u><u style="text-decoration-style:solid"> import </u><u style="text-decoration-style:solid"><b>app</b></u>
+
+      <span style="background-color:#007166"><font color="#D3D7CF"> app </font></span>  Using import string: <font color="#3465A4">main:app</font>
+
+   <span style="background-color:#007166"><font color="#D3D7CF"> server </font></span>  Server started at <font color="#729FCF"><u style="text-decoration-style:solid">http://127.0.0.1:8000</u></font>
+   <span style="background-color:#007166"><font color="#D3D7CF"> server </font></span>  Documentation at <font color="#729FCF"><u style="text-decoration-style:solid">http://127.0.0.1:8000/docs</u></font>
+
+      <span style="background-color:#007166"><font color="#D3D7CF"> tip </font></span>  Running in development mode, for production use:
+             <b>fastapi run</b>
+
+             Logs:
+
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Will watch for changes in these directories:
+             <b>[</b><font color="#4E9A06">&apos;/home/user/code/awesomeapp&apos;</font><b>]</b>
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Uvicorn running on <font color="#729FCF"><u style="text-decoration-style:solid">http://127.0.0.1:8000</u></font> <b>(</b>Press CTRL+C to
+             quit<b>)</b>
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Started reloader process <b>[</b><font color="#34E2E2"><b>383138</b></font><b>]</b> using WatchFiles
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Started server process <b>[</b><font color="#34E2E2"><b>383153</b></font><b>]</b>
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Waiting for application startup.
+     <span style="background-color:#007166"><font color="#D3D7CF"> INFO </font></span>  Application startup complete.
+```
+
+--------------------------------
+
+### Add Test Path Operation
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/how-to/custom-docs-ui-assets.md
+
+Include a simple path operation to verify the application is running and accessible, allowing testing of the custom documentation setup.
+
+```python
+@app.get("/hello")
+async def hello():
+    return {"message": "Hello World"}
+```
+
+--------------------------------
+
+### Define a GET Path Operation in FastAPI
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/alternatives.md
+
+This snippet illustrates how to define a basic GET path operation in a FastAPI application, handling requests to a specific URL and returning a JSON response.
+
+```Python
+@app.get("/some/url")
+def read_url():
+    return {"message": "Hello World"}
+```
+
+--------------------------------
+
+### Example SSE event format
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/server-sent-events.md
+
+This shows the basic structure of Server-Sent Events, where each event is a text block with fields like `data` and separated by blank lines.
+
+```text
+data: {"name": "Portal Gun", "price": 999.99}
+
+data: {"name": "Plumbus", "price": 32.99}
+
+```
+
+--------------------------------
+
+### Instantiate ASGI Middleware Directly
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/middleware.md
+
+This shows the general way to instantiate an ASGI middleware directly, passing an existing ASGI app. FastAPI provides a simpler method for better error handling.
+
+```python
+from unicorn import UnicornMiddleware
+
+app = SomeASGIApp()
+
+new_app = UnicornMiddleware(app, some_config="rainbow")
+```
+
+--------------------------------
+
+### JSON Response for String Path Parameter
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/path-params.md
+
+Example JSON response when accessing a path with a string value for the `item_id` parameter.
+
+```json
+{"item_id":"foo"}
+```
+
+--------------------------------
+
+### Data with Values for Fields with Defaults (Python)
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/response-model.md
+
+Example Python dictionary representing item data where some fields with default values are explicitly provided.
+
+```python
+{
+    "name": "Bar",
+    "description": "The bartenders",
+    "price": 62,
+    "tax": 20.2
+}
+```
+
+--------------------------------
+
+### Example Output of Pydantic Model Dump
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/extra-models.md
+
+This is the expected dictionary output when a `UserIn` model is converted using `.model_dump()` and then printed.
+
+```Python
+{
+    'username': 'john',
+    'password': 'secret',
+    'email': 'john.doe@example.com',
+    'full_name': None,
+}
+```
+
+--------------------------------
+
+### Full Example of Embedding a Single Body Parameter in FastAPI
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/body-multiple-params.md
+
+Provides a complete example of a FastAPI path operation function where a single Pydantic model 'Item' is embedded within an 'item' key in the request body using 'Body(embed=True)'.
+
+```python
+from typing import Annotated
+
+from fastapi import Body, FastAPI, Path
+from pydantic import BaseModel
+
+
+class Item(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    tax: float | None = None
+
+
+app = FastAPI()
+
+
+@app.put("/items/{item_id}")
+async def update_item(
+    item_id: Annotated[int, Path(title="The ID of the item to get", ge=0, le=1000)],
+    item: Annotated[Item, Body(embed=True)],
+):
+    results = {"item_id": item_id, "item": item}
+    return results
+```
+
+--------------------------------
+
+### Upgrade pip in a virtual environment
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/virtual-environments.md
+
+Run this command once after activating a virtual environment to ensure pip is up-to-date, resolving many package installation issues.
+
+```console
+$ python -m pip install --upgrade pip
+
+---> 100%
+```
+
+--------------------------------
+
+### Using FastAPI Parameter Tools with Pydantic v1 Models
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/how-to/migrate-from-pydantic-v1-to-pydantic-v2.md
+
+This example shows how to use FastAPI's parameter tools, such as `Body`, with Pydantic v1 models during the migration phase. It requires importing these tools from `fastapi.temp_pydantic_v1_params`.
+
+```python
+from typing import Union
+
+from fastapi import FastAPI
+from fastapi.temp_pydantic_v1_params import Body
+from pydantic.v1 import BaseModel
+
+class Item(BaseModel):
+    name: str
+    description: Union[str, None] = None
+    price: float
+    tax: Union[float, None] = None
+
+app = FastAPI()
+
+@app.put("/items/{item_id}")
+async def update_item(
+    item_id: int, item: Item = Body(embed=True)
+):
+    results = {"item_id": item_id, "item": item}
+    return results
+```
+
+--------------------------------
+
+### JSON Response for Integer Path Parameter
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/path-params.md
+
+Example JSON response when accessing a path with an integer value for the `item_id` parameter, demonstrating automatic data conversion.
+
+```json
+{"item_id":3}
+```
+
+--------------------------------
+
+### Example URL Overriding a Query Parameter Default
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/query-params.md
+
+This URL shows how to override the `skip` query parameter's default value while `limit` retains its default.
+
+```url
+http://127.0.0.1:8000/items/?skip=20
+```
+
+--------------------------------
+
+### Python Dictionary for Jinja2 Template Context
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/templates.md
+
+Example of a Python dictionary used to pass context variables to a Jinja2 template.
+
+```Python
+{"id": id}
+```
+
+--------------------------------
+
+### Dependency Scope Execution Flow
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/dependencies/dependencies-with-yield.md
+
+Illustrates the sequence of execution for dependencies with 'request' and 'function' scopes, showing when setup and teardown (after yield) code runs relative to the path operation.
+
+```mermaid
+sequenceDiagram
+
+participant client as Client
+participant dep_req as Dep scope="request"
+participant dep_func as Dep scope="function"
+participant operation as Path Operation
+
+    client ->> dep_req: Start request
+    Note over dep_req: Run code up to yield
+    dep_req ->> dep_func: Pass dependency
+    Note over dep_func: Run code up to yield
+    dep_func ->> operation: Run path operation with dependency
+    operation ->> dep_func: Return from path operation
+    Note over dep_func: Run code after yield
+    Note over dep_func: ✅ Dependency closed
+    dep_func ->> client: Send response to client
+    Note over client: Response sent
+    Note over dep_req: Run code after yield
+    Note over dep_req: ✅ Dependency closed
+```
+
+--------------------------------
+
+### Run FastAPI with Forwarded Headers Enabled
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/behind-a-proxy.md
+
+Starts the FastAPI application using the CLI, allowing all incoming IP addresses to be trusted for forwarded headers. This is useful when the server is behind a trusted proxy.
+
+```console
+fastapi run --forwarded-allow-ips="*"
+```
+
+--------------------------------
+
+### Synchronous Request with TestClient
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/async-tests.md
+
+This snippet shows how to make a synchronous GET request using the TestClient in a traditional def test function, for comparison with AsyncClient.
+
+```Python
+response = client.get('/')
+```
+
+--------------------------------
+
+### Example HTTP Request with Duplicate Headers
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/header-params.md
+
+This snippet shows an HTTP request with the X-Token header provided twice, demonstrating how multiple values for the same header are sent.
+
+```http
+X-Token: foo
+X-Token: bar
+```
+
+--------------------------------
+
+### FastAPI Application with Path Operation Tags
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/advanced/generate-clients.md
+
+This example demonstrates a FastAPI application where path operations are organized using tags, allowing for better categorization in the generated OpenAPI documentation and client SDKs.
+
+```python
+from typing import Union
+
+from fastapi import FastAPI, Depends
+from pydantic import BaseModel
+
+
+class Item(BaseModel):
+    name: str
+    price: float
+    is_offer: Union[bool, None] = None
+
+
+class ResponseMessage(BaseModel):
+    message: str
+
+
+app = FastAPI()
+
+
+async def common_parameters(q: Union[str, None] = None, skip: int = 0, limit: int = 100):
+    return {"q": q, "skip": skip, "limit": limit}
+
+
+@app.get("/items/", tags=["items"])
+async def read_items(commons: dict = Depends(common_parameters)):
+    return commons
+
+
+@app.get("/users/", tags=["users"])
+async def read_users(commons: dict = Depends(common_parameters)):
+    return commons
+
+
+@app.get("/items/{item_id}", response_model=Item, tags=["items"])
+def read_item(item_id: str, q: Union[str, None] = None):
+    return {"id": "foo", "name": "Foo", "price": 42.0}
+
+
+@app.put("/items/{item_id}", response_model=ResponseMessage, tags=["items"])
+def update_item(item_id: str, item: Item):
+    return {"message": "Item updated successfully"}
+```
+
+--------------------------------
+
+### JSON Response with Unset Defaults Excluded
+
+Source: https://github.com/fastapi/fastapi/blob/master/docs/en/docs/tutorial/response-model.md
+
+Example JSON response when `response_model_exclude_unset=True` is applied, showing only explicitly set values.
+
+```json
+{
+    "name": "Foo",
+    "price": 50.2
+}
+```

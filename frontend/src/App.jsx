@@ -35,6 +35,18 @@ import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// ── Enterprise Workflow v2 Pages ────────────────────────────────────────────────
+import WorkflowDetailPage    from './pages/WorkflowDetail/WorkflowDetailPage';
+import DesignQueuePage        from './pages/DesignQueue/DesignQueuePage';
+import CheckerQueuePage       from './pages/CheckerQueue/CheckerQueuePage';
+import FinalApprovalQueuePage from './pages/FinalApprovalQueue/FinalApprovalQueuePage';
+import L1ApprovalQueuePage    from './pages/L1ApprovalQueue/L1ApprovalQueuePage';
+import DesignLibraryPage      from './pages/DesignLibrary/DesignLibraryPage';
+
+// ── Estimation UI Feature ───────────────────────────────────────────────────────
+import EstimationLayout from './components/EstimationLayout';
+import EstimationDashboard from './pages/Estimation/EstimationDashboard';
+
 function App() {
   const antdTheme = {
     token: {
@@ -59,6 +71,15 @@ function App() {
           {/* ── Public landing page (no auth required) ── */}
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Estimation Module */}
+          <Route path="/estimation" element={
+            <ProtectedRoute>
+              <EstimationLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<EstimationDashboard />} />
+          </Route>
 
           <Route path="/" element={<Layout />}>
             <Route index element={
@@ -116,6 +137,12 @@ function App() {
             <Route path="asset-summary" element={
               <ProtectedRoute permission="assetSummary">
                 <AssetSummary />
+              </ProtectedRoute>
+            } />
+
+            <Route path="design-library" element={
+              <ProtectedRoute permission="assetSummary">
+                <DesignLibraryPage />
               </ProtectedRoute>
             } />
 
@@ -189,6 +216,43 @@ function App() {
                 <Settings />
               </ProtectedRoute>
             } />
+
+            {/* ── Enterprise Workflow v2 Routes ────────────────────────────────── */}
+            <Route path="workflow/:id" element={
+              <ProtectedRoute permission="requestTracker">
+                <WorkflowDetailPage />
+              </ProtectedRoute>
+            } />
+
+            {/* L1 Approval Queue — Approver + Admin */}
+            <Route path="workflow-queue/l1" element={
+              <ProtectedRoute roles={['L1 Approver', 'Admin']}>
+                <L1ApprovalQueuePage />
+              </ProtectedRoute>
+            } />
+
+            {/* Design Queue — Designer + Admin */}
+            <Route path="design-queue" element={
+              <ProtectedRoute roles={['Designer', 'Admin']}>
+                <DesignQueuePage />
+              </ProtectedRoute>
+            } />
+
+            {/* Checker Queue — Checker + Admin */}
+            <Route path="checker-queue" element={
+              <ProtectedRoute roles={['Checker', 'Admin']}>
+                <CheckerQueuePage />
+              </ProtectedRoute>
+            } />
+
+            {/* Final Approval Queue — Final Approver + Admin */}
+            <Route path="final-approval-queue" element={
+              <ProtectedRoute roles={['Final Approver', 'Admin']}>
+                <FinalApprovalQueuePage />
+              </ProtectedRoute>
+            } />
+
+
           </Route>
         </Routes>
       </AuthProvider>

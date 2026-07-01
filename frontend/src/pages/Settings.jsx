@@ -5,12 +5,14 @@ import { message, Select, Tag, Spin, Tooltip } from 'antd';
 import { COLOR_THEMES, FONT_OPTIONS, LAYOUT_OPTIONS } from '../components/Sidebar';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import KPISettingsSection from './KPISettingsSection';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const ROLE_OPTIONS = [
-    { value: 'Employee',     label: 'Employee',     color: 'blue' },
-    { value: 'Approver',     label: 'Approver',     color: 'green' },
+    { value: 'Requester',    label: 'Requester',    color: 'blue' },
+    { value: 'L1 Approver',     label: 'L1 Approver',     color: 'green' },
     { value: 'PED Engineer', label: 'PED Engineer', color: 'purple' },
 ];
 
@@ -18,6 +20,8 @@ const Settings = () => {
     const [loading, setLoading] = useState(true);
     const [employees, setEmployees] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [roles, setRoles] = useState([]);
+    const [exportLoading, setExportLoading] = useState(false);
 
     // Settings State
     const [frequency, setFrequency] = useState('Weekly');
@@ -76,9 +80,18 @@ const Settings = () => {
     const fetchUsers = async () => {
         setUsersLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/users`);
-            if (response.data.success) {
-                setUsers(response.data.data);
+            const usersRes = await axios.get(`${API_BASE_URL}/api/users`, {
+                headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+            });
+            setUsers(usersRes.data.data || []);
+            
+            try {
+                const rolesRes = await axios.get(`${API_BASE_URL}/api/roles`, {
+                    headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+                });
+                setRoles(rolesRes.data || []);
+            } catch (err) {
+                console.error('Failed to load roles', err);
             }
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -240,6 +253,45 @@ const Settings = () => {
             message.error(error.response?.data?.message || 'Failed to send report');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExportDeletedDesigns = async () => {
+        try {
+            setExportLoading(true);
+            const token = sessionStorage.getItem('token');
+            const response = await axios.get(`${API_BASE_URL}/api/design-library?activeStatus=false&limit=10000`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            const deletedData = response.data.data;
+            if (!deletedData || deletedData.length === 0) {
+                message.info('No soft-deleted data found.');
+                return;
+            }
+
+            const formattedData = deletedData.map(item => ({
+                'Library ID': item.libraryId,
+                'Name': item.name,
+                'Category': item.category,
+                'Equipment Type': item.equipmentType,
+                'Version': item.version,
+                'Number of Variants': item.variants?.length || 0,
+                'Deleted (Inactive)': 'Yes',
+                'Last Updated': new Date(item.updatedAt || new Date()).toLocaleString()
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(formattedData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Deleted Designs");
+            XLSX.writeFile(workbook, `Deleted_Designs_Audit_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            message.success('Excel export downloaded successfully!');
+        } catch (error) {
+            console.error('Error exporting deleted data:', error);
+            message.error('Failed to export data');
+        } finally {
+            setExportLoading(false);
         }
     };
 
@@ -472,7 +524,7 @@ const Settings = () => {
                                         })
                                         .map(user => {
                                             const emp = user.employeeId;
-                                            const roleColor = ROLE_OPTIONS.find(r => r.value === user.role)?.color || 'default';
+                                            const roleColor = 'blue';
                                             return (
                                                 <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-6 py-3">
@@ -499,7 +551,7 @@ const Settings = () => {
                                                                 size="small"
                                                                 style={{ width: '100%' }}
                                                                 onChange={val => handleRoleChange(user._id, val)}
-                                                                options={ROLE_OPTIONS.map(r => ({ value: r.value, label: r.label }))}
+                                                                options={roles.map(r => ({ value: r.name, label: r.name }))}
                                                             />
                                                         </Tooltip>
                                                     </td>
@@ -593,6 +645,39 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
+
+            {/* ─── Audit & Compliance Section ─────────────────────────────────────── */}
+            <div className="mt-10">
+                <div className="mb-4 flex items-center gap-3">
+                    <Shield className="w-6 h-6 text-red-500" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Audit & Compliance</h1>
+                        <p className="text-gray-600 text-sm">Manage deleted records and compliance data</p>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-base font-bold text-gray-800 mb-1 flex items-center gap-2">
+                            Soft-Deleted Design Library Logs
+                        </h2>
+                        <p className="text-sm text-gray-500 max-w-2xl">
+                            Download a complete Excel report of all inactive/deleted designs for fraud prevention and auditing purposes. This ensures no designs are permanently lost without a trace.
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleExportDeletedDesigns}
+                        disabled={exportLoading}
+                        className="px-6 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg font-medium transition-all flex items-center gap-2 shrink-0 shadow-sm"
+                    >
+                        {exportLoading ? <Spin size="small" /> : <FileText size={18} />}
+                        Export Excel Report
+                    </button>
+                </div>
+            </div>
+
+            {/* ─── KPI Settings Section ─────────────────────────────────────── */}
+            <KPISettingsSection />
         </div>
     );
 };

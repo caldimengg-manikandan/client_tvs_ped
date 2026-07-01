@@ -43,10 +43,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
 const updateUserRole = asyncHandler(async (req, res) => {
     const { role } = req.body;
 
-    const validRoles = ['Admin', 'Employee', 'Approver', 'PED Engineer'];
-    if (!role || !validRoles.includes(role)) {
+    if (!role) {
         res.status(400);
-        throw new Error(`Invalid role. Must be one of: ${validRoles.join(', ')}`);
+        throw new Error('Role is required');
     }
 
     // Use .save() so the pre-save hook fires and auto-updates permissions

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { DatePicker, Select, Button, Tooltip, Dropdown } from 'antd';
-import { RefreshCw, Download, FileText, Sheet, Film } from 'lucide-react';
+import { DatePicker, Select, Tooltip, Dropdown, Popover } from 'antd';
+import { RefreshCw, Download, FileText, Sheet, Film, Filter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import { exportDashboardPDF, exportDashboardExcel, exportDashboardPPTX } from './exportUtils';
+import DashboardCalendar from './DashboardCalendar';
+import { CalendarDays } from 'lucide-react';
 
 const { RangePicker } = DatePicker;
 
@@ -15,18 +17,21 @@ const DATE_PRESETS = [
     { label: 'Custom', value: 'custom' },
 ];
 
-const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange, dateRange, dashboardData }) => {
+const DEPARTMENTS = ['Assembly', 'Machining', 'Paint Shop', 'Logistics'];
+const REQUEST_TYPES = ['New Project', 'Upgrade', 'Capacity', 'Replacement'];
+const PLANT_LOCATIONS = ['Plant A', 'Plant B', 'Plant C'];
+
+const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange, dateRange, filters, onFilterChange, dashboardData }) => {
     const [preset, setPreset] = useState('month');
     const [showCustom, setShowCustom] = useState(false);
     const [exportLoading, setExportLoading] = useState(null);
-
-    const now = dayjs();
-    const dateStr = now.format('dddd, D MMMM YYYY');
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const applyPreset = (val) => {
         setPreset(val);
         if (val === 'custom') { setShowCustom(true); return; }
         setShowCustom(false);
+        const now = dayjs();
         if (val === 'today') {
             onDateRangeChange(now.format('YYYY-MM-DD'), now.format('YYYY-MM-DD'));
         } else if (val === 'week') {
@@ -63,43 +68,86 @@ const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange,
         { key: 'pptx', label: <span className="flex items-center gap-2"><Film size={14} /> Export as PowerPoint</span> },
     ];
 
+    const filterContent = (
+        <div className="flex flex-col gap-3 w-56 p-1">
+            <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Department</label>
+                <Select
+                    allowClear
+                    placeholder="All Departments"
+                    value={filters?.department}
+                    onChange={(val) => onFilterChange('department', val)}
+                    options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                    className="w-full"
+                    size="small"
+                />
+            </div>
+            <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Request Type</label>
+                <Select
+                    allowClear
+                    placeholder="All Types"
+                    value={filters?.requestType}
+                    onChange={(val) => onFilterChange('requestType', val)}
+                    options={REQUEST_TYPES.map(t => ({ value: t, label: t }))}
+                    className="w-full"
+                    size="small"
+                />
+            </div>
+            <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Plant Location</label>
+                <Select
+                    allowClear
+                    placeholder="All Plants"
+                    value={filters?.plantLocation}
+                    onChange={(val) => onFilterChange('plantLocation', val)}
+                    options={PLANT_LOCATIONS.map(p => ({ value: p, label: p }))}
+                    className="w-full"
+                    size="small"
+                />
+            </div>
+        </div>
+    );
+
     return (
         <div id="dashboard-header" className="bg-white rounded-2xl border border-border px-5 py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-sm">
-            {/* Left: title + live indicator */}
-            <div className="flex items-center gap-4">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-bold text-txt-1 font-outfit m-0">
-                            PLANT ENGINEERING -MATERIAL HANDLING ASSESTS DASHBOARD
-                        </h1>
-                        {/* Live pulsing dot */}
-                        <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-                        </span>
-                    </div>
-                    <p className="text-xs text-txt-3 mt-0.5 m-0">{dateStr}</p>
-                </div>
-                {/* Last updated */}
-                <div className="hidden lg:flex items-center gap-1.5 text-xs text-txt-3 bg-surface px-2.5 py-1 rounded-full border border-border">
-                    <span>Updated {secondsAgo < 5 ? 'just now' : `${secondsAgo}s ago`}</span>
-                </div>
+            {/* Left: live indicator */}
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={() => setIsCalendarOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 hover:bg-blue-50 hover:border-blue-200 transition-colors rounded-full text-sm font-semibold text-slate-700"
+                >
+                    <CalendarDays size={18} className="text-blue-500" />
+                    Request & Delivery Calendar
+                </button>
+                <DashboardCalendar open={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
             </div>
 
             {/* Right: filters + actions */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
+                {/* Advanced Filters */}
+                <Popover content={filterContent} title="Advanced Filters" trigger="click" placement="bottomRight">
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full text-[13px] font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                        <Filter size={14} />
+                        Filter
+                        {(filters?.department || filters?.requestType || filters?.plantLocation) && (
+                            <span className="w-2 h-2 rounded-full bg-[#C81E1E] ml-1"></span>
+                        )}
+                    </button>
+                </Popover>
+
                 {/* Date preset */}
                 <Select
                     value={preset}
                     onChange={applyPreset}
-                    size="small"
-                    className="w-32"
+                    size="middle"
+                    style={{ width: 140 }}
                     options={DATE_PRESETS.map(p => ({ value: p.value, label: p.label }))}
                 />
                 {/* Custom range picker */}
                 {showCustom && (
                     <RangePicker
-                        size="small"
+                        size="middle"
                         onChange={handleCustomRange}
                         className="rounded-lg"
                     />
@@ -110,10 +158,10 @@ const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange,
                     <button
                         onClick={onRefresh}
                         disabled={refreshing}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-semibold text-txt-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full text-[13px] font-semibold text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
                     >
                         <motion.span animate={refreshing ? { rotate: 360 } : { rotate: 0 }} transition={refreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}>
-                            <RefreshCw size={13} />
+                            <RefreshCw size={14} />
                         </motion.span>
                         {refreshing ? 'Refreshing…' : 'Refresh'}
                     </button>
@@ -127,8 +175,8 @@ const DashboardHeader = ({ secondsAgo, refreshing, onRefresh, onDateRangeChange,
                     }}
                     placement="bottomRight"
                 >
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-tvs-primary text-white border-none rounded-lg text-xs font-semibold hover:bg-navy-700 transition-colors">
-                        <Download size={13} />
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-[#C81E1E] text-white border border-[#C81E1E] rounded-full text-[13px] font-semibold hover:bg-[#A41515] transition-colors shadow-sm">
+                        <Download size={14} />
                         {exportLoading ? 'Exporting…' : 'Export'}
                     </button>
                 </Dropdown>

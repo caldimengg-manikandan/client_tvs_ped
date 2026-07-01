@@ -42,7 +42,8 @@ const EmployeeView = () => {
             case 'super admin': return 'bg-purple-100 text-purple-800';
             case 'admin': return 'bg-blue-100 text-blue-800';
             case 'manager': return 'bg-indigo-100 text-indigo-800';
-            case 'employee': return 'bg-green-100 text-green-800';
+            case 'l1 approver': return 'bg-teal-100 text-teal-800';
+            case 'requester': return 'bg-green-100 text-green-800';
             case 'viewer': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
         }

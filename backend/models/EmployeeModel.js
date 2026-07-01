@@ -31,14 +31,13 @@ const employeeSchema = mongoose.Schema({
     },
     accessLevel: {
         type: String,
-        enum: ['Employee', 'Viewer', 'Manager', 'Admin', 'Super Admin'],
-        default: 'Employee'
+        enum: ['Requester', 'Viewer', 'Manager', 'Admin', 'Super Admin'],
+        default: 'Requester'
     },
     // Role field aligned with the 3-tier access system (Admin managed separately)
     role: {
         type: String,
-        enum: ['Admin', 'Employee', 'Approver', 'PED Engineer'],
-        default: 'Employee'
+        default: 'Requester'
     },
     permissions: {
         type: Object,
